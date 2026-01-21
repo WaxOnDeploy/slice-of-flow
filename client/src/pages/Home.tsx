@@ -1,283 +1,147 @@
 /**
- * Release Train Chronicles - The Deck Shop
- * Design: Terminal/Dev Console Aesthetic
- * - Dark GitHub-style background
- * - JetBrains Mono typography
- * - Products as "packages/modules"
- * - CTAs as terminal commands
+ * Release Train Chronicles - Design Concept Selector
+ * Strawman presentation page for Jeff to review 3 design directions
  */
 
-import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
 import { 
-  Package, 
-  Terminal, 
-  Zap, 
-  Users, 
   Target, 
-  BarChart3, 
-  Layers,
-  CheckCircle2,
+  BookOpen, 
+  Briefcase,
   ArrowRight,
-  Mail,
-  ExternalLink
+  Crosshair,
+  PenTool,
+  Sparkles
 } from "lucide-react";
+import { Link } from "wouter";
 
-// Typewriter effect component
-function TypewriterText({ text, className = "" }: { text: string; className?: string }) {
-  const [displayText, setDisplayText] = useState("");
-  const [showCursor, setShowCursor] = useState(true);
-
-  useEffect(() => {
-    let i = 0;
-    const timer = setInterval(() => {
-      if (i < text.length) {
-        setDisplayText(text.slice(0, i + 1));
-        i++;
-      } else {
-        clearInterval(timer);
-      }
-    }, 50);
-    return () => clearInterval(timer);
-  }, [text]);
-
-  useEffect(() => {
-    const cursorTimer = setInterval(() => {
-      setShowCursor(prev => !prev);
-    }, 530);
-    return () => clearInterval(cursorTimer);
-  }, []);
-
-  return (
-    <span className={className}>
-      {displayText}
-      <span className={`inline-block w-3 h-6 bg-terminal-green ml-1 align-middle ${showCursor ? 'opacity-100' : 'opacity-0'}`} />
-    </span>
-  );
-}
-
-// Terminal window component
-function TerminalWindow({ children, title = "terminal" }: { children: React.ReactNode; title?: string }) {
-  return (
-    <div className="terminal-window">
-      <div className="terminal-header">
-        <div className="terminal-dot terminal-dot-red" />
-        <div className="terminal-dot terminal-dot-yellow" />
-        <div className="terminal-dot terminal-dot-green" />
-        <span className="ml-4 text-muted-foreground text-sm font-mono">{title}</span>
-      </div>
-      <div className="p-6 font-mono text-sm">
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// Product bundle data
-const bundles = [
+const concepts = [
   {
-    id: "sprint-ceremonies",
-    name: "Sprint Ceremonies Pack",
-    description: "Planning, Daily Standups, Reviews, Retrospectives",
-    slides: 75,
-    price: 29,
-    icon: Target,
-    color: "text-terminal-green"
+    id: "a",
+    name: "The War Room",
+    tagline: "Dark, tactical, command-center aesthetic",
+    description: "Military operations meets modern SaaS. Strategic briefing room feel with data-driven, mission-critical vibes. Deep charcoal, military green, amber alerts.",
+    icon: Crosshair,
+    colors: ["#0a0f0a", "#22c55e", "#f59e0b", "#1a2f1a"],
+    path: "/concept-a",
+    vibe: "Tactical • Authoritative • Mission-Critical"
   },
   {
-    id: "team-foundations",
-    name: "Team Foundations Pack",
-    description: "Working Agreements, DoR, DoD, Capacity Planning",
-    slides: 60,
-    price: 29,
-    icon: Users,
-    color: "text-terminal-blue"
+    id: "b",
+    name: "The Field Journal",
+    tagline: "Warm, weathered, storytelling vibe",
+    description: "Well-worn notebook meets memoir. Authentic, personal, human. Paper textures, handwritten accents. Warm cream, aged paper, ink blue, leather brown.",
+    icon: PenTool,
+    colors: ["#faf8f5", "#8b4513", "#2c2416", "#d4c4a8"],
+    path: "/concept-b",
+    vibe: "Personal • Authentic • Story-Driven"
   },
   {
-    id: "metrics-reporting",
-    name: "Metrics & Reporting Pack",
-    description: "Velocity, Burndown, CFD, Team Health",
-    slides: 50,
-    price: 29,
-    icon: BarChart3,
-    color: "text-terminal-orange"
-  },
-  {
-    id: "safe-scaling",
-    name: "SAFe & Scaling Pack",
-    description: "PI Planning, ARTs, Program Increment",
-    slides: 80,
-    price: 39,
-    icon: Layers,
-    color: "text-terminal-purple"
-  },
-  {
-    id: "coaching-training",
-    name: "Coaching & Training Pack",
-    description: "Icebreakers, Workshops, Anti-Patterns",
-    slides: 65,
-    price: 29,
-    icon: Zap,
-    color: "text-terminal-green"
-  },
-  {
-    id: "full-library",
-    name: "The Full Arsenal",
-    description: "All 500+ slides. Everything. Forever.",
-    slides: 500,
-    price: 149,
-    icon: Package,
-    color: "text-accent",
-    featured: true
-  }
-];
-
-// Sample decks for preview
-const sampleDecks = [
-  {
-    title: "Team Activation",
-    description: "Get new teams aligned on Working Agreements, DoR, DoD, and Capacity",
-    slides: 25,
-    preview: "/images/sample-team-activation.png"
-  },
-  {
-    title: "Backlog Refinement",
-    description: "Run effective refinement sessions and avoid common anti-patterns",
-    slides: 15,
-    preview: "/images/sample-refinement.png"
+    id: "c",
+    name: "The Modern Practitioner",
+    tagline: "Clean, confident, professional",
+    description: "Consulting firm meets thought leader. Premium, authoritative, trustworthy. Generous whitespace, strong typography. Deep navy, warm white, gold accents.",
+    icon: Briefcase,
+    colors: ["#ffffff", "#1a1a2e", "#c9a227", "#f8f9fa"],
+    path: "/concept-c",
+    vibe: "Professional • Premium • Authoritative"
   }
 ];
 
 export default function Home() {
-  const handlePurchase = (bundleName: string) => {
-    toast.info(`Purchase flow coming soon for: ${bundleName}`, {
-      description: "Contact us directly for early access pricing."
-    });
-  };
-
-  const handleCustomDeck = () => {
-    toast.info("Custom Deck Service", {
-      description: "Email us your requirements and we'll build your deck in 24-48 hours."
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-background grid-bg relative">
-      {/* Scanlines overlay */}
-      <div className="scanlines fixed inset-0 pointer-events-none z-50" />
-      
+    <div className="min-h-screen bg-[#0f0f0f] text-white">
       {/* Header */}
-      <header className="border-b border-border sticky top-0 bg-background/95 backdrop-blur z-40">
-        <div className="container py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Terminal className="w-6 h-6 text-terminal-green" />
+      <header className="border-b border-[#2a2a2a] py-6">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex items-center justify-between">
             <div>
-              <h1 className="font-mono font-bold text-lg">Release Train Chronicles</h1>
-              <p className="text-xs text-muted-foreground font-mono">the_deck_shop</p>
+              <h1 className="text-xl font-bold">Release Train Chronicles</h1>
+              <p className="text-sm text-[#888]">Design Concept Review</p>
             </div>
+            <Badge variant="outline" className="border-[#444] text-[#888]">
+              Strawman v1.0
+            </Badge>
           </div>
-          <nav className="hidden md:flex items-center gap-6 font-mono text-sm">
-            <a href="#bundles" className="text-muted-foreground hover:text-foreground transition-colors">./bundles</a>
-            <a href="#samples" className="text-muted-foreground hover:text-foreground transition-colors">./samples</a>
-            <a href="#custom" className="text-muted-foreground hover:text-foreground transition-colors">./custom</a>
-            <Button variant="outline" size="sm" className="font-mono">
-              <Mail className="w-4 h-4 mr-2" />
-              contact
-            </Button>
-          </nav>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="py-20 md:py-32">
-        <div className="container">
-          <div className="max-w-4xl">
-            <div className="font-mono text-terminal-green text-sm mb-4">
-              $ cat /about/mission.txt
-            </div>
-            <h2 className="text-4xl md:text-6xl font-bold font-mono mb-6 leading-tight">
-              <TypewriterText text="500+ Battle-Tested Agile Slides" />
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl">
-              From the trenches, for the trenches. Real-world presentations built by practitioners 
-              who've survived the daily compromises of hybrid waterfall-agile environments.
-            </p>
-            
-            <TerminalWindow title="quick_start.sh">
-              <div className="space-y-2 text-foreground">
-                <div><span className="text-terminal-green">$</span> npm install @rtc/agile-slides</div>
-                <div className="text-muted-foreground"># Or grab individual packs below</div>
-                <div><span className="text-terminal-green">$</span> rtc --list-bundles</div>
-                <div className="text-terminal-blue">Found 6 available packages...</div>
-              </div>
-            </TerminalWindow>
-            
-            <div className="flex flex-wrap gap-4 mt-8">
-              <Button size="lg" className="font-mono" onClick={() => document.getElementById('bundles')?.scrollIntoView({ behavior: 'smooth' })}>
-                <Package className="w-5 h-5 mr-2" />
-                Browse Bundles
-              </Button>
-              <Button size="lg" variant="outline" className="font-mono" onClick={() => document.getElementById('custom')?.scrollIntoView({ behavior: 'smooth' })}>
-                <Terminal className="w-5 h-5 mr-2" />
-                Custom Deck Service
-              </Button>
-            </div>
+      {/* Hero */}
+      <section className="py-16 md:py-24 border-b border-[#2a2a2a]">
+        <div className="max-w-6xl mx-auto px-6 text-center">
+          <Badge className="mb-6 bg-amber-500/20 text-amber-400 border-amber-500/50">
+            <Sparkles className="w-3 h-3 mr-1" />
+            For Review
+          </Badge>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            Three Design Directions
+          </h2>
+          <p className="text-xl text-[#888] max-w-2xl mx-auto mb-8">
+            Each concept represents a distinct visual identity for your professional hub. 
+            Click through to experience each one, then let me know what resonates—or what 
+            elements to mix and match.
+          </p>
+          <div className="flex justify-center gap-4 text-sm text-[#666]">
+            <span>✓ Your real headshots</span>
+            <span>•</span>
+            <span>✓ Your LinkedIn articles</span>
+            <span>•</span>
+            <span>✓ The Fatal Five book</span>
+            <span>•</span>
+            <span>✓ The Armory link</span>
           </div>
         </div>
       </section>
 
-      <Separator />
-
-      {/* Bundles Section */}
-      <section id="bundles" className="py-20">
-        <div className="container">
-          <div className="font-mono text-terminal-green text-sm mb-2">
-            $ ls -la ./bundles/
-          </div>
-          <h3 className="text-3xl font-bold font-mono mb-2">Available Packages</h3>
-          <p className="text-muted-foreground mb-12 max-w-2xl">
-            Each bundle is a curated collection of presentation-ready slides. 
-            Download once, use forever. No subscriptions, no nonsense.
-          </p>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {bundles.map((bundle) => {
-              const Icon = bundle.icon;
+      {/* Concept Cards */}
+      <section className="py-16">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="grid md:grid-cols-3 gap-8">
+            {concepts.map((concept) => {
+              const Icon = concept.icon;
               return (
                 <Card 
-                  key={bundle.id} 
-                  className={`p-6 bg-card border-border hover:border-primary/50 transition-all ${bundle.featured ? 'md:col-span-2 lg:col-span-1 ring-2 ring-accent/50' : ''}`}
+                  key={concept.id}
+                  className="bg-[#1a1a1a] border-[#2a2a2a] overflow-hidden hover:border-[#444] transition-all group"
                 >
-                  {bundle.featured && (
-                    <Badge className="mb-4 bg-accent text-accent-foreground font-mono">
-                      BEST VALUE
-                    </Badge>
-                  )}
-                  <div className="flex items-start justify-between mb-4">
-                    <Icon className={`w-8 h-8 ${bundle.color}`} />
-                    <div className="text-right">
-                      <div className="text-3xl font-bold font-mono">${bundle.price}</div>
-                      <div className="text-xs text-muted-foreground font-mono">one-time</div>
-                    </div>
+                  {/* Color Preview */}
+                  <div className="h-24 flex">
+                    {concept.colors.map((color, i) => (
+                      <div 
+                        key={i} 
+                        className="flex-1" 
+                        style={{ backgroundColor: color }}
+                      />
+                    ))}
                   </div>
-                  <h4 className="font-mono font-bold text-lg mb-2">{bundle.name}</h4>
-                  <p className="text-sm text-muted-foreground mb-4">{bundle.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-mono text-terminal-blue">
-                      {bundle.slides} slides
-                    </span>
-                    <Button 
-                      variant={bundle.featured ? "default" : "outline"} 
-                      size="sm" 
-                      className="font-mono"
-                      onClick={() => handlePurchase(bundle.name)}
-                    >
-                      $ purchase
-                    </Button>
+                  
+                  <div className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-10 h-10 bg-[#2a2a2a] rounded-lg flex items-center justify-center">
+                        <Icon className="w-5 h-5 text-white" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">Concept {concept.id.toUpperCase()}</h3>
+                        <p className="text-sm text-[#888]">{concept.name}</p>
+                      </div>
+                    </div>
+                    
+                    <p className="text-[#888] text-sm mb-4 leading-relaxed">
+                      {concept.description}
+                    </p>
+                    
+                    <div className="text-xs text-[#666] mb-6 uppercase tracking-wider">
+                      {concept.vibe}
+                    </div>
+                    
+                    <Link href={concept.path}>
+                      <Button className="w-full bg-white text-black hover:bg-[#eee] font-medium group-hover:bg-amber-400 group-hover:text-black transition-colors">
+                        View Concept {concept.id.toUpperCase()}
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
                   </div>
                 </Card>
               );
@@ -286,118 +150,67 @@ export default function Home() {
         </div>
       </section>
 
-      <Separator />
-
-      {/* Sample Decks Section */}
-      <section id="samples" className="py-20">
-        <div className="container">
-          <div className="font-mono text-terminal-green text-sm mb-2">
-            $ cat ./samples/README.md
-          </div>
-          <h3 className="text-3xl font-bold font-mono mb-2">Sample Decks</h3>
-          <p className="text-muted-foreground mb-12 max-w-2xl">
-            See the quality before you buy. These complete presentations demonstrate 
-            our battle-tested approach to Agile training materials.
-          </p>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {sampleDecks.map((deck, index) => (
-              <Card key={index} className="overflow-hidden bg-card border-border">
-                <div className="aspect-video bg-secondary flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <Terminal className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-                    <p className="text-sm text-muted-foreground font-mono">Preview Coming Soon</p>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle2 className="w-5 h-5 text-terminal-green" />
-                    <h4 className="font-mono font-bold text-lg">{deck.title}</h4>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-4">{deck.description}</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-mono text-terminal-blue">{deck.slides} slides</span>
-                    <Button variant="ghost" size="sm" className="font-mono" onClick={() => toast.info("Preview coming soon!")}>
-                      View Sample <ExternalLink className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
-                </div>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <Separator />
-
-      {/* Custom Deck Service */}
-      <section id="custom" className="py-20">
-        <div className="container">
-          <div className="max-w-4xl mx-auto">
-            <div className="font-mono text-terminal-green text-sm mb-2">
-              $ ./services/custom-deck --help
+      {/* Instructions */}
+      <section className="py-16 border-t border-[#2a2a2a]">
+        <div className="max-w-3xl mx-auto px-6 text-center">
+          <h3 className="text-2xl font-bold mb-4">How to Review</h3>
+          <div className="grid md:grid-cols-3 gap-6 text-left">
+            <div className="bg-[#1a1a1a] p-6 rounded-lg border border-[#2a2a2a]">
+              <div className="text-3xl font-bold text-amber-400 mb-2">1</div>
+              <h4 className="font-semibold mb-2">Explore Each</h4>
+              <p className="text-sm text-[#888]">
+                Click through all three concepts. Scroll through the full page to see 
+                every section.
+              </p>
             </div>
-            <h3 className="text-3xl font-bold font-mono mb-2">Done-For-You Custom Decks</h3>
-            <p className="text-muted-foreground mb-8">
-              Need something specific? Tell us your topic, audience, and timeline. 
-              We'll build a custom presentation using our 500+ slide library.
-            </p>
-
-            <TerminalWindow title="custom_deck_service.sh">
-              <div className="space-y-3">
-                <div><span className="text-terminal-green">$</span> rtc custom --describe</div>
-                <div className="text-foreground pl-4">
-                  <div className="mb-2">How it works:</div>
-                  <div className="text-terminal-blue">1.</div> You tell us your topic and requirements<br/>
-                  <div className="text-terminal-blue">2.</div> We pull from our 500+ slide library<br/>
-                  <div className="text-terminal-blue">3.</div> Custom deck delivered in 24-48 hours<br/>
-                  <div className="text-terminal-blue">4.</div> One round of revisions included
-                </div>
-                <div className="mt-4">
-                  <span className="text-terminal-green">$</span> rtc custom --pricing
-                </div>
-                <div className="text-foreground pl-4">
-                  <div><span className="text-terminal-orange">$99</span> - Quick Deck (10-15 slides)</div>
-                  <div><span className="text-terminal-orange">$199</span> - Standard Deck (20-30 slides)</div>
-                  <div><span className="text-terminal-orange">$299</span> - Workshop Kit (30+ slides + facilitator notes)</div>
-                </div>
-              </div>
-            </TerminalWindow>
-
-            <div className="mt-8 flex flex-wrap gap-4">
-              <Button size="lg" className="font-mono" onClick={handleCustomDeck}>
-                <Mail className="w-5 h-5 mr-2" />
-                Request Custom Deck
-              </Button>
-              <Button size="lg" variant="outline" className="font-mono" onClick={() => toast.info("Email: hello@releasetrainchronicles.com")}>
-                <ArrowRight className="w-5 h-5 mr-2" />
-                See Examples
-              </Button>
+            <div className="bg-[#1a1a1a] p-6 rounded-lg border border-[#2a2a2a]">
+              <div className="text-3xl font-bold text-amber-400 mb-2">2</div>
+              <h4 className="font-semibold mb-2">Note Reactions</h4>
+              <p className="text-sm text-[#888]">
+                What feels right? What feels off? Which elements stand out—good or bad?
+              </p>
+            </div>
+            <div className="bg-[#1a1a1a] p-6 rounded-lg border border-[#2a2a2a]">
+              <div className="text-3xl font-bold text-amber-400 mb-2">3</div>
+              <h4 className="font-semibold mb-2">Share Feedback</h4>
+              <p className="text-sm text-[#888]">
+                Pick one to refine, mix elements from multiple, or tell me what's missing.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      <Separator />
+      {/* Quick Links */}
+      <section className="py-8 border-t border-[#2a2a2a]">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex flex-wrap justify-center gap-4">
+            <Link href="/concept-a">
+              <Button variant="outline" className="border-[#2a2a2a] text-[#888] hover:text-white hover:border-[#444]">
+                <Crosshair className="w-4 h-4 mr-2" />
+                War Room
+              </Button>
+            </Link>
+            <Link href="/concept-b">
+              <Button variant="outline" className="border-[#2a2a2a] text-[#888] hover:text-white hover:border-[#444]">
+                <PenTool className="w-4 h-4 mr-2" />
+                Field Journal
+              </Button>
+            </Link>
+            <Link href="/concept-c">
+              <Button variant="outline" className="border-[#2a2a2a] text-[#888] hover:text-white hover:border-[#444]">
+                <Briefcase className="w-4 h-4 mr-2" />
+                Modern Practitioner
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-border">
-        <div className="container">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-3">
-              <Terminal className="w-5 h-5 text-terminal-green" />
-              <div>
-                <div className="font-mono font-bold">Release Train Chronicles</div>
-                <div className="text-xs text-muted-foreground">Agile Leadership from the Trenches</div>
-              </div>
-            </div>
-            <div className="font-mono text-sm text-muted-foreground">
-              <span className="text-terminal-green">$</span> echo "Built by practitioners, for practitioners"
-            </div>
-          </div>
-          <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground font-mono">
-            © {new Date().getFullYear()} Release Train Chronicles. All rights reserved.
-          </div>
+      <footer className="py-6 border-t border-[#2a2a2a] text-center text-sm text-[#666]">
+        <div className="max-w-6xl mx-auto px-6">
+          Release Train Chronicles © 2025 · Strawman Design Review
         </div>
       </footer>
     </div>
