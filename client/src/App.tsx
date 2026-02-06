@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import ConceptA from "./pages/ConceptA";
 import ConceptB from "./pages/ConceptB";
 import ConceptC from "./pages/ConceptC";
+import JungleCruiseShop from "./pages/JungleCruiseShop";
 
 function Router() {
   return (
@@ -16,6 +17,7 @@ function Router() {
       <Route path={"/concept-a"} component={ConceptA} />
       <Route path={"/concept-b"} component={ConceptB} />
       <Route path={"/concept-c"} component={ConceptC} />
+      <Route path={"/jungle-cruise-shop"} component={JungleCruiseShop} />
       <Route path={"/404"} component={NotFound} />
       <Route component={NotFound} />
     </Switch>
