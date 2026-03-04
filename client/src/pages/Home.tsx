@@ -25,7 +25,7 @@ const IMAGES = {
   heroStation: "https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/hero-station_1b837b2e.jpg",
   departureBoard: "https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/departure-board-bg_a37c2dec.jpg",
   dispatchOps: "https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/dispatch-ops-bg_6bc3e4a2.jpg",
-  armoryTools: "https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/armory-tools-bg_f9990731.jpg",
+  depotTools: "https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/armory-tools-bg_f9990731.jpg",
   tracks: "https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/tracks-perspective_f0326484.jpg",
 };
 
@@ -79,7 +79,7 @@ const NAV_ITEMS = [
   { label: "About", href: "#about" },
   { label: "Articles", href: "#articles" },
   { label: "Fatal Five", href: "#fatal-five" },
-  { label: "The Armory", href: "#armory" },
+  { label: "The Depot", href: "#depot" },
   { label: "Shop", href: "#shop" },
   { label: "Contact", href: "#contact" },
 ];
@@ -208,10 +208,10 @@ function HeroSection() {
 
           <div className="flex flex-wrap gap-4">
             <button
-              onClick={() => document.querySelector("#armory")?.scrollIntoView({ behavior: "smooth" })}
+              onClick={() => document.querySelector("#depot")?.scrollIntoView({ behavior: "smooth" })}
               className="font-display font-semibold text-sm uppercase tracking-wider bg-vermillion hover:bg-vermillion-light text-white px-8 py-4 transition-colors"
             >
-              Enter The Armory
+              Enter The Depot
             </button>
             <button
               onClick={() => document.querySelector("#articles")?.scrollIntoView({ behavior: "smooth" })}
@@ -234,7 +234,7 @@ function DepartureTicker() {
   const items = [
     "PLATFORM 1 → Thought Leadership",
     "PLATFORM 2 → The Fatal Five",
-    "PLATFORM 3 → The Armory",
+    "PLATFORM 3 → The Depot",
     "PLATFORM 4 → The Shop",
     "NEW → Sprint Hygiene Playbook Available",
     "NEW → Retro-in-a-Box: Firehouse Edition",
@@ -578,13 +578,13 @@ const ARMORY_ITEMS = [
   },
 ];
 
-function ArmorySection() {
+function DepotSection() {
   const anim = useInView();
   return (
-    <section id="armory" className="relative py-24 overflow-hidden">
+    <section id="depot" className="relative py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
-        <img src={IMAGES.armoryTools} alt="" className="w-full h-full object-cover opacity-10" />
+        <img src={IMAGES.depotTools} alt="" className="w-full h-full object-cover opacity-10" />
         <div className="absolute inset-0 bg-background/90" />
       </div>
 
@@ -594,9 +594,9 @@ function ArmorySection() {
             <PlatformBadge num={3} />
             <div>
               <h2 className="font-display font-bold text-3xl sm:text-4xl text-offwhite">
-                The Armory
+                The Depot
               </h2>
-              <p className="font-mono text-xs text-brass/60 tracking-wider mt-1">TOOLS, TEMPLATES & FRAMEWORKS</p>
+              <p className="font-mono text-xs text-brass/60 tracking-wider mt-1">SUPPLIES FROM THE FRONT LINE</p>
             </div>
           </div>
 
@@ -925,7 +925,7 @@ export default function Home() {
       <ZoneTransition />
       <FatalFiveSection />
       <ZoneTransitionBack />
-      <ArmorySection />
+      <DepotSection />
       <ShopSection />
       <ContactSection />
       <Footer />
