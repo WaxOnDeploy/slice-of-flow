@@ -71,6 +71,85 @@ function injectStyles() {
 }
 
 // ─── ORDER CARD COMPONENT ──────────────────────────
+// ─── COMPLEXITY PIPS ──────────────────────────────
+function ComplexityPips({ complexity, burnt }: { complexity: string; burnt?: boolean }) {
+  const count = complexity === 'Small' ? 1 : complexity === 'Medium' ? 2 : 3;
+  const pipColor = burnt ? '#666' : complexity === 'Small' ? '#4CAF50' : complexity === 'Medium' ? '#FFC107' : '#F44336';
+  return (
+    <div className="flex items-center gap-0.5" title={complexity}>
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div
+          key={i}
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            background: i < count ? pipColor : 'rgba(0,0,0,0.1)',
+            transition: 'background 0.2s',
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── TIMER PROGRESS BAR ──────────────────────────────
+function TimerProgressBar({
+  remaining,
+  total,
+  doneAt,
+  warningAt,
+}: {
+  remaining: number;
+  total: number;
+  doneAt?: number; // elapsed threshold where "done" (green zone ends)
+  warningAt?: number; // elapsed threshold where warning starts
+}) {
+  const elapsed = total - remaining;
+  const pct = Math.min(100, Math.max(0, (elapsed / total) * 100));
+
+  // Determine bar color based on zones
+  let barColor = '#4CAF50'; // green — safe
+  if (doneAt !== undefined && warningAt !== undefined) {
+    // Oven: green (baking) → gold (done zone) → orange (warning) → red (near burn)
+    if (elapsed >= warningAt) {
+      const burnPct = (elapsed - warningAt) / (total - warningAt);
+      barColor = burnPct > 0.6 ? '#B71C1C' : '#E64A19';
+    } else if (elapsed >= doneAt) {
+      barColor = '#2E7D32'; // deep green = done, pull it!
+    } else {
+      barColor = '#FF9800'; // orange = still baking
+    }
+  } else {
+    // Prep: green fills up as it completes
+    const donePct = elapsed / total;
+    barColor = donePct >= 1 ? '#2E7D32' : donePct > 0.7 ? '#8BC34A' : '#FF9800';
+  }
+
+  return (
+    <div
+      style={{
+        width: '100%',
+        height: 4,
+        borderRadius: 2,
+        background: 'rgba(0,0,0,0.1)',
+        overflow: 'hidden',
+        marginTop: 4,
+      }}
+    >
+      <div
+        style={{
+          width: `${pct}%`,
+          height: '100%',
+          borderRadius: 2,
+          background: barColor,
+          transition: 'width 0.3s linear, background 0.3s',
+        }}
+      />
+    </div>
+  );
+}
+
 function PizzaCard({
   card,
   isDragging,
@@ -127,13 +206,11 @@ function PizzaCard({
         >
           #{card.orderNumber}
         </span>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1.5">
           {canMoveForward && !card.burnt && (
-            <span className="text-xs" title="Ready to move">▶</span>
+            <span className="text-xs" title="Ready to move" style={{ color: '#2E7D32' }}>▶</span>
           )}
-          <span className="text-xs" style={{ fontFamily: "'DM Sans', sans-serif", color: '#888' }}>
-            {card.complexity}
-          </span>
+          <ComplexityPips complexity={card.complexity} burnt={card.burnt} />
         </div>
       </div>
 
@@ -150,35 +227,51 @@ function PizzaCard({
         for {card.customer} {card.angry && !card.burnt ? '😤' : ''}
       </div>
 
-      {/* Prep timer */}
+      {/* Prep timer with progress bar */}
       {card.column === 'prep' && card.prepTimerRemaining !== undefined && (
-        <div
-          className="mt-1.5 text-xs font-mono px-2 py-1 rounded text-center"
-          style={{
-            background: prepDone ? '#E8F5E9' : '#FFF3E0',
-            color: prepDone ? '#2E7D32' : '#E65100',
-            fontFamily: "'JetBrains Mono', monospace",
-          }}
-        >
-          {prepDone ? '✓ Ready for oven' : `Prepping: ${formatTime(card.prepTimerRemaining)}`}
+        <div className="mt-1.5">
+          <div
+            className="text-xs font-mono px-2 py-1 rounded text-center"
+            style={{
+              background: prepDone ? '#E8F5E9' : '#FFF3E0',
+              color: prepDone ? '#2E7D32' : '#E65100',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {prepDone ? '✓ Ready for oven' : `Prepping: ${formatTime(card.prepTimerRemaining)}`}
+          </div>
+          {!prepDone && (
+            <TimerProgressBar
+              remaining={card.prepTimerRemaining}
+              total={card.prepTime}
+            />
+          )}
         </div>
       )}
 
-      {/* Oven timer */}
+      {/* Oven timer with progress bar */}
       {card.column === 'oven' && !card.burnt && card.ovenTimerRemaining !== undefined && (
-        <div
-          className="mt-1.5 text-xs font-mono px-2 py-1 rounded text-center"
-          style={{
-            background: ovenDone ? '#E8F5E9' : ovenWarning ? '#FFEBEE' : '#FFF3E0',
-            color: ovenDone ? '#2E7D32' : ovenWarning ? '#B71C1C' : '#E65100',
-            fontFamily: "'JetBrains Mono', monospace",
-          }}
-        >
-          {ovenDone
-            ? '✓ Pull it out!'
-            : ovenWarning
-            ? `⚠️ Hurry! ${formatTime(card.ovenTimerRemaining)}`
-            : `Baking: ${formatTime(card.ovenTimerRemaining)}`}
+        <div className="mt-1.5">
+          <div
+            className="text-xs font-mono px-2 py-1 rounded text-center"
+            style={{
+              background: ovenDone ? '#E8F5E9' : ovenWarning ? '#FFEBEE' : '#FFF3E0',
+              color: ovenDone ? '#2E7D32' : ovenWarning ? '#B71C1C' : '#E65100',
+              fontFamily: "'JetBrains Mono', monospace",
+            }}
+          >
+            {ovenDone
+              ? '✓ Pull it out!'
+              : ovenWarning
+              ? `⚠️ Hurry! ${formatTime(card.ovenTimerRemaining)}`
+              : `Baking: ${formatTime(card.ovenTimerRemaining)}`}
+          </div>
+          <TimerProgressBar
+            remaining={card.ovenTimerRemaining}
+            total={preset.ovenBurnTime}
+            doneAt={preset.ovenDoneTime}
+            warningAt={preset.ovenWarningTime}
+          />
         </div>
       )}
 
@@ -247,27 +340,35 @@ function BoardColumn({
           {label}
         </span>
         <div className="flex items-center gap-1.5">
-          {wipEnabled && wipLimit !== undefined && (
+          {wipEnabled && wipLimit !== undefined ? (
+            <div className="flex items-center gap-1" title={`${cards.length}/${wipLimit}`}>
+              {Array.from({ length: wipLimit }).map((_, i) => (
+                <div
+                  key={i}
+                  style={{
+                    width: 8,
+                    height: 8,
+                    borderRadius: 2,
+                    background: i < cards.length
+                      ? (isOverLimit ? '#FF5252' : '#fff')
+                      : 'rgba(255,255,255,0.25)',
+                    border: isOverLimit && i < cards.length ? '1px solid #FFCDD2' : '1px solid rgba(255,255,255,0.3)',
+                    transition: 'background 0.2s, border 0.2s',
+                  }}
+                />
+              ))}
+            </div>
+          ) : (
             <span
-              className="text-xs px-1.5 py-0.5 rounded font-bold"
+              className="text-xs px-1.5 py-0.5 rounded"
               style={{
-                background: isOverLimit ? '#B71C1C' : 'rgba(255,255,255,0.3)',
-                color: '#fff',
+                background: 'rgba(255,255,255,0.2)',
                 fontFamily: "'JetBrains Mono', monospace",
               }}
             >
-              {cards.length}/{wipLimit}
+              {cards.length}
             </span>
           )}
-          <span
-            className="text-xs px-1.5 py-0.5 rounded"
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              fontFamily: "'JetBrains Mono', monospace",
-            }}
-          >
-            {cards.length}
-          </span>
         </div>
       </div>
 
