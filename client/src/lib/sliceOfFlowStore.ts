@@ -19,6 +19,8 @@ import {
   SCORE_ZERO_BURNS_BONUS,
 } from './sliceOfFlowConstants';
 
+export type SpeedMultiplier = 1 | 2 | 3;
+
 interface GameState {
   // ─── CORE STATE ──────────────────────────────────
   phase: GamePhase;
@@ -29,6 +31,7 @@ interface GameState {
   orderFlipTimer: number; // seconds until next auto-flip (Round 1)
   nextOrderIndex: number; // index into deck for next flip
   wipEnabled: boolean;
+  speed: SpeedMultiplier; // 1x, 2x, 3x time compression
 
   // ─── METRICS ─────────────────────────────────────
   round1Metrics: RoundMetrics | null;
@@ -45,6 +48,7 @@ interface GameState {
   goToTransition: () => void;
   goToDebrief: () => void;
   resetGame: () => void;
+  setSpeed: (speed: SpeedMultiplier) => void;
   canMoveCard: (cardId: string, toColumn: ColumnId) => { allowed: boolean; reason?: string };
 }
 
@@ -98,8 +102,12 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   orderFlipTimer: ORDER_FLIP_INTERVAL_SOLO,
   nextOrderIndex: 0,
   wipEnabled: false,
+  speed: 3 as SpeedMultiplier,
   round1Metrics: null,
   round2Metrics: null,
+
+  // ─── SET SPEED ──────────────────────────────────
+  setSpeed: (speed) => set({ speed }),
 
   // ─── START GAME ──────────────────────────────────
   startGame: () => {
@@ -131,41 +139,44 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     });
   },
 
-  // ─── TICK (called every second) ──────────────────
+  // ─── TICK (called every second, advances by speed multiplier) ──
   tick: () => {
     const state = get();
     if (!state.isRunning) return;
 
+    const spd = state.speed;
     const now = Date.now() / 1000;
     let newCards = [...state.cards];
     let shouldFlip = false;
 
-    // Decrement round timer
-    const newRoundTimer = state.roundTimer - 1;
+    // Decrement round timer by speed factor
+    const newRoundTimer = state.roundTimer - spd;
 
     // Round 1: auto-flip orders
     let newFlipTimer = state.orderFlipTimer;
     if (state.round === 1) {
-      newFlipTimer -= 1;
+      newFlipTimer -= spd;
       if (newFlipTimer <= 0) {
         shouldFlip = true;
         newFlipTimer = ORDER_FLIP_INTERVAL_SOLO;
       }
     }
 
-    // Check oven timers — burn detection
+    // Check oven timers — burn detection (use simulated elapsed = real elapsed * speed)
     newCards = newCards.map((card) => {
       if (card.column === 'oven' && card.ovenTimerStarted && !card.burnt) {
-        const elapsed = now - card.ovenTimerStarted;
-        if (elapsed >= OVEN_BURN_TIME) {
+        const realElapsed = now - card.ovenTimerStarted;
+        const simElapsed = realElapsed * spd;
+        if (simElapsed >= OVEN_BURN_TIME) {
           return { ...card, burnt: true, ovenTimerRemaining: 0 };
         }
-        return { ...card, ovenTimerRemaining: OVEN_BURN_TIME - elapsed };
+        return { ...card, ovenTimerRemaining: OVEN_BURN_TIME - simElapsed };
       }
       // Check prep timers
       if (card.column === 'prep' && card.prepTimerStarted) {
-        const elapsed = now - card.prepTimerStarted;
-        return { ...card, prepTimerRemaining: Math.max(0, card.prepTime - elapsed) };
+        const realElapsed = now - card.prepTimerStarted;
+        const simElapsed = realElapsed * spd;
+        return { ...card, prepTimerRemaining: Math.max(0, card.prepTime - simElapsed) };
       }
       return card;
     });
@@ -173,8 +184,9 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     // Check for angry customers (lead time > threshold)
     newCards = newCards.map((card) => {
       if (card.enteredQueueAt && !card.angry && card.column !== 'served' && card.column !== 'orderDeck') {
-        const leadTime = now - card.enteredQueueAt;
-        if (leadTime >= ANGRY_THRESHOLD) {
+        const realLeadTime = now - card.enteredQueueAt;
+        const simLeadTime = realLeadTime * spd;
+        if (simLeadTime >= ANGRY_THRESHOLD) {
           return { ...card, angry: true };
         }
       }
@@ -304,9 +316,10 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     if (card.column === 'oven' && toColumn === 'boxDeliver') {
       if (card.burnt) return { allowed: false, reason: 'Pizza is burnt!' };
       const now = Date.now() / 1000;
+      const spd = state.speed;
       if (card.ovenTimerStarted) {
-        const elapsed = now - card.ovenTimerStarted;
-        if (elapsed < OVEN_DONE_TIME) {
+        const simElapsed = (now - card.ovenTimerStarted) * spd;
+        if (simElapsed < OVEN_DONE_TIME) {
           return { allowed: false, reason: 'Still baking...' };
         }
       }
@@ -369,7 +382,8 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   goToDebrief: () => set({ phase: 'debrief' }),
 
   // ─── RESET ───────────────────────────────────────
-  resetGame: () =>
+  resetGame: () => {
+    const currentSpeed = get().speed;
     set({
       phase: 'landing',
       round: 1,
@@ -379,7 +393,9 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
       orderFlipTimer: ORDER_FLIP_INTERVAL_SOLO,
       nextOrderIndex: 0,
       wipEnabled: false,
+      speed: currentSpeed,
       round1Metrics: null,
       round2Metrics: null,
-    }),
+    });
+  },
 }));

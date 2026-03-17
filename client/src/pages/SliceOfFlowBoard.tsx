@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
+import { useSliceOfFlowStore, type SpeedMultiplier } from '@/lib/sliceOfFlowStore';
 import {
   COLUMNS,
   WIP_LIMITS,
@@ -330,6 +330,8 @@ export default function SliceOfFlowBoard() {
     pullNextOrder,
     goToTransition,
     goToDebrief,
+    speed,
+    setSpeed,
   } = useSliceOfFlowStore();
 
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
@@ -508,6 +510,23 @@ export default function SliceOfFlowBoard() {
           >
             {isSoundEnabled() ? '🔊' : '🔇'}
           </button>
+          <div className="ml-2 pl-2 flex items-center gap-0.5" style={{ borderLeft: '1px solid rgba(255,255,255,0.2)' }}>
+            {([1, 2, 3] as SpeedMultiplier[]).map((s) => (
+              <button
+                key={s}
+                onClick={() => setSpeed(s)}
+                className="px-1.5 py-0.5 rounded text-xs font-bold transition-all"
+                style={{
+                  background: speed === s ? '#D94F3B' : 'rgba(255,255,255,0.1)',
+                  color: speed === s ? '#fff' : 'rgba(255,255,255,0.5)',
+                  transform: speed === s ? 'scale(1.1)' : 'scale(1)',
+                }}
+                title={`${s}x speed`}
+              >
+                {s}x
+              </button>
+            ))}
+          </div>
           <button
             onClick={() => setShowTutorial(true)}
             className="ml-1 text-base opacity-60 hover:opacity-100 transition-opacity"
