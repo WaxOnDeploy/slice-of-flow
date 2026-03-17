@@ -52,18 +52,21 @@ export interface OrderCard {
   color: string; // card accent color
   // Runtime state
   column: ColumnId;
-  prepTimerStarted?: number; // timestamp
+  prepTimerStarted?: number | boolean; // flag or timestamp
   prepTimerRemaining?: number;
-  ovenTimerStarted?: number; // timestamp
+  ovenTimerStarted?: number | boolean; // flag or timestamp
   ovenTimerRemaining?: number;
-  enteredQueueAt?: number; // timestamp for lead time calc
-  servedAt?: number;
+  enteredQueueAt?: number; // legacy timestamp
+  servedAt?: number; // legacy timestamp
+  simEnteredQueueAt?: number; // simulated game clock when entered queue
+  simServedAt?: number; // simulated game clock when served
+  simElapsedInQueue?: number; // simulated seconds spent in system
   burnt?: boolean;
   angry?: boolean;
 }
 
 // ─── ORDER DECK (12 cards for solo mode) ───────────────────
-export const SOLO_DECK: Omit<OrderCard, 'column' | 'prepTimerStarted' | 'prepTimerRemaining' | 'ovenTimerStarted' | 'ovenTimerRemaining' | 'enteredQueueAt' | 'servedAt' | 'burnt' | 'angry'>[] = [
+export const SOLO_DECK: Omit<OrderCard, 'column' | 'prepTimerStarted' | 'prepTimerRemaining' | 'ovenTimerStarted' | 'ovenTimerRemaining' | 'enteredQueueAt' | 'servedAt' | 'simEnteredQueueAt' | 'simServedAt' | 'simElapsedInQueue' | 'burnt' | 'angry'>[] = [
   { id: 'order-1', orderNumber: 1, customer: 'Sarah', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60, ovenTime: 120, color: '#4CAF50' },
   { id: 'order-2', orderNumber: 2, customer: 'Carlos', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 60, ovenTime: 120, color: '#4CAF50' },
   { id: 'order-3', orderNumber: 3, customer: 'Rachel', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120, ovenTime: 120, color: '#FFC107' },

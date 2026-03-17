@@ -13,7 +13,7 @@ import {
   playOvenWarning,
   playPrepDone,
 } from '@/lib/sliceOfFlowSounds';
-import { OVEN_WARNING_TIME, OVEN_BURN_TIME } from '@/lib/sliceOfFlowConstants';
+import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
 
 export default function SliceOfFlow() {
   const phase = useSliceOfFlowStore((s) => s.phase);
@@ -41,6 +41,7 @@ export default function SliceOfFlow() {
         const stateAfter = useSliceOfFlowStore.getState();
         const cardsAfter = stateAfter.cards;
         const timerAfter = stateAfter.roundTimer;
+        const preset = DIFFICULTY_PRESETS[stateAfter.difficulty];
 
         // ─── SOUND: New order flipped ───
         const queueBefore = cardsBefore.filter((c) => c.column === 'orderQueue').length;
@@ -64,11 +65,12 @@ export default function SliceOfFlow() {
         }
 
         // ─── SOUND: Oven warning (approaching burn) ───
+        // Use ovenTimerRemaining instead of wall-clock timestamps
+        // Warning zone: remaining <= (burnTime - warningTime) and remaining > 0
         cardsAfter.forEach((card) => {
-          if (card.column === 'oven' && card.ovenTimerStarted && !card.burnt) {
-            const now = Date.now() / 1000;
-            const elapsed = now - card.ovenTimerStarted;
-            if (elapsed >= OVEN_WARNING_TIME && elapsed < OVEN_BURN_TIME && !warnedOvenRef.current.has(card.id)) {
+          if (card.column === 'oven' && card.ovenTimerStarted && !card.burnt && card.ovenTimerRemaining !== undefined) {
+            const elapsed = preset.ovenBurnTime - card.ovenTimerRemaining;
+            if (elapsed >= preset.ovenWarningTime && elapsed < preset.ovenBurnTime && !warnedOvenRef.current.has(card.id)) {
               warnedOvenRef.current.add(card.id);
               playOvenWarning();
             }
@@ -84,7 +86,7 @@ export default function SliceOfFlow() {
         });
 
         // ─── SOUND: Timer tick (last 30 seconds) ───
-        if (timerAfter <= 30 && timerAfter > 0 && timerAfter % 2 === 0) {
+        if (timerAfter <= 30 && timerAfter > 0 && Math.floor(timerAfter) % 2 === 0) {
           playTimerTick();
         }
 

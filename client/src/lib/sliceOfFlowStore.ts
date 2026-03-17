@@ -9,7 +9,6 @@ import {
   COLUMN_ORDER,
   WIP_LIMITS,
   DIFFICULTY_PRESETS,
-  OVEN_DONE_TIME,
   SCORE_SERVED,
   SCORE_BURNT,
   SCORE_ANGRY,
@@ -23,9 +22,9 @@ interface GameState {
   phase: GamePhase;
   round: 1 | 2;
   cards: OrderCard[];
-  roundTimer: number; // seconds remaining
+  roundTimer: number; // simulated seconds remaining
   isRunning: boolean;
-  orderFlipTimer: number; // seconds until next auto-flip (Round 1)
+  orderFlipTimer: number; // simulated seconds until next auto-flip (Round 1)
   nextOrderIndex: number; // index into deck for next flip
   wipEnabled: boolean;
   speed: SpeedMultiplier; // 1x, 2x, 3x time compression
@@ -67,7 +66,7 @@ function calculateMetrics(cards: OrderCard[], round: 1 | 2): RoundMetrics {
   );
 
   const leadTimes = served.map((c) => {
-    if (c.enteredQueueAt && c.servedAt) return c.servedAt - c.enteredQueueAt;
+    if (c.simEnteredQueueAt !== undefined && c.simServedAt !== undefined) return c.simServedAt - c.simEnteredQueueAt;
     return 0;
   }).filter((t) => t > 0);
 
@@ -155,18 +154,17 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     });
   },
 
-  // ─── TICK (called every second, advances by speed multiplier) ──
+  // ─── TICK (called every 1 real second; advances simulated time by `speed` seconds) ──
   tick: () => {
     const state = get();
     if (!state.isRunning) return;
 
     const preset = getPreset(state.difficulty);
     const spd = state.speed;
-    const now = Date.now() / 1000;
     let newCards = [...state.cards];
     let shouldFlip = false;
 
-    // Decrement round timer by speed factor
+    // Decrement round timer by speed factor (simulated seconds per real second)
     const newRoundTimer = state.roundTimer - spd;
 
     // Round 1: auto-flip orders
@@ -179,33 +177,35 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
       }
     }
 
-    // Check oven timers — burn detection (use simulated elapsed = real elapsed * speed)
+    // Track simulated game clock for lead time (how much sim-time has elapsed since round start)
+    const simElapsedThisTick = spd; // simulated seconds that pass this tick
+
+    // Update all card timers incrementally (same approach as round timer)
     newCards = newCards.map((card) => {
+      // Oven timer: decrement remaining by speed
       if (card.column === 'oven' && card.ovenTimerStarted && !card.burnt) {
-        const realElapsed = now - card.ovenTimerStarted;
-        const simElapsed = realElapsed * spd;
-        if (simElapsed >= preset.ovenBurnTime) {
+        const newRemaining = (card.ovenTimerRemaining ?? preset.ovenBurnTime) - simElapsedThisTick;
+        if (newRemaining <= 0) {
           return { ...card, burnt: true, ovenTimerRemaining: 0 };
         }
-        return { ...card, ovenTimerRemaining: preset.ovenBurnTime - simElapsed };
+        return { ...card, ovenTimerRemaining: newRemaining };
       }
-      // Check prep timers
+      // Prep timer: decrement remaining by speed
       if (card.column === 'prep' && card.prepTimerStarted) {
-        const realElapsed = now - card.prepTimerStarted;
-        const simElapsed = realElapsed * spd;
-        return { ...card, prepTimerRemaining: Math.max(0, card.prepTime - simElapsed) };
+        const newRemaining = (card.prepTimerRemaining ?? card.prepTime) - simElapsedThisTick;
+        return { ...card, prepTimerRemaining: Math.max(0, newRemaining) };
       }
       return card;
     });
 
-    // Check for angry customers (lead time > threshold)
+    // Check for angry customers: increment simElapsedInQueue and check threshold
     newCards = newCards.map((card) => {
-      if (card.enteredQueueAt && !card.angry && card.column !== 'served' && card.column !== 'orderDeck') {
-        const realLeadTime = now - card.enteredQueueAt;
-        const simLeadTime = realLeadTime * spd;
-        if (simLeadTime >= preset.angryThreshold) {
-          return { ...card, angry: true };
+      if (card.simEnteredQueueAt !== undefined && !card.angry && card.column !== 'served' && card.column !== 'orderDeck') {
+        const newElapsed = (card.simElapsedInQueue ?? 0) + simElapsedThisTick;
+        if (newElapsed >= preset.angryThreshold) {
+          return { ...card, angry: true, simElapsedInQueue: newElapsed };
         }
+        return { ...card, simElapsedInQueue: newElapsed };
       }
       return card;
     });
@@ -250,12 +250,14 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     if (deckCards.length === 0) return;
 
     const nextCard = deckCards[0];
-    const now = Date.now() / 1000;
+    // Use simulated game clock (roundDuration - roundTimer) for lead time tracking
+    const preset = getPreset(state.difficulty);
+    const simGameClock = preset.roundDuration - state.roundTimer;
 
     set({
       cards: state.cards.map((c) =>
         c.id === nextCard.id
-          ? { ...c, column: 'orderQueue' as ColumnId, enteredQueueAt: now }
+          ? { ...c, column: 'orderQueue' as ColumnId, simEnteredQueueAt: simGameClock, simElapsedInQueue: 0 }
           : c
       ),
       nextOrderIndex: state.nextOrderIndex + 1,
@@ -274,12 +276,13 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     if (deckCards.length === 0) return;
 
     const nextCard = deckCards[0];
-    const now = Date.now() / 1000;
+    const preset = getPreset(state.difficulty);
+    const simGameClock = preset.roundDuration - state.roundTimer;
 
     set({
       cards: state.cards.map((c) =>
         c.id === nextCard.id
-          ? { ...c, column: 'orderQueue' as ColumnId, enteredQueueAt: now }
+          ? { ...c, column: 'orderQueue' as ColumnId, simEnteredQueueAt: simGameClock, simElapsedInQueue: 0 }
           : c
       ),
       nextOrderIndex: state.nextOrderIndex + 1,
@@ -333,13 +336,14 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     // Oven timer must be done (but not burnt) before moving to box
     if (card.column === 'oven' && toColumn === 'boxDeliver') {
       if (card.burnt) return { allowed: false, reason: 'Pizza is burnt!' };
-      const now = Date.now() / 1000;
-      const spd = state.speed;
-      if (card.ovenTimerStarted) {
-        const simElapsed = (now - card.ovenTimerStarted) * spd;
-        if (simElapsed < preset.ovenDoneTime) {
-          return { allowed: false, reason: 'Still baking...' };
-        }
+      // Check ovenTimerRemaining — done when remaining <= (burnTime - doneTime)
+      // ovenTimerRemaining counts down from burnTime. Done when elapsed >= doneTime.
+      // elapsed = burnTime - remaining. So done when (burnTime - remaining) >= doneTime
+      // i.e. remaining <= burnTime - doneTime
+      const remaining = card.ovenTimerRemaining ?? preset.ovenBurnTime;
+      const doneThreshold = preset.ovenBurnTime - preset.ovenDoneTime;
+      if (remaining > doneThreshold) {
+        return { allowed: false, reason: 'Still baking...' };
       }
     }
 
@@ -352,8 +356,7 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     if (!allowed) return false;
 
     const preset = getPreset(state.difficulty);
-    const now = Date.now() / 1000;
-    const card = state.cards.find((c) => c.id === cardId)!;
+    const simGameClock = preset.roundDuration - state.roundTimer;
 
     set({
       cards: state.cards.map((c) => {
@@ -363,19 +366,19 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
 
         // Start prep timer when entering prep
         if (toColumn === 'prep') {
-          updates.prepTimerStarted = now;
+          updates.prepTimerStarted = true as any; // flag that prep has started
           updates.prepTimerRemaining = c.prepTime;
         }
 
         // Start oven timer when entering oven
         if (toColumn === 'oven') {
-          updates.ovenTimerStarted = now;
+          updates.ovenTimerStarted = true as any; // flag that oven has started
           updates.ovenTimerRemaining = preset.ovenBurnTime;
         }
 
-        // Record served time
+        // Record served time (simulated game clock)
         if (toColumn === 'served') {
-          updates.servedAt = now;
+          updates.simServedAt = simGameClock;
         }
 
         return { ...c, ...updates };
