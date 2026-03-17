@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useSliceOfFlowStore, type SpeedMultiplier } from '@/lib/sliceOfFlowStore';
 import {
   COLUMNS,
@@ -66,11 +66,186 @@ function injectStyles() {
       background: rgba(183,28,28,0.05) !important;
     }
     .sof-dragging { opacity: 0.5; transform: scale(0.95); }
+
+    /* ─── CONFETTI BURST (on serve) ─── */
+    @keyframes sof-confetti-pop {
+      0% { transform: translate(0, 0) scale(1); opacity: 1; }
+      100% { opacity: 0; }
+    }
+    .sof-confetti-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+    .sof-confetti-piece {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      border-radius: 2px;
+      animation: sof-confetti-pop 0.7s ease-out forwards;
+    }
+
+    /* ─── SMOKE EFFECT (on burn) ─── */
+    @keyframes sof-smoke-rise {
+      0% { transform: translateY(0) scale(0.5); opacity: 0.6; }
+      50% { transform: translateY(-18px) scale(1); opacity: 0.3; }
+      100% { transform: translateY(-36px) scale(1.3); opacity: 0; }
+    }
+    .sof-smoke-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      pointer-events: none;
+      z-index: 40;
+      overflow: visible;
+    }
+    .sof-smoke-puff {
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(120,120,120,0.5) 0%, rgba(80,80,80,0) 70%);
+      animation: sof-smoke-rise 1.2s ease-out forwards;
+    }
+
+    /* ─── ANGRY FUSE BAR ─── */
+    @keyframes sof-fuse-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+    .sof-fuse-critical {
+      animation: sof-fuse-pulse 0.5s ease-in-out infinite;
+    }
   `;
   document.head.appendChild(style);
 }
 
 // ─── ORDER CARD COMPONENT ──────────────────────────
+
+// ─── CONFETTI BURST ──────────────────────────────
+const CONFETTI_COLORS = ['#4CAF50', '#FFC107', '#FF5722', '#2196F3', '#E91E63', '#00BCD4', '#FF9800'];
+
+function spawnConfetti(x: number, y: number) {
+  const container = document.createElement('div');
+  container.className = 'sof-confetti-container';
+  container.style.position = 'fixed';
+  container.style.top = `${y}px`;
+  container.style.left = `${x}px`;
+  document.body.appendChild(container);
+
+  for (let i = 0; i < 16; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'sof-confetti-piece';
+    const angle = (Math.PI * 2 * i) / 16 + (Math.random() - 0.5) * 0.5;
+    const dist = 30 + Math.random() * 50;
+    const tx = Math.cos(angle) * dist;
+    const ty = Math.sin(angle) * dist - 20; // bias upward
+    const rot = Math.random() * 360;
+    piece.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+    piece.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    piece.style.width = `${4 + Math.random() * 4}px`;
+    piece.style.height = `${4 + Math.random() * 4}px`;
+    piece.style.animation = `sof-confetti-pop ${0.5 + Math.random() * 0.4}s ease-out forwards`;
+    piece.style.transform = `translate(${tx}px, ${ty}px) rotate(${rot}deg)`;
+    // Set final position via custom property trick: animate to the computed transform
+    piece.animate([
+      { transform: 'translate(0, 0) scale(1) rotate(0deg)', opacity: 1 },
+      { transform: `translate(${tx}px, ${ty}px) scale(0.5) rotate(${rot}deg)`, opacity: 0 },
+    ], { duration: 500 + Math.random() * 300, easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)', fill: 'forwards' });
+    container.appendChild(piece);
+  }
+
+  setTimeout(() => container.remove(), 1000);
+}
+
+// ─── SMOKE EFFECT ──────────────────────────────
+function SmokeEffect({ active }: { active: boolean }) {
+  const [puffs, setPuffs] = useState<{ id: number; left: number; delay: number }[]>([]);
+  const hasTriggered = useRef(false);
+
+  useEffect(() => {
+    if (active && !hasTriggered.current) {
+      hasTriggered.current = true;
+      const newPuffs = Array.from({ length: 5 }).map((_, i) => ({
+        id: Date.now() + i,
+        left: 15 + Math.random() * 70, // % from left
+        delay: i * 0.15,
+      }));
+      setPuffs(newPuffs);
+      setTimeout(() => setPuffs([]), 1500);
+    }
+    if (!active) hasTriggered.current = false;
+  }, [active]);
+
+  if (puffs.length === 0) return null;
+
+  return (
+    <div className="sof-smoke-container">
+      {puffs.map((p) => (
+        <div
+          key={p.id}
+          className="sof-smoke-puff"
+          style={{
+            left: `${p.left}%`,
+            top: -4,
+            animationDelay: `${p.delay}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// ─── ANGRY FUSE BAR ──────────────────────────────
+function AngryFuse({ elapsed, threshold }: { elapsed: number; threshold: number }) {
+  if (elapsed <= 0 || threshold <= 0) return null;
+  const pct = Math.min(100, (elapsed / threshold) * 100);
+  const remaining = 100 - pct;
+  // Color: green → yellow → orange → red as fuse depletes
+  let fuseColor = '#4CAF50';
+  if (pct > 85) fuseColor = '#B71C1C';
+  else if (pct > 65) fuseColor = '#E64A19';
+  else if (pct > 40) fuseColor = '#FF9800';
+  else fuseColor = '#8BC34A';
+
+  const isCritical = pct > 80;
+
+  return (
+    <div className="mt-1" title={`Patience: ${Math.round(remaining)}%`}>
+      <div className="flex items-center gap-1">
+        <span style={{ fontSize: 9, color: '#999', fontFamily: "'JetBrains Mono', monospace" }}>
+          {isCritical ? '💢' : '⏳'}
+        </span>
+        <div
+          className={isCritical ? 'sof-fuse-critical' : ''}
+          style={{
+            flex: 1,
+            height: 3,
+            borderRadius: 1.5,
+            background: 'rgba(0,0,0,0.08)',
+            overflow: 'hidden',
+          }}
+        >
+          <div
+            style={{
+              width: `${remaining}%`,
+              height: '100%',
+              borderRadius: 1.5,
+              background: fuseColor,
+              transition: 'width 0.5s linear, background 0.3s',
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── COMPLEXITY PIPS ──────────────────────────────
 function ComplexityPips({ complexity, burnt }: { complexity: string; burnt?: boolean }) {
   const count = complexity === 'Small' ? 1 : complexity === 'Medium' ? 2 : 3;
@@ -191,9 +366,13 @@ function PizzaCard({
         boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.3)' : '0 2px 6px rgba(0,0,0,0.1)',
         minWidth: 140,
         cursor: card.burnt ? 'not-allowed' : undefined,
+        position: 'relative' as const,
+        overflow: 'visible',
       }}
       data-card-id={card.id}
     >
+      {/* Smoke effect on burn */}
+      <SmokeEffect active={!!card.burnt} />
       {/* Header */}
       <div className="flex items-center justify-between mb-1">
         <span
@@ -283,6 +462,11 @@ function PizzaCard({
         >
           BURNT — Toss it
         </div>
+      )}
+
+      {/* Angry fuse — shows on cards in active columns (not deck, not served, not burnt) */}
+      {!card.burnt && !card.angry && card.column !== 'orderDeck' && card.column !== 'served' && card.simElapsedInQueue !== undefined && card.simElapsedInQueue > 0 && (
+        <AngryFuse elapsed={card.simElapsedInQueue} threshold={preset.angryThreshold} />
       )}
     </div>
   );
@@ -494,7 +678,11 @@ export default function SliceOfFlowBoard() {
         moveCard(cardId, toColumn);
         // Play context-specific sound
         if (toColumn === 'oven') playOvenSizzle();
-        else if (toColumn === 'served') playServed();
+        else if (toColumn === 'served') {
+          playServed();
+          // Confetti burst at drop location
+          spawnConfetti(e.clientX, e.clientY);
+        }
         else playCardMove();
         toast.success(`Moved to ${COLUMNS.find(c => c.id === toColumn)?.label}`, { duration: 1500 });
       } else {
