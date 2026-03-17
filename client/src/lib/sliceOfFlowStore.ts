@@ -164,8 +164,8 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     let newCards = [...state.cards];
     let shouldFlip = false;
 
-    // Decrement round timer by speed factor (simulated seconds per real second)
-    const newRoundTimer = state.roundTimer - spd;
+    // Round timer ALWAYS counts down in real time (1 second per tick)
+    const newRoundTimer = state.roundTimer - 1;
 
     // Round 1: auto-flip orders
     let newFlipTimer = state.orderFlipTimer;
