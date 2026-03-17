@@ -10,6 +10,17 @@ import {
   type OrderCard,
 } from '@/lib/sliceOfFlowConstants';
 import { toast } from 'sonner';
+import SliceOfFlowTutorial from '@/components/SliceOfFlowTutorial';
+import {
+  playCardMove,
+  playServed,
+  playOvenSizzle,
+  playPullOrder,
+  playWipBlocked,
+  playGameStart,
+  isSoundEnabled,
+  toggleSound,
+} from '@/lib/sliceOfFlowSounds';
 
 const BOARD_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-board-texture-KNwu2LircNbQS5UCEasJLy.webp';
 
@@ -294,7 +305,17 @@ function BoardColumn({
 }
 
 // ─── MAIN BOARD ────────────────────────────────────
+const TUTORIAL_KEY = 'sof-tutorial-seen';
+
 export default function SliceOfFlowBoard() {
+  const [showTutorial, setShowTutorial] = useState(() => {
+    return !localStorage.getItem(TUTORIAL_KEY);
+  });
+
+  const closeTutorial = useCallback(() => {
+    setShowTutorial(false);
+    localStorage.setItem(TUTORIAL_KEY, '1');
+  }, []);
   const {
     round,
     cards,
@@ -368,8 +389,13 @@ export default function SliceOfFlowBoard() {
       const result = canMoveCard(cardId, toColumn);
       if (result.allowed) {
         moveCard(cardId, toColumn);
+        // Play context-specific sound
+        if (toColumn === 'oven') playOvenSizzle();
+        else if (toColumn === 'served') playServed();
+        else playCardMove();
         toast.success(`Moved to ${COLUMNS.find(c => c.id === toColumn)?.label}`, { duration: 1500 });
       } else {
+        if (result.reason?.includes('WIP limit')) playWipBlocked();
         toast.error(result.reason || 'Cannot move here', { duration: 2000 });
       }
     }
@@ -387,15 +413,17 @@ export default function SliceOfFlowBoard() {
   const metrics = round === 1 ? round1Metrics : round2Metrics;
 
   return (
-    <div
-      className="h-screen flex flex-col overflow-hidden"
-      style={{
-        backgroundImage: `url(${BOARD_BG})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-      onDragEnd={handleDragEnd}
-    >
+    <>
+      {showTutorial && <SliceOfFlowTutorial onClose={closeTutorial} />}
+      <div
+        className="h-screen flex flex-col overflow-hidden"
+        style={{
+          backgroundImage: `url(${BOARD_BG})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+        onDragEnd={handleDragEnd}
+      >
       {/* Top bar */}
       <div
         className="flex items-center justify-between px-4 py-2 flex-shrink-0"
@@ -472,6 +500,21 @@ export default function SliceOfFlowBoard() {
               {cardsByColumn.orderDeck.length}
             </span>
           </div>
+          <button
+            onClick={() => toggleSound(!isSoundEnabled())}
+            className="ml-2 pl-2 text-base opacity-60 hover:opacity-100 transition-opacity"
+            style={{ borderLeft: '1px solid rgba(255,255,255,0.2)' }}
+            title={isSoundEnabled() ? 'Mute sounds' : 'Unmute sounds'}
+          >
+            {isSoundEnabled() ? '🔊' : '🔇'}
+          </button>
+          <button
+            onClick={() => setShowTutorial(true)}
+            className="ml-1 text-base opacity-60 hover:opacity-100 transition-opacity"
+            title="How to Play"
+          >
+            ❓
+          </button>
         </div>
       </div>
 
@@ -479,7 +522,7 @@ export default function SliceOfFlowBoard() {
       {round === 2 && isRunning && (
         <div className="flex items-center justify-center gap-4 py-2 flex-shrink-0" style={{ background: 'rgba(25,118,210,0.15)', borderBottom: '1px solid rgba(25,118,210,0.3)' }}>
           <button
-            onClick={pullNextOrder}
+            onClick={() => { pullNextOrder(); playPullOrder(); }}
             className="px-6 py-1.5 rounded-lg text-sm font-bold text-white transition-all hover:scale-105 active:scale-95"
             style={{
               background: '#1976D2',
@@ -601,5 +644,6 @@ export default function SliceOfFlowBoard() {
         </div>
       )}
     </div>
+    </>
   );
 }
