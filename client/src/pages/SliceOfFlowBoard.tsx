@@ -121,6 +121,28 @@ function injectStyles() {
     .sof-fuse-critical {
       animation: sof-fuse-pulse 0.5s ease-in-out infinite;
     }
+
+    /* ─── OVEN GLOW (intensifies toward burn) ─── */
+    @keyframes sof-oven-glow-soft {
+      0%, 100% { box-shadow: 0 0 8px 2px rgba(255,152,0,0.15), inset 0 0 6px rgba(255,152,0,0.05); }
+      50% { box-shadow: 0 0 14px 4px rgba(255,152,0,0.25), inset 0 0 10px rgba(255,152,0,0.08); }
+    }
+    @keyframes sof-oven-glow-warm {
+      0%, 100% { box-shadow: 0 0 12px 3px rgba(255,87,34,0.25), inset 0 0 8px rgba(255,87,34,0.08); }
+      50% { box-shadow: 0 0 20px 6px rgba(255,87,34,0.4), inset 0 0 14px rgba(255,87,34,0.12); }
+    }
+    @keyframes sof-oven-glow-hot {
+      0%, 100% { box-shadow: 0 0 16px 4px rgba(230,74,25,0.35), inset 0 0 10px rgba(230,74,25,0.12); }
+      50% { box-shadow: 0 0 28px 8px rgba(230,74,25,0.55), inset 0 0 18px rgba(230,74,25,0.18); }
+    }
+    @keyframes sof-oven-glow-danger {
+      0%, 100% { box-shadow: 0 0 20px 6px rgba(183,28,28,0.4), inset 0 0 12px rgba(183,28,28,0.15); }
+      50% { box-shadow: 0 0 36px 12px rgba(183,28,28,0.65), inset 0 0 22px rgba(183,28,28,0.22); }
+    }
+    .sof-oven-glow-soft { animation: sof-oven-glow-soft 2s ease-in-out infinite; }
+    .sof-oven-glow-warm { animation: sof-oven-glow-warm 1.5s ease-in-out infinite; }
+    .sof-oven-glow-hot { animation: sof-oven-glow-hot 1.2s ease-in-out infinite; }
+    .sof-oven-glow-danger { animation: sof-oven-glow-danger 0.8s ease-in-out infinite; }
   `;
   document.head.appendChild(style);
 }
@@ -341,11 +363,23 @@ function PizzaCard({
   const ovenDone = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= preset.ovenDoneTime && !card.burnt;
   const ovenWarning = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= preset.ovenWarningTime && !ovenDone && !card.burnt;
 
+  // Oven glow intensity based on baking progress
+  const isInOven = card.column === 'oven' && card.ovenTimerStarted && !card.burnt;
+  let ovenGlowClass = '';
+  if (isInOven) {
+    const bakePct = ovenElapsed / preset.ovenBurnTime;
+    if (bakePct > 0.85) ovenGlowClass = 'sof-oven-glow-danger';
+    else if (bakePct > 0.65) ovenGlowClass = 'sof-oven-glow-hot';
+    else if (bakePct > 0.4) ovenGlowClass = 'sof-oven-glow-warm';
+    else ovenGlowClass = 'sof-oven-glow-soft';
+  }
+
   // Determine animation class
   let animClass = 'sof-card-enter';
   if (card.burnt) animClass += ' sof-burn-shake';
   else if (ovenWarning) animClass += ' sof-pulse-warning';
   else if (ovenDone || prepDone) animClass += ' sof-glow-ready';
+  else if (ovenGlowClass) animClass += ` ${ovenGlowClass}`;
   if (isDragging) animClass += ' sof-dragging';
 
   // Ready-to-move indicator
@@ -520,9 +554,14 @@ function BoardColumn({
         className="px-3 py-2 flex items-center justify-between flex-shrink-0"
         style={{ background: color, color: '#fff' }}
       >
-        <span className="text-sm font-bold" style={{ fontFamily: "'Lilita One', cursive" }}>
-          {label}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-base" style={{ lineHeight: 1 }}>
+            {columnId === 'orderDeck' ? '📋' : columnId === 'orderQueue' ? '📥' : columnId === 'prep' ? '🔪' : columnId === 'oven' ? '🔥' : columnId === 'boxDeliver' ? '📦' : '✅'}
+          </span>
+          <span className="text-sm font-bold" style={{ fontFamily: "'Lilita One', cursive" }}>
+            {label}
+          </span>
+        </div>
         <div className="flex items-center gap-1.5">
           {wipEnabled && wipLimit !== undefined ? (
             <div className="flex items-center gap-1" title={`${cards.length}/${wipLimit}`}>

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import SliceOfFlowLanding from './SliceOfFlowLanding';
 import SliceOfFlowBoard from './SliceOfFlowBoard';
@@ -15,11 +15,140 @@ import {
 } from '@/lib/sliceOfFlowSounds';
 import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
 
+// ─── PHASE TRANSITION OVERLAY ─────────────────────
+function PhaseTransitionOverlay({
+  isVisible,
+  label,
+}: {
+  isVisible: boolean;
+  label: string;
+}) {
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 9999,
+        pointerEvents: isVisible ? 'auto' : 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Top curtain */}
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '50%',
+          background: 'linear-gradient(180deg, #1a1a1a 0%, #2d1810 100%)',
+          transform: isVisible ? 'translateY(0)' : 'translateY(-100%)',
+          transition: 'transform 0.5s cubic-bezier(0.65, 0, 0.35, 1)',
+        }}
+      />
+      {/* Bottom curtain */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '50%',
+          background: 'linear-gradient(0deg, #1a1a1a 0%, #2d1810 100%)',
+          transform: isVisible ? 'translateY(0)' : 'translateY(100%)',
+          transition: 'transform 0.5s cubic-bezier(0.65, 0, 0.35, 1)',
+        }}
+      />
+      {/* Center label */}
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 1,
+          opacity: isVisible ? 1 : 0,
+          transform: isVisible ? 'scale(1)' : 'scale(0.8)',
+          transition: 'opacity 0.3s ease 0.25s, transform 0.3s ease 0.25s',
+          textAlign: 'center',
+        }}
+      >
+        <div
+          style={{
+            fontFamily: "'Lilita One', cursive",
+            fontSize: 48,
+            color: '#D94F3B',
+            textShadow: '0 2px 20px rgba(217,79,59,0.5)',
+            letterSpacing: 2,
+          }}
+        >
+          {label}
+        </div>
+        <div
+          style={{
+            fontFamily: "'DM Sans', sans-serif",
+            fontSize: 16,
+            color: 'rgba(255,255,255,0.6)',
+            marginTop: 8,
+          }}
+        >
+          Slice of Flow
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function SliceOfFlow() {
   const phase = useSliceOfFlowStore((s) => s.phase);
   const isRunning = useSliceOfFlowStore((s) => s.isRunning);
   const tick = useSliceOfFlowStore((s) => s.tick);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Phase transition animation state
+  const [transitionVisible, setTransitionVisible] = useState(false);
+  const [transitionLabel, setTransitionLabel] = useState('');
+  const [displayedPhase, setDisplayedPhase] = useState(phase);
+  const prevPhaseRef = useRef(phase);
+
+  useEffect(() => {
+    if (phase !== prevPhaseRef.current) {
+      const oldPhase = prevPhaseRef.current;
+      prevPhaseRef.current = phase;
+
+      // Determine transition label
+      let label = '';
+      if (phase === 'round1') label = 'Round 1';
+      else if (phase === 'transition') label = 'Time!';
+      else if (phase === 'round2') label = 'Round 2';
+      else if (phase === 'debrief') label = 'Results';
+
+      // Skip animation for landing → landing or if no label
+      if (!label || oldPhase === 'landing' && phase === 'landing') {
+        setDisplayedPhase(phase);
+        return;
+      }
+
+      // Show curtain
+      setTransitionLabel(label);
+      setTransitionVisible(true);
+
+      // After curtain closes, swap content
+      const swapTimer = setTimeout(() => {
+        setDisplayedPhase(phase);
+      }, 500);
+
+      // After a beat, open curtain
+      const openTimer = setTimeout(() => {
+        setTransitionVisible(false);
+      }, 1100);
+
+      return () => {
+        clearTimeout(swapTimer);
+        clearTimeout(openTimer);
+      };
+    }
+  }, [phase]);
 
   // Track previous state for sound triggers
   const prevCardsRef = useRef<any[]>([]);
@@ -65,8 +194,6 @@ export default function SliceOfFlow() {
         }
 
         // ─── SOUND: Oven warning (approaching burn) ───
-        // Use ovenTimerRemaining instead of wall-clock timestamps
-        // Warning zone: remaining <= (burnTime - warningTime) and remaining > 0
         cardsAfter.forEach((card) => {
           if (card.column === 'oven' && card.ovenTimerStarted && !card.burnt && card.ovenTimerRemaining !== undefined) {
             const elapsed = preset.ovenBurnTime - card.ovenTimerRemaining;
@@ -115,17 +242,26 @@ export default function SliceOfFlow() {
     };
   }, [isRunning, tick]);
 
-  switch (phase) {
-    case 'landing':
-      return <SliceOfFlowLanding />;
-    case 'round1':
-    case 'round2':
-      return <SliceOfFlowBoard />;
-    case 'transition':
-      return <SliceOfFlowTransition />;
-    case 'debrief':
-      return <SliceOfFlowDebrief />;
-    default:
-      return <SliceOfFlowLanding />;
-  }
+  const renderPhase = () => {
+    switch (displayedPhase) {
+      case 'landing':
+        return <SliceOfFlowLanding />;
+      case 'round1':
+      case 'round2':
+        return <SliceOfFlowBoard />;
+      case 'transition':
+        return <SliceOfFlowTransition />;
+      case 'debrief':
+        return <SliceOfFlowDebrief />;
+      default:
+        return <SliceOfFlowLanding />;
+    }
+  };
+
+  return (
+    <>
+      <PhaseTransitionOverlay isVisible={transitionVisible} label={transitionLabel} />
+      {renderPhase()}
+    </>
+  );
 }
