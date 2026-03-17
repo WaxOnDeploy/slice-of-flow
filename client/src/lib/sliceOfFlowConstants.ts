@@ -94,6 +94,61 @@ export const COLORS = {
   brick: '#C75B39',
 } as const;
 
+// ─── DIFFICULTY PRESETS ────────────────────────────────────
+export type Difficulty = 'easy' | 'normal' | 'hard';
+
+export interface DifficultyPreset {
+  label: string;
+  description: string;
+  icon: string;
+  roundDuration: number; // seconds
+  orderFlipInterval: number; // seconds between auto-flips
+  ovenBurnTime: number; // seconds
+  ovenDoneTime: number; // seconds
+  ovenWarningTime: number; // seconds
+  angryThreshold: number; // seconds
+  defaultSpeed: 1 | 2 | 3;
+}
+
+export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
+  easy: {
+    label: 'Easy',
+    description: 'Longer rounds, slower orders. Great for learning.',
+    icon: '🧑‍🍳',
+    roundDuration: 7 * 60, // 7 minutes
+    orderFlipInterval: 20, // 20 seconds
+    ovenBurnTime: 180, // 3:00
+    ovenDoneTime: 120, // 2:00
+    ovenWarningTime: 100, // 1:40
+    angryThreshold: 300, // 5 min
+    defaultSpeed: 2,
+  },
+  normal: {
+    label: 'Normal',
+    description: 'Standard kitchen. Balanced chaos.',
+    icon: '🍕',
+    roundDuration: 5 * 60, // 5 minutes
+    orderFlipInterval: 15, // 15 seconds
+    ovenBurnTime: 150, // 2:30
+    ovenDoneTime: 120, // 2:00
+    ovenWarningTime: 90, // 1:30
+    angryThreshold: 240, // 4 min
+    defaultSpeed: 3,
+  },
+  hard: {
+    label: 'Hard',
+    description: 'Short rounds, fast orders, tight oven. Good luck.',
+    icon: '🔥',
+    roundDuration: 4 * 60, // 4 minutes
+    orderFlipInterval: 10, // 10 seconds
+    ovenBurnTime: 120, // 2:00
+    ovenDoneTime: 90, // 1:30
+    ovenWarningTime: 60, // 1:00
+    angryThreshold: 180, // 3 min
+    defaultSpeed: 3,
+  },
+};
+
 // ─── GAME PHASES ───────────────────────────────────────────
 export type GamePhase = 'landing' | 'round1' | 'transition' | 'round2' | 'debrief';
 

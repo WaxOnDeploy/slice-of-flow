@@ -4,15 +4,12 @@ import {
   type ColumnId,
   type GamePhase,
   type RoundMetrics,
+  type Difficulty,
   SOLO_DECK,
   COLUMN_ORDER,
   WIP_LIMITS,
-  ROUND_DURATION_SOLO,
-  ORDER_FLIP_INTERVAL_SOLO,
-  OVEN_BURN_TIME,
+  DIFFICULTY_PRESETS,
   OVEN_DONE_TIME,
-  OVEN_WARNING_TIME,
-  ANGRY_THRESHOLD,
   SCORE_SERVED,
   SCORE_BURNT,
   SCORE_ANGRY,
@@ -32,12 +29,14 @@ interface GameState {
   nextOrderIndex: number; // index into deck for next flip
   wipEnabled: boolean;
   speed: SpeedMultiplier; // 1x, 2x, 3x time compression
+  difficulty: Difficulty;
 
   // ─── METRICS ─────────────────────────────────────
   round1Metrics: RoundMetrics | null;
   round2Metrics: RoundMetrics | null;
 
   // ─── ACTIONS ─────────────────────────────────────
+  setDifficulty: (difficulty: Difficulty) => void;
   startGame: () => void;
   startRound: (round: 1 | 2) => void;
   tick: () => void;
@@ -92,32 +91,48 @@ function calculateMetrics(cards: OrderCard[], round: 1 | 2): RoundMetrics {
   };
 }
 
+// Helper to get timing values from current difficulty
+function getPreset(difficulty: Difficulty) {
+  return DIFFICULTY_PRESETS[difficulty];
+}
+
 export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   // ─── INITIAL STATE ───────────────────────────────
   phase: 'landing',
   round: 1,
   cards: createFreshDeck(),
-  roundTimer: ROUND_DURATION_SOLO,
+  roundTimer: DIFFICULTY_PRESETS.normal.roundDuration,
   isRunning: false,
-  orderFlipTimer: ORDER_FLIP_INTERVAL_SOLO,
+  orderFlipTimer: DIFFICULTY_PRESETS.normal.orderFlipInterval,
   nextOrderIndex: 0,
   wipEnabled: false,
   speed: 3 as SpeedMultiplier,
+  difficulty: 'normal' as Difficulty,
   round1Metrics: null,
   round2Metrics: null,
+
+  // ─── SET DIFFICULTY ─────────────────────────────
+  setDifficulty: (difficulty) => {
+    const preset = DIFFICULTY_PRESETS[difficulty];
+    set({
+      difficulty,
+      speed: preset.defaultSpeed as SpeedMultiplier,
+    });
+  },
 
   // ─── SET SPEED ──────────────────────────────────
   setSpeed: (speed) => set({ speed }),
 
   // ─── START GAME ──────────────────────────────────
   startGame: () => {
+    const preset = getPreset(get().difficulty);
     set({
       phase: 'round1',
       round: 1,
       cards: createFreshDeck(),
-      roundTimer: ROUND_DURATION_SOLO,
+      roundTimer: preset.roundDuration,
       isRunning: true,
-      orderFlipTimer: ORDER_FLIP_INTERVAL_SOLO,
+      orderFlipTimer: preset.orderFlipInterval,
       nextOrderIndex: 0,
       wipEnabled: false,
       round1Metrics: null,
@@ -127,13 +142,14 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
 
   // ─── START ROUND ─────────────────────────────────
   startRound: (round) => {
+    const preset = getPreset(get().difficulty);
     set({
       phase: round === 1 ? 'round1' : 'round2',
       round,
       cards: createFreshDeck(),
-      roundTimer: ROUND_DURATION_SOLO,
+      roundTimer: preset.roundDuration,
       isRunning: true,
-      orderFlipTimer: ORDER_FLIP_INTERVAL_SOLO,
+      orderFlipTimer: preset.orderFlipInterval,
       nextOrderIndex: 0,
       wipEnabled: round === 2,
     });
@@ -144,6 +160,7 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     const state = get();
     if (!state.isRunning) return;
 
+    const preset = getPreset(state.difficulty);
     const spd = state.speed;
     const now = Date.now() / 1000;
     let newCards = [...state.cards];
@@ -158,7 +175,7 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
       newFlipTimer -= spd;
       if (newFlipTimer <= 0) {
         shouldFlip = true;
-        newFlipTimer = ORDER_FLIP_INTERVAL_SOLO;
+        newFlipTimer = preset.orderFlipInterval;
       }
     }
 
@@ -167,10 +184,10 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
       if (card.column === 'oven' && card.ovenTimerStarted && !card.burnt) {
         const realElapsed = now - card.ovenTimerStarted;
         const simElapsed = realElapsed * spd;
-        if (simElapsed >= OVEN_BURN_TIME) {
+        if (simElapsed >= preset.ovenBurnTime) {
           return { ...card, burnt: true, ovenTimerRemaining: 0 };
         }
-        return { ...card, ovenTimerRemaining: OVEN_BURN_TIME - simElapsed };
+        return { ...card, ovenTimerRemaining: preset.ovenBurnTime - simElapsed };
       }
       // Check prep timers
       if (card.column === 'prep' && card.prepTimerStarted) {
@@ -186,7 +203,7 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
       if (card.enteredQueueAt && !card.angry && card.column !== 'served' && card.column !== 'orderDeck') {
         const realLeadTime = now - card.enteredQueueAt;
         const simLeadTime = realLeadTime * spd;
-        if (simLeadTime >= ANGRY_THRESHOLD) {
+        if (simLeadTime >= preset.angryThreshold) {
           return { ...card, angry: true };
         }
       }
@@ -272,6 +289,7 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   // ─── MOVE CARD ───────────────────────────────────
   canMoveCard: (cardId, toColumn) => {
     const state = get();
+    const preset = getPreset(state.difficulty);
     const card = state.cards.find((c) => c.id === cardId);
     if (!card) return { allowed: false, reason: 'Card not found' };
 
@@ -319,7 +337,7 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
       const spd = state.speed;
       if (card.ovenTimerStarted) {
         const simElapsed = (now - card.ovenTimerStarted) * spd;
-        if (simElapsed < OVEN_DONE_TIME) {
+        if (simElapsed < preset.ovenDoneTime) {
           return { allowed: false, reason: 'Still baking...' };
         }
       }
@@ -333,6 +351,7 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     const { allowed } = state.canMoveCard(cardId, toColumn);
     if (!allowed) return false;
 
+    const preset = getPreset(state.difficulty);
     const now = Date.now() / 1000;
     const card = state.cards.find((c) => c.id === cardId)!;
 
@@ -351,7 +370,7 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
         // Start oven timer when entering oven
         if (toColumn === 'oven') {
           updates.ovenTimerStarted = now;
-          updates.ovenTimerRemaining = OVEN_BURN_TIME;
+          updates.ovenTimerRemaining = preset.ovenBurnTime;
         }
 
         // Record served time
@@ -384,16 +403,19 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   // ─── RESET ───────────────────────────────────────
   resetGame: () => {
     const currentSpeed = get().speed;
+    const currentDifficulty = get().difficulty;
+    const preset = getPreset(currentDifficulty);
     set({
       phase: 'landing',
       round: 1,
       cards: createFreshDeck(),
-      roundTimer: ROUND_DURATION_SOLO,
+      roundTimer: preset.roundDuration,
       isRunning: false,
-      orderFlipTimer: ORDER_FLIP_INTERVAL_SOLO,
+      orderFlipTimer: preset.orderFlipInterval,
       nextOrderIndex: 0,
       wipEnabled: false,
       speed: currentSpeed,
+      difficulty: currentDifficulty,
       round1Metrics: null,
       round2Metrics: null,
     });

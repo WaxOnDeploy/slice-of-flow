@@ -3,9 +3,7 @@ import { useSliceOfFlowStore, type SpeedMultiplier } from '@/lib/sliceOfFlowStor
 import {
   COLUMNS,
   WIP_LIMITS,
-  OVEN_DONE_TIME,
-  OVEN_WARNING_TIME,
-  OVEN_BURN_TIME,
+  DIFFICULTY_PRESETS,
   type ColumnId,
   type OrderCard,
 } from '@/lib/sliceOfFlowConstants';
@@ -82,10 +80,12 @@ function PizzaCard({
   isDragging?: boolean;
   onDragStart: (cardId: string) => void;
 }) {
+  const difficulty = useSliceOfFlowStore((s) => s.difficulty);
+  const preset = DIFFICULTY_PRESETS[difficulty];
   const prepDone = card.column === 'prep' && card.prepTimerRemaining !== undefined && card.prepTimerRemaining <= 0;
-  const ovenElapsed = card.ovenTimerStarted ? (OVEN_BURN_TIME - (card.ovenTimerRemaining ?? OVEN_BURN_TIME)) : 0;
-  const ovenDone = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= OVEN_DONE_TIME && !card.burnt;
-  const ovenWarning = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= OVEN_WARNING_TIME && !ovenDone && !card.burnt;
+  const ovenElapsed = card.ovenTimerStarted ? (preset.ovenBurnTime - (card.ovenTimerRemaining ?? preset.ovenBurnTime)) : 0;
+  const ovenDone = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= preset.ovenDoneTime && !card.burnt;
+  const ovenWarning = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= preset.ovenWarningTime && !ovenDone && !card.burnt;
 
   // Determine animation class
   let animClass = 'sof-card-enter';

@@ -1,6 +1,8 @@
-import { useMemo, useEffect, useRef } from 'react';
+import { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
+import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
 import { Chart, registerables } from 'chart.js';
+import { toast } from 'sonner';
 
 Chart.register(...registerables);
 
@@ -114,8 +116,42 @@ const BRIDGE_ROWS = [
   { pizza: 'Pull (Round 2)', team: 'Pull System / Kanban', desc: 'Take work only when you have capacity' },
 ];
 
+// ─── SHARE RESULTS ─────────────────────────────────
+function generateShareText(
+  r1: { served: number; burnt: number; angry: number; avgLeadTime: number; score: number },
+  r2: { served: number; burnt: number; angry: number; avgLeadTime: number; score: number },
+  improvement: number,
+  difficultyLabel: string,
+) {
+  const arrow = (v1: number, v2: number, lowerIsBetter = false) => {
+    const diff = v2 - v1;
+    if (diff === 0) return '→';
+    const improved = lowerIsBetter ? diff < 0 : diff > 0;
+    return improved ? '↑' : '↓';
+  };
+
+  return `🍕 Slice of Flow — My Results (${difficultyLabel} Mode)
+
+Round 1 (Push) vs Round 2 (Pull):
+
+  Served:     ${r1.served} → ${r2.served}  ${arrow(r1.served, r2.served)}
+  Burnt:      ${r1.burnt} → ${r2.burnt}  ${arrow(r1.burnt, r2.burnt, true)}
+  Angry:      ${r1.angry} → ${r2.angry}  ${arrow(r1.angry, r2.angry, true)}
+  Lead Time:  ${formatTime(r1.avgLeadTime)} → ${formatTime(r2.avgLeadTime)}  ${arrow(r1.avgLeadTime, r2.avgLeadTime, true)}
+  Score:      ${r1.score} → ${r2.score}  ${arrow(r1.score, r2.score)}
+
+${improvement >= 0 ? '📈' : '📉'} ${improvement >= 0 ? '+' : ''}${improvement}% improvement
+
+WIP limits + pull systems = better flow.
+Stop starting, start finishing. 🚦
+
+Play it yourself → sliceofflow.com
+#SliceOfFlow #Kanban #Agile #FlowMetrics`;
+}
+
 export default function SliceOfFlowDebrief() {
-  const { round1Metrics, round2Metrics, resetGame } = useSliceOfFlowStore();
+  const { round1Metrics, round2Metrics, resetGame, difficulty } = useSliceOfFlowStore();
+  const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
 
   const r1 = round1Metrics || { served: 0, burnt: 0, angry: 0, avgLeadTime: 0, stillInProgress: 0, score: 0 };
   const r2 = round2Metrics || { served: 0, burnt: 0, angry: 0, avgLeadTime: 0, stillInProgress: 0, score: 0 };
@@ -124,6 +160,46 @@ export default function SliceOfFlowDebrief() {
     if (r1.score === 0) return 0;
     return Math.round(((r2.score - r1.score) / Math.abs(r1.score)) * 100);
   }, [r1.score, r2.score]);
+
+  const difficultyLabel = DIFFICULTY_PRESETS[difficulty].label;
+
+  const handleShare = useCallback(async () => {
+    const text = generateShareText(r1, r2, improvement, difficultyLabel);
+
+    // Try native share first (mobile/tablet), fall back to clipboard
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Slice of Flow — My Results',
+          text,
+        });
+        return;
+      } catch {
+        // User cancelled or share failed — fall through to clipboard
+      }
+    }
+
+    // Clipboard fallback
+    try {
+      await navigator.clipboard.writeText(text);
+      setShareState('copied');
+      toast.success('Results copied to clipboard!', { duration: 3000 });
+      setTimeout(() => setShareState('idle'), 3000);
+    } catch {
+      // Final fallback: select text in a textarea
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      setShareState('copied');
+      toast.success('Results copied to clipboard!', { duration: 3000 });
+      setTimeout(() => setShareState('idle'), 3000);
+    }
+  }, [r1, r2, improvement, difficultyLabel]);
 
   return (
     <div className="min-h-screen" style={{ background: '#FAF7F2' }}>
@@ -148,7 +224,7 @@ export default function SliceOfFlowDebrief() {
             The Results Are In
           </h1>
           <p className="text-sm mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>
-            Push vs. Pull — Let the numbers speak
+            Push vs. Pull — Let the numbers speak ({difficultyLabel} Mode)
           </p>
         </div>
       </div>
@@ -315,21 +391,40 @@ export default function SliceOfFlowDebrief() {
           </div>
         </div>
 
-        {/* Play Again */}
+        {/* Action Buttons */}
         <div className="text-center pb-12">
-          <button
-            onClick={resetGame}
-            className="px-10 py-4 rounded-lg text-xl font-bold text-white transition-all hover:scale-105 active:scale-95"
-            style={{
-              fontFamily: "'Lilita One', cursive",
-              background: 'linear-gradient(135deg, #D94F3B 0%, #E64A19 100%)',
-              boxShadow: '0 6px 20px rgba(217, 79, 59, 0.4)',
-            }}
-          >
-            Play Again
-          </button>
+          <div className="flex items-center justify-center gap-4 flex-wrap">
+            {/* Share Results */}
+            <button
+              onClick={handleShare}
+              className="px-8 py-4 rounded-lg text-xl font-bold transition-all hover:scale-105 active:scale-95"
+              style={{
+                fontFamily: "'Lilita One', cursive",
+                background: shareState === 'copied' ? '#2E7D32' : '#1976D2',
+                color: '#fff',
+                boxShadow: shareState === 'copied'
+                  ? '0 6px 20px rgba(46, 125, 50, 0.4)'
+                  : '0 6px 20px rgba(25, 118, 210, 0.4)',
+              }}
+            >
+              {shareState === 'copied' ? '✓ Copied!' : '📤 Share Results'}
+            </button>
+
+            {/* Play Again */}
+            <button
+              onClick={resetGame}
+              className="px-10 py-4 rounded-lg text-xl font-bold text-white transition-all hover:scale-105 active:scale-95"
+              style={{
+                fontFamily: "'Lilita One', cursive",
+                background: 'linear-gradient(135deg, #D94F3B 0%, #E64A19 100%)',
+                boxShadow: '0 6px 20px rgba(217, 79, 59, 0.4)',
+              }}
+            >
+              Play Again
+            </button>
+          </div>
           <p className="text-xs mt-3" style={{ fontFamily: "'DM Sans', sans-serif", color: '#999' }}>
-            Try different strategies. Can you beat your score?
+            Try different strategies and difficulty levels. Can you beat your score?
           </p>
         </div>
       </div>
