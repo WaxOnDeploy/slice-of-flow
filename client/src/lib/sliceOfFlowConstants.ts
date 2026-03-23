@@ -7,7 +7,7 @@ export const ORDER_FLIP_INTERVAL_SOLO = 15; // seconds between auto-flips in Rou
 export const OVEN_BURN_TIME = 75; // 1:15 in seconds — pizza burns (halved)
 export const OVEN_DONE_TIME = 60; // 1:00 in seconds — pizza is done (halved)
 export const OVEN_WARNING_TIME = 45; // 0:45 in seconds — sizzle warning (halved)
-export const ANGRY_THRESHOLD = 240; // 4 min lead time = angry customer
+export const ANGRY_THRESHOLD = 480; // 8 min lead time = angry customer (doubled)
 
 // ─── WIP LIMITS (Round 2) ─────────────────────────────────
 export const WIP_LIMITS = {
@@ -123,7 +123,7 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
     ovenBurnTime: 90, // 1:30 (halved)
     ovenDoneTime: 60, // 1:00 (halved)
     ovenWarningTime: 50, // 0:50 (halved)
-    angryThreshold: 300, // 5 min
+    angryThreshold: 600, // 10 min (doubled)
     defaultSpeed: 2,
   },
   normal: {
@@ -135,7 +135,7 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
     ovenBurnTime: 75, // 1:15 (halved)
     ovenDoneTime: 60, // 1:00 (halved)
     ovenWarningTime: 45, // 0:45 (halved)
-    angryThreshold: 240, // 4 min
+    angryThreshold: 480, // 8 min (doubled)
     defaultSpeed: 3,
   },
   hard: {
@@ -147,7 +147,7 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
     ovenBurnTime: 60, // 1:00 (halved)
     ovenDoneTime: 45, // 0:45 (halved)
     ovenWarningTime: 30, // 0:30 (halved)
-    angryThreshold: 180, // 3 min
+    angryThreshold: 360, // 6 min (doubled)
     defaultSpeed: 3,
   },
 };

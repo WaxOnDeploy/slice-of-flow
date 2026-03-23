@@ -211,20 +211,30 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
       return card;
     });
 
-    // End round if timer hits 0
-    if (newRoundTimer <= 0) {
+    // Auto-end: check if all cards are either served or burnt (no cards left in play)
+    const allCardsComplete = newCards.every(
+      (c) => c.column === 'served' || c.burnt || c.column === 'orderDeck'
+    );
+    const anyCardsInPlay = newCards.some(
+      (c) => c.column !== 'orderDeck' && c.column !== 'served' && !c.burnt
+    );
+    const allOrdersFlipped = newCards.filter((c) => c.column === 'orderDeck').length === 0;
+    const shouldAutoEnd = allOrdersFlipped && !anyCardsInPlay;
+
+    // End round if timer hits 0 OR all cards are complete
+    if (newRoundTimer <= 0 || shouldAutoEnd) {
       const metrics = calculateMetrics(newCards, state.round);
       if (state.round === 1) {
         set({
           cards: newCards,
-          roundTimer: 0,
+          roundTimer: shouldAutoEnd ? newRoundTimer : 0,
           isRunning: false,
           round1Metrics: metrics,
         });
       } else {
         set({
           cards: newCards,
-          roundTimer: 0,
+          roundTimer: shouldAutoEnd ? newRoundTimer : 0,
           isRunning: false,
           round2Metrics: metrics,
         });
