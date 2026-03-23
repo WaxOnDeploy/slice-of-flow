@@ -74,24 +74,30 @@ export default function SliceOfFlowTransition() {
               Sound like any sprint you've been in?
             </p>
 
-            <div className="grid grid-cols-3 gap-6 mb-8">
-              <div className="text-center p-6 rounded-xl" style={{ background: '#E8F5E9', border: '2px solid #A5D6A7' }}>
-                <div className="text-4xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#2E7D32' }}>
+            <div className="grid grid-cols-4 gap-4 mb-8">
+              <div className="text-center p-5 rounded-xl" style={{ background: '#E8F5E9', border: '2px solid #A5D6A7' }}>
+                <div className="text-3xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#2E7D32' }}>
                   {round1Metrics.served}
                 </div>
-                <div className="text-sm mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Pizzas Served</div>
+                <div className="text-xs mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Served</div>
               </div>
-              <div className="text-center p-6 rounded-xl" style={{ background: '#FFEBEE', border: '2px solid #EF9A9A' }}>
-                <div className="text-4xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#B71C1C' }}>
+              <div className="text-center p-5 rounded-xl" style={{ background: '#FFEBEE', border: '2px solid #EF9A9A' }}>
+                <div className="text-3xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#B71C1C' }}>
                   {round1Metrics.burnt}
                 </div>
-                <div className="text-sm mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Burnt Pizzas</div>
+                <div className="text-xs mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Burnt</div>
               </div>
-              <div className="text-center p-6 rounded-xl" style={{ background: '#FFF3E0', border: '2px solid #FFCC80' }}>
-                <div className="text-4xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#E65100' }}>
-                  {formatTime(round1Metrics.avgLeadTime)}
+              <div className="text-center p-5 rounded-xl" style={{ background: '#FFF3E0', border: '2px solid #FFCC80' }}>
+                <div className="text-3xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#E65100' }}>
+                  {round1Metrics.angry}
                 </div>
-                <div className="text-sm mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Avg Lead Time</div>
+                <div className="text-xs mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Angry</div>
+              </div>
+              <div className="text-center p-5 rounded-xl" style={{ background: '#E3F2FD', border: '2px solid #90CAF9' }}>
+                <div className="text-3xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#1976D2' }}>
+                  {round1Metrics.served > 0 ? formatTime(round1Metrics.avgLeadTime) : '\u2014'}
+                </div>
+                <div className="text-xs mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Avg Lead Time</div>
               </div>
             </div>
 

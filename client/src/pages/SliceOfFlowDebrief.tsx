@@ -195,8 +195,8 @@ const BRIDGE_ROWS = [
 
 // ─── SHARE RESULTS ─────────────────────────────────
 function generateShareText(
-  r1: { served: number; burnt: number; angry: number; avgLeadTime: number; score: number } | null,
-  r2: { served: number; burnt: number; angry: number; avgLeadTime: number; score: number },
+  r1: { served: number; burnt: number; angry: number; avgLeadTime: number; score: number; timeRemaining?: number } | null,
+  r2: { served: number; burnt: number; angry: number; avgLeadTime: number; score: number; timeRemaining?: number },
   improvement: number,
   difficultyLabel: string,
   skippedRound1: boolean,
@@ -211,11 +211,11 @@ Round 2 (Pull + WIP Limits):
   Angry:      ${r2.angry}
   Lead Time:  ${formatTime(r2.avgLeadTime)}
   Score:      ${r2.score}
-
+${r2.timeRemaining && r2.timeRemaining > 0 ? `\ud83d\udd14 Finished with ${formatTime(r2.timeRemaining)} to spare!\n` : ''}
 WIP limits + pull systems = better flow.
-Stop starting, start finishing. 🚦
+Stop starting, start finishing. \ud83d\udea6
 
-Play it yourself → sliceofflow.com
+Play it yourself \u2192 sliceofflow.com
 #SliceOfFlow #Kanban #Agile #FlowMetrics`;
   }
 
@@ -340,6 +340,33 @@ export default function SliceOfFlowDebrief() {
 
       <div className="px-8 py-8 max-w-5xl mx-auto">
 
+        {/* Top action buttons — easy to find */}
+        <div className="flex items-center justify-end gap-3 mb-6">
+          <button
+            onClick={handleShare}
+            className="px-5 py-2.5 rounded-lg text-sm font-bold transition-all hover:scale-105 active:scale-95"
+            style={{
+              fontFamily: "'Lilita One', cursive",
+              background: shareState === 'copied' ? '#2E7D32' : '#1976D2',
+              color: '#fff',
+              boxShadow: '0 3px 10px rgba(25,118,210,0.3)',
+            }}
+          >
+            {shareState === 'copied' ? '\u2713 Copied!' : '\ud83d\udce4 Share'}
+          </button>
+          <button
+            onClick={resetGame}
+            className="px-5 py-2.5 rounded-lg text-sm font-bold text-white transition-all hover:scale-105 active:scale-95"
+            style={{
+              fontFamily: "'Lilita One', cursive",
+              background: '#D94F3B',
+              boxShadow: '0 3px 10px rgba(217,79,59,0.3)',
+            }}
+          >
+            {skippedRound1 ? 'Play Full Game' : 'Play Again'}
+          </button>
+        </div>
+
         {/* ─── SKIPPED ROUND 1: Single-round summary ─── */}
         {skippedRound1 ? (
           <>
@@ -371,6 +398,15 @@ export default function SliceOfFlowDebrief() {
                 <div className="text-xs mt-1" style={{ color: '#999' }}>points</div>
               </div>
             </div>
+
+            {/* Service bell — finished early */}
+            {r2.timeRemaining && r2.timeRemaining > 0 && (
+              <div className="text-center mb-6 p-3 rounded-xl" style={{ background: '#E8F5E9', border: '1px solid #A5D6A7' }}>
+                <span className="text-sm" style={{ fontFamily: "'DM Sans', sans-serif", color: '#2E7D32' }}>
+                  \ud83d\udd14 Finished with <strong style={{ fontFamily: "'JetBrains Mono', monospace" }}>{formatTime(r2.timeRemaining)}</strong> to spare!
+                </span>
+              </div>
+            )}
 
             {/* Single-round metrics grid */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">
@@ -419,10 +455,12 @@ export default function SliceOfFlowDebrief() {
                 <div className="text-sm font-semibold mb-2" style={{ fontFamily: "'Lilita One', cursive", color: '#2E7D32' }}>
                   Improvement
                 </div>
-                <div className="text-5xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: improvement >= 0 ? '#2E7D32' : '#B71C1C' }}>
-                  {improvement >= 0 ? '+' : ''}{improvement}%
+                <div className="text-5xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: improvement > 0 ? '#2E7D32' : improvement < 0 ? '#B71C1C' : '#666' }}>
+                  {improvement === 0 && r1.score === r2.score ? '—' : `${improvement >= 0 ? '+' : ''}${improvement}%`}
                 </div>
-                <div className="text-xs mt-1" style={{ color: '#999' }}>score change</div>
+                <div className="text-xs mt-1" style={{ color: '#999' }}>
+                  {improvement === 0 && r1.score === r2.score ? 'Same score both rounds' : 'score change'}
+                </div>
               </div>
 
               <div className="text-center p-6 rounded-xl" style={{ background: '#E3F2FD', border: '2px solid #90CAF9' }}>
@@ -435,6 +473,15 @@ export default function SliceOfFlowDebrief() {
                 <div className="text-xs mt-1" style={{ color: '#999' }}>points</div>
               </div>
             </div>
+
+            {/* Service bell — finished early */}
+            {r2.timeRemaining && r2.timeRemaining > 0 && (
+              <div className="text-center mb-8 p-3 rounded-xl" style={{ background: '#E8F5E9', border: '1px solid #A5D6A7' }}>
+                <span className="text-sm" style={{ fontFamily: "'DM Sans', sans-serif", color: '#2E7D32' }}>
+                  \ud83d\udd14 Round 2 finished with <strong style={{ fontFamily: "'JetBrains Mono', monospace" }}>{formatTime(r2.timeRemaining)}</strong> to spare!
+                </span>
+              </div>
+            )}
 
             {/* Detailed metrics table */}
             <div className="mb-10">
@@ -474,9 +521,11 @@ export default function SliceOfFlowDebrief() {
                             {row.unit === 'time' ? formatTime(row.v2) : row.v2}
                           </td>
                           <td className="text-center px-4 py-3 font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: improved ? '#2E7D32' : diff === 0 ? '#999' : '#B71C1C' }}>
-                            {row.unit === 'time'
-                              ? (diff < 0 ? '-' : '+') + formatTime(Math.abs(diff))
-                              : (diff > 0 ? '+' : '') + diff
+                            {diff === 0
+                              ? '\u2014'
+                              : row.unit === 'time'
+                                ? (diff < 0 ? '-' : '+') + formatTime(Math.abs(diff))
+                                : (diff > 0 ? '+' : '') + diff
                             }
                           </td>
                         </tr>

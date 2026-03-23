@@ -432,6 +432,10 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   endRound: () => {
     const state = get();
     const metrics = calculateMetrics(state.cards, state.round);
+    // Capture remaining time (non-zero means service bell was rung early)
+    if (state.roundTimer > 0) {
+      metrics.timeRemaining = state.roundTimer;
+    }
     if (state.round === 1) {
       set({ isRunning: false, round1Metrics: metrics });
     } else {
@@ -482,3 +486,8 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     });
   },
 }));
+
+// SOF-047: Expose store on window in dev mode for debugging
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__sofStore = useSliceOfFlowStore;
+}

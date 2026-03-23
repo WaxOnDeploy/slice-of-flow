@@ -712,7 +712,7 @@ function BoardColumn({
       >
         <div className="flex items-center gap-1.5">
           <span className="text-base" style={{ lineHeight: 1 }}>
-            {columnId === 'orderDeck' ? '📋' : columnId === 'orderQueue' ? '📥' : columnId === 'prep' ? '🔪' : columnId === 'oven' ? '🔥' : columnId === 'boxDeliver' ? '📦' : '✅'}
+            {columnId === 'orderDeck' ? '📋' : columnId === 'orderQueue' ? '📥' : columnId === 'prep' ? '🔪' : columnId === 'oven' ? '🔥' : columnId === 'boxDeliver' ? '🍕' : '✅'}
           </span>
           <span className="text-sm font-bold" style={{ fontFamily: "'Lilita One', cursive" }}>
             {label}
@@ -752,7 +752,27 @@ function BoardColumn({
       </div>
 
       {/* Cards area */}
-      <div className="flex-1 p-2 space-y-2 overflow-y-auto">
+      <div
+        className="flex-1 p-2 space-y-2 overflow-y-auto"
+        style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: 'rgba(0,0,0,0.15) transparent',
+        }}
+        onScroll={(e) => {
+          const el = e.currentTarget;
+          const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 10;
+          el.style.maskImage = atBottom
+            ? 'none'
+            : 'linear-gradient(to bottom, black 85%, transparent 100%)';
+          el.style.webkitMaskImage = el.style.maskImage;
+        }}
+        ref={(el) => {
+          if (el && el.scrollHeight > el.clientHeight) {
+            el.style.maskImage = 'linear-gradient(to bottom, black 85%, transparent 100%)';
+            el.style.webkitMaskImage = el.style.maskImage;
+          }
+        }}
+      >
         {isDeck ? (
           <div className="flex items-center justify-center h-full">
             <div
@@ -1192,12 +1212,21 @@ export default function SliceOfFlowBoard() {
             </div>
 
             {/* Avg lead time */}
-            <div className="text-center mb-6 p-3 rounded-lg" style={{ background: '#E3F2FD' }}>
+            <div className="text-center mb-4 p-3 rounded-lg" style={{ background: '#E3F2FD' }}>
               <div className="text-xs mb-1" style={{ color: '#666' }}>Avg Lead Time</div>
               <div className="text-xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#1976D2' }}>
-                {metrics.served > 0 ? formatTime(metrics.avgLeadTime) : '—'}
+                {metrics.served > 0 ? formatTime(metrics.avgLeadTime) : '\u2014'}
               </div>
             </div>
+
+            {/* Service bell — finished early */}
+            {metrics.timeRemaining && metrics.timeRemaining > 0 && (
+              <div className="text-center mb-6 p-2 rounded-lg" style={{ background: '#E8F5E9', border: '1px solid #A5D6A7' }}>
+                <span className="text-sm" style={{ fontFamily: "'DM Sans', sans-serif", color: '#2E7D32' }}>
+                  \ud83d\udd14 Finished with <strong style={{ fontFamily: "'JetBrains Mono', monospace" }}>{formatTime(metrics.timeRemaining)}</strong> to spare!
+                </span>
+              </div>
+            )}
 
             <button
               onClick={round === 1 ? goToTransition : goToDebrief}

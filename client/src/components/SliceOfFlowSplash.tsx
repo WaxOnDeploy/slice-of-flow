@@ -289,9 +289,9 @@ function OrderTicketSplash({ onEnter }: { onEnter: () => void }) {
   const [phase, setPhase] = useState(0); // 0=empty, 1=drop, 2=landed, 3=stamp
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 300);
-    const t2 = setTimeout(() => setPhase(2), 1000);
-    const t3 = setTimeout(() => setPhase(3), 1800);
+    const t1 = setTimeout(() => setPhase(1), 200);
+    const t2 = setTimeout(() => setPhase(2), 700);
+    const t3 = setTimeout(() => setPhase(3), 1200);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
@@ -466,7 +466,7 @@ function OrderTicketSplash({ onEnter }: { onEnter: () => void }) {
         bottom: '40px',
         fontFamily: "'DM Sans', sans-serif",
         fontSize: '13px',
-        color: 'rgba(255,255,255,0.3)',
+        color: 'rgba(255,255,255,0.55)',
         letterSpacing: '2px',
         opacity: phase >= 3 ? 1 : 0,
         transition: 'opacity 0.5s ease',

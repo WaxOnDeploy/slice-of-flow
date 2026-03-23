@@ -167,4 +167,5 @@ export interface RoundMetrics {
   avgLeadTime: number; // seconds
   stillInProgress: number;
   score: number;
+  timeRemaining?: number; // seconds remaining when round ended (service bell)
 }
