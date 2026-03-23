@@ -67,18 +67,18 @@ export interface OrderCard {
 
 // ─── ORDER DECK (12 cards for solo mode) ───────────────────
 export const SOLO_DECK: Omit<OrderCard, 'column' | 'prepTimerStarted' | 'prepTimerRemaining' | 'ovenTimerStarted' | 'ovenTimerRemaining' | 'enteredQueueAt' | 'servedAt' | 'simEnteredQueueAt' | 'simServedAt' | 'simElapsedInQueue' | 'burnt' | 'angry'>[] = [
-  { id: 'order-1', orderNumber: 1, customer: 'Sarah', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60, ovenTime: 60, color: '#4CAF50' },
-  { id: 'order-2', orderNumber: 2, customer: 'Carlos', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 60, ovenTime: 60, color: '#4CAF50' },
-  { id: 'order-3', orderNumber: 3, customer: 'Rachel', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120, ovenTime: 60, color: '#FFC107' },
-  { id: 'order-4', orderNumber: 4, customer: 'Dan', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60,ovenTime: 60, color: '#4CAF50' },
-  { id: 'order-5', orderNumber: 5, customer: 'Aisha', pizzaType: 'Meat Lovers', complexity: 'Medium', prepTime: 120,ovenTime: 60, color: '#FFC107' },
-  { id: 'order-6', orderNumber: 6, customer: 'Priya', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60, ovenTime: 60, color: '#4CAF50' },
-  { id: 'order-7', orderNumber: 7, customer: 'Tom', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120, ovenTime: 60, color: '#FFC107' },
-  { id: 'order-8', orderNumber: 8, customer: 'Lisa', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 60, ovenTime: 60, color: '#4CAF50' },
-  { id: 'order-9', orderNumber: 9, customer: 'Marcus', pizzaType: 'Custom Build', complexity: 'Large', prepTime: 180,ovenTime: 60, color: '#F44336' },
-  { id: 'order-10', orderNumber: 10, customer: 'Derek', pizzaType: 'Meat Lovers', complexity: 'Medium', prepTime: 120, ovenTime: 60, color: '#FFC107' },
-  { id: 'order-11', orderNumber: 11, customer: 'Nina', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120,ovenTime: 60, color: '#FFC107' },
-  { id: 'order-12', orderNumber: 12, customer: 'Sophie', pizzaType: 'Custom Build', complexity: 'Large', prepTime: 180, ovenTime: 60, color: '#F44336' },
+  { id: 'order-1', orderNumber: 1, customer: 'Sarah', pizzaType: 'Cheese', complexity: 'Small', prepTime: 30, ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-2', orderNumber: 2, customer: 'Carlos', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 30, ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-3', orderNumber: 3, customer: 'Rachel', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 60, ovenTime: 60, color: '#FFC107' },
+  { id: 'order-4', orderNumber: 4, customer: 'Dan', pizzaType: 'Cheese', complexity: 'Small', prepTime: 30,ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-5', orderNumber: 5, customer: 'Aisha', pizzaType: 'Meat Lovers', complexity: 'Medium', prepTime: 60,ovenTime: 60, color: '#FFC107' },
+  { id: 'order-6', orderNumber: 6, customer: 'Priya', pizzaType: 'Cheese', complexity: 'Small', prepTime: 30, ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-7', orderNumber: 7, customer: 'Tom', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 60, ovenTime: 60, color: '#FFC107' },
+  { id: 'order-8', orderNumber: 8, customer: 'Lisa', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 30, ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-9', orderNumber: 9, customer: 'Marcus', pizzaType: 'Custom Build', complexity: 'Large', prepTime: 90,ovenTime: 60, color: '#F44336' },
+  { id: 'order-10', orderNumber: 10, customer: 'Derek', pizzaType: 'Meat Lovers', complexity: 'Medium', prepTime: 60, ovenTime: 60, color: '#FFC107' },
+  { id: 'order-11', orderNumber: 11, customer: 'Nina', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 60,ovenTime: 60, color: '#FFC107' },
+  { id: 'order-12', orderNumber: 12, customer: 'Sophie', pizzaType: 'Custom Build', complexity: 'Large', prepTime: 90, ovenTime: 60, color: '#F44336' },
 ];
 
 // Default shuffle order for solo (mixes complexity)

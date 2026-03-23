@@ -38,6 +38,8 @@ interface GameState {
   setDifficulty: (difficulty: Difficulty) => void;
   startGame: () => void;
   startRound: (round: 1 | 2) => void;
+  pauseGame: () => void;
+  resumeGame: () => void;
   tick: () => void;
   moveCard: (cardId: string, toColumn: ColumnId) => boolean;
   flipNextOrder: () => void;
@@ -126,12 +128,14 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   // ─── START GAME ──────────────────────────────────
   startGame: () => {
     const preset = getPreset(get().difficulty);
+    // Start paused — tutorial will call resumeGame when closed
+    // If tutorial was already seen, isRunning will be set to true by the board component
     set({
       phase: 'round1',
       round: 1,
       cards: createFreshDeck(),
       roundTimer: preset.roundDuration,
-      isRunning: true,
+      isRunning: false,
       orderFlipTimer: preset.orderFlipInterval,
       nextOrderIndex: 0,
       wipEnabled: false,
@@ -139,6 +143,10 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
       round2Metrics: null,
     });
   },
+
+  // ─── PAUSE / RESUME ─────────────────────────────
+  pauseGame: () => set({ isRunning: false }),
+  resumeGame: () => set({ isRunning: true }),
 
   // ─── START ROUND ─────────────────────────────────
   startRound: (round) => {
@@ -417,12 +425,13 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   // ─── SKIP TO ROUND 2 ────────────────────────────
   skipToRound2: () => {
     const preset = getPreset(get().difficulty);
+    // Start paused — tutorial will call resumeGame when closed
     set({
       phase: 'round2',
       round: 2,
       cards: createFreshDeck(),
       roundTimer: preset.roundDuration,
-      isRunning: true,
+      isRunning: false,
       orderFlipTimer: preset.orderFlipInterval,
       nextOrderIndex: 0,
       wipEnabled: true,

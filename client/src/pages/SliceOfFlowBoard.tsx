@@ -633,15 +633,7 @@ function BoardColumn({
 const TUTORIAL_KEY = 'sof-tutorial-seen';
 
 export default function SliceOfFlowBoard() {
-  const [showTutorial, setShowTutorial] = useState(() => {
-    return !localStorage.getItem(TUTORIAL_KEY);
-  });
-
-  const closeTutorial = useCallback(() => {
-    setShowTutorial(false);
-    localStorage.setItem(TUTORIAL_KEY, '1');
-  }, []);
-    const {
+  const {
     round,
     cards,
     roundTimer,
@@ -658,7 +650,27 @@ export default function SliceOfFlowBoard() {
     goToDebrief,
     speed,
     setSpeed,
+    resumeGame,
   } = useSliceOfFlowStore();
+
+  const [showTutorial, setShowTutorial] = useState(() => {
+    return !localStorage.getItem(TUTORIAL_KEY);
+  });
+
+  const closeTutorial = useCallback(() => {
+    setShowTutorial(false);
+    localStorage.setItem(TUTORIAL_KEY, '1');
+    // Start the round timer now that instructions are done
+    resumeGame();
+  }, [resumeGame]);
+
+  // If tutorial was already seen (returning player), auto-start immediately
+  useEffect(() => {
+    if (!showTutorial && !isRunning && roundTimer > 0 && !round1Metrics && !round2Metrics) {
+      resumeGame();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount only
 
   const [draggedCardId, setDraggedCardId] = useState<string | null>(null);
   const [dragOverColumn, setDragOverColumn] = useState<ColumnId | null>(null);

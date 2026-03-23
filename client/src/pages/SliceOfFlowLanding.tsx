@@ -89,7 +89,7 @@ export default function SliceOfFlowLanding() {
             <div className="space-y-3">
               {[
                 { icon: '📋', label: 'Orders', desc: 'Customers order pizza — each has a type and complexity' },
-                { icon: '🔪', label: 'Prep', desc: 'Chop, sauce, top — Small (1 min), Medium (2 min), Large (3 min)' },
+                { icon: '🔪', label: 'Prep', desc: 'Chop, sauce, top — Small (30s), Medium (1 min), Large (1:30)' },
                 { icon: '🔥', label: 'Oven', desc: `Bake until done. Leave it too long? It burns.` },
                 { icon: '📦', label: 'Box & Deliver', desc: 'Box it up and get it out the door' },
                 { icon: '⏱️', label: 'Timer', desc: `${Math.floor(preset.roundDuration / 60)} minutes per round. Every second counts.` },
