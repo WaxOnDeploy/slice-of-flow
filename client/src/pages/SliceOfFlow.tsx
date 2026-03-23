@@ -4,6 +4,8 @@ import SliceOfFlowLanding from './SliceOfFlowLanding';
 import SliceOfFlowBoard from './SliceOfFlowBoard';
 import SliceOfFlowTransition from './SliceOfFlowTransition';
 import SliceOfFlowDebrief from './SliceOfFlowDebrief';
+import SliceOfFlowSplash from '@/components/SliceOfFlowSplash';
+import type { SplashVariant } from '@/components/SliceOfFlowSplash';
 import {
   playOrderFlip,
   playBurn,
@@ -104,6 +106,29 @@ export default function SliceOfFlow() {
   const isRunning = useSliceOfFlowStore((s) => s.isRunning);
   const tick = useSliceOfFlowStore((s) => s.tick);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Splash screen state
+  const [showSplash, setShowSplash] = useState(true);
+  const [splashVariant, setSplashVariant] = useState<SplashVariant>('ticket');
+
+  // Read splash variant from URL param: ?splash=neon|pizzabox|ticket
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const v = params.get('splash');
+    if (v === 'neon' || v === 'pizzabox' || v === 'ticket') {
+      setSplashVariant(v);
+    }
+    // Skip splash if returning (session storage flag)
+    const seen = sessionStorage.getItem('sof-splash-seen');
+    if (seen === '1') {
+      setShowSplash(false);
+    }
+  }, []);
+
+  const handleSplashEnter = () => {
+    setShowSplash(false);
+    sessionStorage.setItem('sof-splash-seen', '1');
+  };
 
   // Phase transition animation state
   const [transitionVisible, setTransitionVisible] = useState(false);
@@ -241,6 +266,11 @@ export default function SliceOfFlow() {
       }
     };
   }, [isRunning, tick]);
+
+  // Show splash screen first
+  if (showSplash) {
+    return <SliceOfFlowSplash onEnter={handleSplashEnter} variant={splashVariant} />;
+  }
 
   const renderPhase = () => {
     switch (displayedPhase) {

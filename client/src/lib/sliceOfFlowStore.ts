@@ -63,7 +63,10 @@ function createFreshDeck(): OrderCard[] {
 function calculateMetrics(cards: OrderCard[], round: 1 | 2): RoundMetrics {
   const served = cards.filter((c) => c.column === 'served' && !c.burnt);
   const burnt = cards.filter((c) => c.burnt);
-  const angry = served.filter((c) => c.angry);
+  // Count ALL angry customers — not just served ones (SOF-032/033 fix)
+  const angry = cards.filter(
+    (c) => c.column !== 'orderDeck' && c.angry && !c.burnt
+  );
   const inProgress = cards.filter(
     (c) => c.column !== 'orderDeck' && c.column !== 'served' && !c.burnt
   );
@@ -81,7 +84,8 @@ function calculateMetrics(cards: OrderCard[], round: 1 | 2): RoundMetrics {
     + burnt.length * SCORE_BURNT
     + angry.length * SCORE_ANGRY;
 
-  if (burnt.length === 0) score += SCORE_ZERO_BURNS_BONUS;
+  // Zero-burns bonus only applies when at least 1 pizza was served (SOF-054 fix)
+  if (burnt.length === 0 && served.length > 0) score += SCORE_ZERO_BURNS_BONUS;
 
   return {
     served: served.length,
@@ -191,9 +195,11 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
 
     // Update all card timers incrementally (same approach as round timer)
     newCards = newCards.map((card) => {
-      // Oven timer: decrement remaining by speed
+      // Oven timer: decrement remaining by speed (per-card timing)
       if (card.column === 'oven' && card.ovenTimerStarted && !card.burnt) {
-        const newRemaining = (card.ovenTimerRemaining ?? preset.ovenBurnTime) - simElapsedThisTick;
+        const burnBuffer = preset.ovenBurnTime - preset.ovenDoneTime;
+        const fallbackBurn = card.ovenTime + burnBuffer;
+        const newRemaining = (card.ovenTimerRemaining ?? fallbackBurn) - simElapsedThisTick;
         if (newRemaining <= 0) {
           return { ...card, burnt: true, ovenTimerRemaining: 0 };
         }
@@ -355,13 +361,12 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     // Oven timer must be done (but not burnt) before moving to box
     if (card.column === 'oven' && toColumn === 'boxDeliver') {
       if (card.burnt) return { allowed: false, reason: 'Pizza is burnt!' };
-      // Check ovenTimerRemaining — done when remaining <= (burnTime - doneTime)
-      // ovenTimerRemaining counts down from burnTime. Done when elapsed >= doneTime.
-      // elapsed = burnTime - remaining. So done when (burnTime - remaining) >= doneTime
-      // i.e. remaining <= burnTime - doneTime
-      const remaining = card.ovenTimerRemaining ?? preset.ovenBurnTime;
-      const doneThreshold = preset.ovenBurnTime - preset.ovenDoneTime;
-      if (remaining > doneThreshold) {
+      // Per-card oven timing: ovenBurnAt is total time, ovenDoneAt is bake time
+      // ovenTimerRemaining counts down from ovenBurnAt. Done when elapsed >= ovenDoneAt.
+      // elapsed = ovenBurnAt - remaining. Done when remaining <= burnBuffer.
+      const burnBuffer = preset.ovenBurnTime - preset.ovenDoneTime;
+      const remaining = card.ovenTimerRemaining ?? (card.ovenTime + burnBuffer);
+      if (remaining > burnBuffer) {
         return { allowed: false, reason: 'Still baking...' };
       }
     }
@@ -389,10 +394,16 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
           updates.prepTimerRemaining = c.prepTime;
         }
 
-        // Start oven timer when entering oven
+        // Start oven timer when entering oven — use per-card ovenTime
+        // ovenTime = bake duration. Burn window = preset ratio applied to card size.
+        // Card burns at ovenTime + burnBuffer. Done at ovenTime.
         if (toColumn === 'oven') {
-          updates.ovenTimerStarted = true as any; // flag that oven has started
-          updates.ovenTimerRemaining = preset.ovenBurnTime;
+          // burnBuffer = how long after done before it burns (scales with difficulty)
+          const burnBuffer = preset.ovenBurnTime - preset.ovenDoneTime;
+          updates.ovenTimerStarted = true as any;
+          updates.ovenTimerRemaining = c.ovenTime + burnBuffer; // total time before burn
+          updates.ovenDoneAt = c.ovenTime; // bake time for this specific card
+          updates.ovenBurnAt = c.ovenTime + burnBuffer; // burn threshold for this card
         }
 
         // Record served time (simulated game clock)

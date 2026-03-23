@@ -58,6 +58,8 @@ export interface OrderCard {
   prepTimerRemaining?: number;
   ovenTimerStarted?: number | boolean; // flag or timestamp
   ovenTimerRemaining?: number;
+  ovenDoneAt?: number; // per-card: bake time (seconds) — done when this much time has elapsed
+  ovenBurnAt?: number; // per-card: burn time (seconds) — burns when this much time has elapsed
   enteredQueueAt?: number; // legacy timestamp
   servedAt?: number; // legacy timestamp
   simEnteredQueueAt?: number; // simulated game clock when entered queue
@@ -132,7 +134,7 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
     label: 'Normal',
     description: 'Standard kitchen. Balanced chaos.',
     icon: '🍕',
-    roundDuration: 5 * 60, // 5 minutes
+    roundDuration: 4 * 60, // 4 minutes
     orderFlipInterval: 15, // 15 seconds
     ovenBurnTime: 75, // 1:15 (halved)
     ovenDoneTime: 60, // 1:00 (halved)
