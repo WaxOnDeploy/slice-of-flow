@@ -7,12 +7,18 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import SliceOfFlow from "./pages/SliceOfFlow";
 
+function SliceOfFlowRedirect() {
+  window.location.replace("/");
+  return null;
+}
+
 function Router() {
   return (
     <Switch>
-      <Route path={"/"} component={Home} />
-      <Route path="/slice-of-flow" component={SliceOfFlow} />
-      <Route path={"/404"} component={NotFound} />
+      <Route path="/" component={SliceOfFlow} />
+      <Route path="/deck-shop" component={Home} />
+      <Route path="/slice-of-flow" component={SliceOfFlowRedirect} />
+      <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
