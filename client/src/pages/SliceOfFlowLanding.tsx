@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import { DIFFICULTY_PRESETS, type Difficulty } from '@/lib/sliceOfFlowConstants';
 
@@ -16,18 +17,19 @@ export default function SliceOfFlowLanding() {
   const skipToRound2 = useSliceOfFlowStore((s) => s.skipToRound2);
   const difficulty = useSliceOfFlowStore((s) => s.difficulty);
   const setDifficulty = useSliceOfFlowStore((s) => s.setDifficulty);
+  const [showFacilitatorGuide, setShowFacilitatorGuide] = useState(false);
 
   const preset = DIFFICULTY_PRESETS[difficulty];
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAF7F2' }}>
       {/* Hero Section */}
-      <div className="relative w-full" style={{ minHeight: '55vh' }}>
+      <div className="relative w-full" style={{ minHeight: '50vh' }}>
         <img
           src={HERO_IMG}
           alt="Slice of Flow Pizza Kitchen"
           className="w-full h-full object-cover absolute inset-0"
-          style={{ minHeight: '55vh' }}
+          style={{ minHeight: '50vh' }}
         />
         {/* Gradient overlay */}
         <div
@@ -55,30 +57,70 @@ export default function SliceOfFlowLanding() {
 
       {/* Content Section */}
       <div className="flex-1 px-8 pt-6 pb-12 max-w-5xl mx-auto w-full">
-        <div className="grid md:grid-cols-2 gap-10">
-          {/* Left — What is this? */}
-          <div>
-            <h2
-              className="text-2xl mb-4"
-              style={{ fontFamily: "'Lilita One', cursive", color: '#D4A843' }}
-            >
-              What is this?
-            </h2>
-            <p className="text-base leading-relaxed mb-4" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
-              You run a pizza shop. Orders come in. You prep, bake, box, and deliver.
-              Simple, right?
-            </p>
-            <p className="text-base leading-relaxed mb-4" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
-              <strong>Round 1:</strong> Orders flood in whether you're ready or not.
-              No limits. Pure chaos. Sound familiar?
-            </p>
-            <p className="text-base leading-relaxed" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
-              <strong>Round 2:</strong> You discover Kanban. WIP limits. Pull systems.
-              Same kitchen, same orders — but now you control the flow.
-            </p>
-          </div>
 
-          {/* Right — How it works */}
+        {/* ─── WHO IS THIS FOR ─── */}
+        <div
+          className="mb-8 p-5 rounded-xl"
+          style={{ background: '#FFF8E7', border: '2px solid #D4A843' }}
+        >
+          <h2
+            className="text-xl mb-2"
+            style={{ fontFamily: "'Lilita One', cursive", color: '#D4A843' }}
+          >
+            Who is this for?
+          </h2>
+          <p className="text-sm leading-relaxed mb-3" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
+            <strong>Slice of Flow</strong> is a hands-on Kanban training tool built for <strong>Scrum Masters, Agile coaches, RTEs, and delivery leads</strong> who want to teach their teams about flow, WIP limits, and pull systems — without a 90-minute lecture.
+          </p>
+          <div className="grid md:grid-cols-3 gap-3">
+            {[
+              { icon: '👥', label: 'Team Workshop', desc: 'Project on a big screen. The whole team plays together, debating which pizza to pull next.' },
+              { icon: '🎓', label: 'Coaching Session', desc: 'Walk a team through push vs. pull in 15 minutes. The debrief writes itself.' },
+              { icon: '🧑‍💻', label: 'Self-Paced Learning', desc: 'Individual team members explore flow concepts at their own pace before a retrospective.' },
+            ].map((item) => (
+              <div key={item.label} className="flex gap-2 items-start">
+                <span className="text-xl flex-shrink-0">{item.icon}</span>
+                <div>
+                  <div className="text-sm font-bold" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>{item.label}</div>
+                  <div className="text-xs" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>{item.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ─── WHAT WILL YOUR TEAM LEARN ─── */}
+        <div className="mb-8">
+          <h2
+            className="text-xl mb-3"
+            style={{ fontFamily: "'Lilita One', cursive", color: '#D4A843' }}
+          >
+            What will your team learn?
+          </h2>
+          <div className="grid md:grid-cols-2 gap-3">
+            {[
+              { icon: '🚦', title: 'WIP Limits', desc: 'Why limiting work-in-progress reduces chaos and increases throughput' },
+              { icon: '🔄', title: 'Pull vs. Push', desc: 'The difference between work being forced in vs. pulled when ready' },
+              { icon: '🔥', title: 'Bottleneck Management', desc: 'What happens when the oven (review/testing) becomes the constraint' },
+              { icon: '📊', title: 'Flow Metrics', desc: 'Lead time, throughput, and quality — measured and compared across rounds' },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="flex gap-3 items-start p-3 rounded-lg"
+                style={{ background: '#fff', border: '1px solid #E0E0E0' }}
+              >
+                <span className="text-xl flex-shrink-0">{item.icon}</span>
+                <div>
+                  <div className="text-sm font-bold" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>{item.title}</div>
+                  <div className="text-xs" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>{item.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-10 mb-8">
+          {/* Left — What is this? */}
           <div>
             <h2
               className="text-2xl mb-4"
@@ -86,12 +128,34 @@ export default function SliceOfFlowLanding() {
             >
               How it works
             </h2>
+            <p className="text-base leading-relaxed mb-4" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
+              You run a pizza shop. Orders come in. You prep, bake, box, and deliver.
+              Simple, right?
+            </p>
+            <p className="text-base leading-relaxed mb-4" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
+              <strong>Round 1 (Push):</strong> Orders flood in whether you're ready or not.
+              No limits. Pure chaos. Sound familiar?
+            </p>
+            <p className="text-base leading-relaxed" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
+              <strong>Round 2 (Pull + WIP):</strong> You discover Kanban. WIP limits. Pull systems.
+              Same kitchen, same orders — but now you control the flow.
+            </p>
+          </div>
+
+          {/* Right — The Kitchen Stages */}
+          <div>
+            <h2
+              className="text-2xl mb-4"
+              style={{ fontFamily: "'Lilita One', cursive", color: '#D4A843' }}
+            >
+              The Kitchen
+            </h2>
             <div className="space-y-3">
               {[
                 { icon: '📋', label: 'Orders', desc: 'Customers order pizza — each has a type and complexity' },
                 { icon: '🔪', label: 'Prep', desc: 'Chop, sauce, top — Small (30s), Medium (1 min), Large (1:30)' },
                 { icon: '🍕', label: 'Oven', desc: 'Bake times vary! Small (40s), Medium (1 min), Large (1:20)' },
-                { icon: '📦', label: 'Pizza Box', desc: 'Box it up and get it out the door' },
+                { icon: '📦', label: 'Box & Deliver', desc: 'Box it up and get it out the door' },
                 { icon: '⏱️', label: 'Timer', desc: `${Math.floor(preset.roundDuration / 60)} minutes per round. Every second counts.` },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-3">
@@ -111,7 +175,7 @@ export default function SliceOfFlowLanding() {
         </div>
 
         {/* Difficulty Selector */}
-        <div className="mt-10">
+        <div className="mt-6">
           <h2
             className="text-2xl mb-4 text-center"
             style={{ fontFamily: "'Lilita One', cursive", color: '#D4A843' }}
@@ -200,22 +264,121 @@ export default function SliceOfFlowLanding() {
           >
             <span className="relative z-10">Open the Kitchen</span>
           </button>
-          <button
-            onClick={skipToRound2}
-            className="group relative px-8 py-3 text-lg font-bold text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
-            style={{
-              fontFamily: "'Lilita One', cursive",
-              background: 'linear-gradient(135deg, #1976D2 0%, #1565C0 100%)',
-              boxShadow: '0 4px 14px rgba(25, 118, 210, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
-            }}
-          >
-            <span className="relative z-10">Skip to Round 2 — WIP + Pull</span>
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={skipToRound2}
+              className="group relative px-8 py-3 text-lg font-bold text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
+              style={{
+                fontFamily: "'Lilita One', cursive",
+                background: 'linear-gradient(135deg, #1976D2 0%, #1565C0 100%)',
+                boxShadow: '0 4px 14px rgba(25, 118, 210, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+              }}
+            >
+              <span className="relative z-10">Skip to Round 2 — WIP + Pull</span>
+            </button>
+          </div>
         </div>
 
-        <p className="text-center text-xs mt-4" style={{ fontFamily: "'DM Sans', sans-serif", color: '#999' }}>
-          Solo Practice Mode — {DIFFICULTY_PRESETS[difficulty].label} difficulty, {Math.floor(preset.roundDuration / 60)} minutes per round, 12 orders
+        <p className="text-center text-xs mt-4 mb-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#999' }}>
+          {DIFFICULTY_PRESETS[difficulty].label} difficulty — {Math.floor(preset.roundDuration / 60)} minutes per round — 12 orders
         </p>
+
+        {/* ─── FACILITATOR QUICK-START ─── */}
+        <div className="mt-4 mb-6">
+          <button
+            onClick={() => setShowFacilitatorGuide(!showFacilitatorGuide)}
+            className="w-full flex items-center justify-between p-4 rounded-xl transition-all"
+            style={{
+              background: showFacilitatorGuide ? '#E8EAF6' : '#F5F5F5',
+              border: `2px solid ${showFacilitatorGuide ? '#5C6BC0' : '#E0E0E0'}`,
+              cursor: 'pointer',
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <span className="text-xl">📋</span>
+              <span className="text-sm font-bold" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>
+                Facilitator Quick-Start Guide
+              </span>
+              <span className="text-xs px-2 py-0.5 rounded-full" style={{ background: '#E8EAF6', color: '#3949AB', fontFamily: "'DM Sans', sans-serif" }}>
+                2 min prep
+              </span>
+            </div>
+            <span className="text-lg" style={{ color: '#666', transform: showFacilitatorGuide ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+              ▼
+            </span>
+          </button>
+
+          {showFacilitatorGuide && (
+            <div
+              className="mt-2 p-5 rounded-xl"
+              style={{ background: '#fff', border: '1px solid #E0E0E0', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}
+            >
+              <h3 className="text-lg font-bold mb-3" style={{ fontFamily: "'Lilita One', cursive", color: '#3949AB' }}>
+                Running Slice of Flow with Your Team
+              </h3>
+
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm font-bold mb-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>
+                    Setup (1 minute)
+                  </div>
+                  <ul className="text-xs space-y-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#555' }}>
+                    <li>• Open this page on a big screen or projector that everyone can see</li>
+                    <li>• Choose <strong>Normal</strong> difficulty for most teams (Easy for brand-new Agile teams)</li>
+                    <li>• Tell the team: <em>"We're going to run a pizza shop. Your job is to serve as many customers as possible without burning anything."</em></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="text-sm font-bold mb-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>
+                    Round 1 — Push (4 min)
+                  </div>
+                  <ul className="text-xs space-y-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#555' }}>
+                    <li>• Click <strong>"Open the Kitchen"</strong> — the team calls out moves together</li>
+                    <li>• Let the chaos happen. Don't coach. Orders pile up, pizzas burn — that's the point</li>
+                    <li>• When the round ends, ask: <em>"What happened? Why did pizzas burn?"</em></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="text-sm font-bold mb-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>
+                    Round 2 — Pull + WIP (4 min)
+                  </div>
+                  <ul className="text-xs space-y-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#555' }}>
+                    <li>• The transition screen explains WIP limits and pull — read it together</li>
+                    <li>• Now the team must decide when to pull orders. Coach them: <em>"Finish what's started before starting something new"</em></li>
+                    <li>• Watch the difference in flow, lead time, and burn rate</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <div className="text-sm font-bold mb-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>
+                    Debrief (5 min)
+                  </div>
+                  <ul className="text-xs space-y-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#555' }}>
+                    <li>• The results page shows side-by-side metrics and a "Bridge" table mapping pizza concepts to real team dynamics</li>
+                    <li>• Key questions: <em>"What changed between rounds? How does this relate to our sprint work?"</em></li>
+                    <li>• Connect the dots: Orders = Backlog, Oven = Review/Testing, Burnt Pizza = Defects, WIP Limit = Stop Starting, Start Finishing</li>
+                  </ul>
+                </div>
+
+                <div
+                  className="p-3 rounded-lg text-xs"
+                  style={{ background: '#FFF8E7', border: '1px solid #D4A843', fontFamily: "'DM Sans', sans-serif", color: '#666' }}
+                >
+                  <strong style={{ color: '#D4A843' }}>Tip:</strong> For a shorter session, use "Skip to Round 2" and focus the debrief on what WIP limits feel like in practice. Total time: ~8 minutes.
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* ─── BROWSER SUPPORT NOTICE ─── */}
+        <div className="text-center text-xs pb-4" style={{ fontFamily: "'DM Sans', sans-serif", color: '#BBB' }}>
+          Best experienced on desktop or tablet (1024px+) in Chrome, Edge, Firefox, or Safari.
+          <br />
+          Mobile devices work but the board is optimized for wider screens.
+        </div>
       </div>
     </div>
   );

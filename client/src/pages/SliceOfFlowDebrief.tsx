@@ -538,14 +538,34 @@ export default function SliceOfFlowDebrief() {
         {/* Key Takeaways — always shown */}
         <div className="mb-10">
           <h2 className="text-2xl mb-4" style={{ fontFamily: "'Lilita One', cursive", color: '#D4A843' }}>
-            Key Takeaways
+            What Did We Learn?
           </h2>
           <div className="grid md:grid-cols-2 gap-4">
             {[
-              { icon: '🚦', title: 'WIP Limits Work', desc: 'Limiting work in progress reduces chaos, improves quality, and increases throughput.' },
-              { icon: '🎯', title: 'Pull > Push', desc: "When you control what enters the system, you control the outcome. Stop starting, start finishing." },
-              { icon: '🔥', title: 'Multitasking Burns', desc: "Every pizza in the oven is a context switch. Too many and they all burn." },
-              { icon: '📊', title: 'Flow is Measurable', desc: 'Lead time, throughput, and WIP are the metrics that matter. Track them.' },
+              {
+                icon: '🚦',
+                title: 'WIP Limits Reduce Chaos',
+                desc: 'When you limit how many pizzas are in the oven at once, fewer burn. In your team: limiting work-in-progress means fewer defects, less context-switching, and more focus.',
+                metric: 'Watch: Burnt count drops when WIP is enforced',
+              },
+              {
+                icon: '🎯',
+                title: 'Pull Systems Beat Push',
+                desc: 'In Round 1, orders flooded in regardless of capacity — just like scope creep. In Round 2, you pulled work only when ready. The result: better throughput with less stress.',
+                metric: 'Watch: Served count rises, angry customers fall',
+              },
+              {
+                icon: '🔥',
+                title: 'Bottlenecks Are Visible',
+                desc: 'The oven is your testing/review stage. When too many pizzas queue up there, everything slows down. Identifying and managing the constraint is the key to flow.',
+                metric: 'Watch: Lead time drops when oven queue is managed',
+              },
+              {
+                icon: '📊',
+                title: 'Quality and Throughput Aren\'t Tradeoffs',
+                desc: 'With WIP limits, you serve more AND burn less. Flow proves that quality and speed improve together when you stop overloading the system.',
+                metric: 'Watch: Score improves because both served and quality rise',
+              },
             ].map((item, i) => (
               <div
                 key={i}
@@ -557,12 +577,39 @@ export default function SliceOfFlowDebrief() {
                   <h3 className="text-base font-bold mb-1" style={{ fontFamily: "'Lilita One', cursive", color: '#333' }}>
                     {item.title}
                   </h3>
-                  <p className="text-sm" style={{ fontFamily: "'DM Sans', sans-serif", color: '#555' }}>
+                  <p className="text-sm mb-1.5" style={{ fontFamily: "'DM Sans', sans-serif", color: '#555' }}>
                     {item.desc}
+                  </p>
+                  <p className="text-xs italic" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#999' }}>
+                    {item.metric}
                   </p>
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+
+        {/* Discussion Questions for Teams */}
+        <div className="mb-10">
+          <h2 className="text-2xl mb-3" style={{ fontFamily: "'Lilita One', cursive", color: '#D4A843' }}>
+            Team Discussion Questions
+          </h2>
+          <div className="p-5 rounded-xl" style={{ background: '#F3E5F5', border: '1px solid #CE93D8' }}>
+            <div className="grid md:grid-cols-2 gap-3">
+              {[
+                'Where are the "ovens" (bottlenecks) in our real workflow?',
+                'What happens to quality when we take on too much work at once?',
+                'How would explicit WIP limits change our daily standup?',
+                'What\'s our team\'s equivalent of a "burnt pizza"?',
+                'Do we push work into the system or pull it when we have capacity?',
+                'How could we measure lead time for our actual work items?',
+              ].map((q, i) => (
+                <div key={i} className="flex gap-2 items-start">
+                  <span className="text-sm flex-shrink-0 font-bold" style={{ color: '#7B1FA2' }}>{i + 1}.</span>
+                  <p className="text-sm" style={{ fontFamily: "'DM Sans', sans-serif", color: '#4A148C' }}>{q}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 

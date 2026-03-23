@@ -1208,7 +1208,7 @@ export default function SliceOfFlowBoard() {
                 boxShadow: round === 1 ? '0 4px 15px rgba(25,118,210,0.4)' : '0 4px 15px rgba(217,79,59,0.4)',
               }}
             >
-              {round === 1 ? 'Learn Kanban →' : 'See Full Results →'}
+              {round === 1 ? 'Learn Kanban →' : round1Metrics ? 'See Full Results →' : 'See Your Results →'}
             </button>
           </div>
         </div>
