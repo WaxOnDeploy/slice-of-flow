@@ -4,9 +4,9 @@
 // ─── TIMING ────────────────────────────────────────────────
 export const ROUND_DURATION_SOLO = 5 * 60; // 5 minutes in seconds
 export const ORDER_FLIP_INTERVAL_SOLO = 15; // seconds between auto-flips in Round 1
-export const OVEN_BURN_TIME = 150; // 2:30 in seconds — pizza burns
-export const OVEN_DONE_TIME = 120; // 2:00 in seconds — pizza is done
-export const OVEN_WARNING_TIME = 90; // 1:30 in seconds — sizzle warning
+export const OVEN_BURN_TIME = 75; // 1:15 in seconds — pizza burns (halved)
+export const OVEN_DONE_TIME = 60; // 1:00 in seconds — pizza is done (halved)
+export const OVEN_WARNING_TIME = 45; // 0:45 in seconds — sizzle warning (halved)
 export const ANGRY_THRESHOLD = 240; // 4 min lead time = angry customer
 
 // ─── WIP LIMITS (Round 2) ─────────────────────────────────
@@ -67,18 +67,18 @@ export interface OrderCard {
 
 // ─── ORDER DECK (12 cards for solo mode) ───────────────────
 export const SOLO_DECK: Omit<OrderCard, 'column' | 'prepTimerStarted' | 'prepTimerRemaining' | 'ovenTimerStarted' | 'ovenTimerRemaining' | 'enteredQueueAt' | 'servedAt' | 'simEnteredQueueAt' | 'simServedAt' | 'simElapsedInQueue' | 'burnt' | 'angry'>[] = [
-  { id: 'order-1', orderNumber: 1, customer: 'Sarah', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60, ovenTime: 120, color: '#4CAF50' },
-  { id: 'order-2', orderNumber: 2, customer: 'Carlos', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 60, ovenTime: 120, color: '#4CAF50' },
-  { id: 'order-3', orderNumber: 3, customer: 'Rachel', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120, ovenTime: 120, color: '#FFC107' },
-  { id: 'order-4', orderNumber: 4, customer: 'Dan', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60, ovenTime: 120, color: '#4CAF50' },
-  { id: 'order-5', orderNumber: 5, customer: 'Aisha', pizzaType: 'Meat Lovers', complexity: 'Medium', prepTime: 120, ovenTime: 120, color: '#FFC107' },
-  { id: 'order-6', orderNumber: 6, customer: 'Priya', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60, ovenTime: 120, color: '#4CAF50' },
-  { id: 'order-7', orderNumber: 7, customer: 'Tom', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120, ovenTime: 120, color: '#FFC107' },
-  { id: 'order-8', orderNumber: 8, customer: 'Lisa', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 60, ovenTime: 120, color: '#4CAF50' },
-  { id: 'order-9', orderNumber: 9, customer: 'Marcus', pizzaType: 'Custom Build', complexity: 'Large', prepTime: 180, ovenTime: 120, color: '#F44336' },
-  { id: 'order-10', orderNumber: 10, customer: 'Derek', pizzaType: 'Meat Lovers', complexity: 'Medium', prepTime: 120, ovenTime: 120, color: '#FFC107' },
-  { id: 'order-11', orderNumber: 11, customer: 'Nina', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120, ovenTime: 120, color: '#FFC107' },
-  { id: 'order-12', orderNumber: 12, customer: 'Sophie', pizzaType: 'Custom Build', complexity: 'Large', prepTime: 180, ovenTime: 120, color: '#F44336' },
+  { id: 'order-1', orderNumber: 1, customer: 'Sarah', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60, ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-2', orderNumber: 2, customer: 'Carlos', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 60, ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-3', orderNumber: 3, customer: 'Rachel', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120, ovenTime: 60, color: '#FFC107' },
+  { id: 'order-4', orderNumber: 4, customer: 'Dan', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60,ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-5', orderNumber: 5, customer: 'Aisha', pizzaType: 'Meat Lovers', complexity: 'Medium', prepTime: 120,ovenTime: 60, color: '#FFC107' },
+  { id: 'order-6', orderNumber: 6, customer: 'Priya', pizzaType: 'Cheese', complexity: 'Small', prepTime: 60, ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-7', orderNumber: 7, customer: 'Tom', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120, ovenTime: 60, color: '#FFC107' },
+  { id: 'order-8', orderNumber: 8, customer: 'Lisa', pizzaType: 'Pepperoni', complexity: 'Small', prepTime: 60, ovenTime: 60, color: '#4CAF50' },
+  { id: 'order-9', orderNumber: 9, customer: 'Marcus', pizzaType: 'Custom Build', complexity: 'Large', prepTime: 180,ovenTime: 60, color: '#F44336' },
+  { id: 'order-10', orderNumber: 10, customer: 'Derek', pizzaType: 'Meat Lovers', complexity: 'Medium', prepTime: 120, ovenTime: 60, color: '#FFC107' },
+  { id: 'order-11', orderNumber: 11, customer: 'Nina', pizzaType: 'Veggie Supreme', complexity: 'Medium', prepTime: 120,ovenTime: 60, color: '#FFC107' },
+  { id: 'order-12', orderNumber: 12, customer: 'Sophie', pizzaType: 'Custom Build', complexity: 'Large', prepTime: 180, ovenTime: 60, color: '#F44336' },
 ];
 
 // Default shuffle order for solo (mixes complexity)
@@ -120,9 +120,9 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
     icon: '🧑‍🍳',
     roundDuration: 7 * 60, // 7 minutes
     orderFlipInterval: 20, // 20 seconds
-    ovenBurnTime: 180, // 3:00
-    ovenDoneTime: 120, // 2:00
-    ovenWarningTime: 100, // 1:40
+    ovenBurnTime: 90, // 1:30 (halved)
+    ovenDoneTime: 60, // 1:00 (halved)
+    ovenWarningTime: 50, // 0:50 (halved)
     angryThreshold: 300, // 5 min
     defaultSpeed: 2,
   },
@@ -132,9 +132,9 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
     icon: '🍕',
     roundDuration: 5 * 60, // 5 minutes
     orderFlipInterval: 15, // 15 seconds
-    ovenBurnTime: 150, // 2:30
-    ovenDoneTime: 120, // 2:00
-    ovenWarningTime: 90, // 1:30
+    ovenBurnTime: 75, // 1:15 (halved)
+    ovenDoneTime: 60, // 1:00 (halved)
+    ovenWarningTime: 45, // 0:45 (halved)
     angryThreshold: 240, // 4 min
     defaultSpeed: 3,
   },
@@ -144,9 +144,9 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
     icon: '🔥',
     roundDuration: 4 * 60, // 4 minutes
     orderFlipInterval: 10, // 10 seconds
-    ovenBurnTime: 120, // 2:00
-    ovenDoneTime: 90, // 1:30
-    ovenWarningTime: 60, // 1:00
+    ovenBurnTime: 60, // 1:00 (halved)
+    ovenDoneTime: 45, // 0:45 (halved)
+    ovenWarningTime: 30, // 0:30 (halved)
     angryThreshold: 180, // 3 min
     defaultSpeed: 3,
   },

@@ -48,6 +48,7 @@ interface GameState {
   resetGame: () => void;
   setSpeed: (speed: SpeedMultiplier) => void;
   canMoveCard: (cardId: string, toColumn: ColumnId) => { allowed: boolean; reason?: string };
+  skipToRound2: () => void;
 }
 
 function createFreshDeck(): OrderCard[] {
@@ -402,6 +403,23 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
   // ─── TRANSITIONS ─────────────────────────────────
   goToTransition: () => set({ phase: 'transition' }),
   goToDebrief: () => set({ phase: 'debrief' }),
+
+  // ─── SKIP TO ROUND 2 ────────────────────────────
+  skipToRound2: () => {
+    const preset = getPreset(get().difficulty);
+    set({
+      phase: 'round2',
+      round: 2,
+      cards: createFreshDeck(),
+      roundTimer: preset.roundDuration,
+      isRunning: true,
+      orderFlipTimer: preset.orderFlipInterval,
+      nextOrderIndex: 0,
+      wipEnabled: true,
+      round1Metrics: null,
+      round2Metrics: null,
+    });
+  },
 
   // ─── RESET ───────────────────────────────────────
   resetGame: () => {

@@ -13,6 +13,7 @@ const DIFFICULTY_COLORS: Record<Difficulty, { bg: string; border: string; text: 
 
 export default function SliceOfFlowLanding() {
   const startGame = useSliceOfFlowStore((s) => s.startGame);
+  const skipToRound2 = useSliceOfFlowStore((s) => s.skipToRound2);
   const difficulty = useSliceOfFlowStore((s) => s.difficulty);
   const setDifficulty = useSliceOfFlowStore((s) => s.setDifficulty);
 
@@ -186,8 +187,8 @@ export default function SliceOfFlowLanding() {
           </div>
         </div>
 
-        {/* Start Button */}
-        <div className="mt-8 flex justify-center">
+        {/* Start Buttons */}
+        <div className="mt-8 flex flex-col items-center gap-4">
           <button
             onClick={startGame}
             className="group relative px-12 py-5 text-2xl font-bold text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
@@ -198,6 +199,17 @@ export default function SliceOfFlowLanding() {
             }}
           >
             <span className="relative z-10">Open the Kitchen</span>
+          </button>
+          <button
+            onClick={skipToRound2}
+            className="group relative px-8 py-3 text-lg font-bold text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
+            style={{
+              fontFamily: "'Lilita One', cursive",
+              background: 'linear-gradient(135deg, #1976D2 0%, #1565C0 100%)',
+              boxShadow: '0 4px 14px rgba(25, 118, 210, 0.35), inset 0 1px 0 rgba(255,255,255,0.2)',
+            }}
+          >
+            <span className="relative z-10">Skip to Round 2 — WIP + Pull</span>
           </button>
         </div>
 
