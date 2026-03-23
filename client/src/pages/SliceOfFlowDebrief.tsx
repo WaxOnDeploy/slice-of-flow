@@ -414,7 +414,7 @@ export default function SliceOfFlowDebrief() {
                 { label: 'Served', value: r2.served, color: '#2E7D32', bg: '#E8F5E9' },
                 { label: 'Burnt', value: r2.burnt, color: '#B71C1C', bg: '#FFEBEE' },
                 { label: 'Angry', value: r2.angry, color: '#E65100', bg: '#FFF3E0' },
-                { label: 'Avg Lead Time', value: formatTime(r2.avgLeadTime), color: '#1976D2', bg: '#E3F2FD' },
+                { label: 'Avg Lead Time', value: r2.served === 0 ? '\u2014' : formatTime(r2.avgLeadTime), color: '#1976D2', bg: '#E3F2FD' },
                 { label: 'Still In Progress', value: r2.stillInProgress, color: '#666', bg: '#F5F5F5' },
               ].map((item) => (
                 <div key={item.label} className="text-center p-4 rounded-xl" style={{ background: item.bg }}>
@@ -503,7 +503,7 @@ export default function SliceOfFlowDebrief() {
                       { label: 'Pizzas Served', v1: r1.served, v2: r2.served, unit: '', better: 'higher' },
                       { label: 'Burnt Pizzas', v1: r1.burnt, v2: r2.burnt, unit: '', better: 'lower' },
                       { label: 'Angry Customers', v1: r1.angry, v2: r2.angry, unit: '', better: 'lower' },
-                      { label: 'Avg Lead Time', v1: r1.avgLeadTime, v2: r2.avgLeadTime, unit: 'time', better: 'lower' },
+                      { label: 'Avg Lead Time', v1: r1.avgLeadTime, v2: r2.avgLeadTime, unit: 'time', better: 'lower', served1: r1.served, served2: r2.served },
                       { label: 'Still In Progress', v1: r1.stillInProgress, v2: r2.stillInProgress, unit: '', better: 'lower' },
                       { label: 'Final Score', v1: r1.score, v2: r2.score, unit: '', better: 'higher' },
                     ].map((row, i) => {
@@ -515,10 +515,10 @@ export default function SliceOfFlowDebrief() {
                             {row.label}
                           </td>
                           <td className="text-center px-4 py-3" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#E64A19' }}>
-                            {row.unit === 'time' ? formatTime(row.v1) : row.v1}
+                            {row.unit === 'time' ? ((row as any).served1 === 0 ? '\u2014' : formatTime(row.v1)) : row.v1}
                           </td>
                           <td className="text-center px-4 py-3" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#1976D2' }}>
-                            {row.unit === 'time' ? formatTime(row.v2) : row.v2}
+                            {row.unit === 'time' ? ((row as any).served2 === 0 ? '\u2014' : formatTime(row.v2)) : row.v2}
                           </td>
                           <td className="text-center px-4 py-3 font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: improved ? '#2E7D32' : diff === 0 ? '#999' : '#B71C1C' }}>
                             {diff === 0

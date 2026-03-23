@@ -1178,9 +1178,13 @@ export default function SliceOfFlowBoard() {
             <p className="text-center text-sm mb-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>
               {round === 1
                 ? "That was chaos, wasn't it? Let's learn a better way."
-                : round1Metrics
+                : round1Metrics && metrics.score > round1Metrics.score
                   ? "Feel the difference? That's the power of flow."
-                  : "Great job, Chef! Here's how you did with WIP limits."
+                  : round1Metrics && metrics.score === round1Metrics.score
+                    ? "Same score both rounds — but how did the flow feel?"
+                    : !round1Metrics
+                      ? "Great job, Chef! Here's how you did with WIP limits."
+                      : "Interesting — let's look at the full picture in the debrief."
               }
             </p>
 
