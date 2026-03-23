@@ -23,6 +23,153 @@ import {
 
 const BOARD_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-board-texture-KNwu2LircNbQS5UCEasJLy.webp';
 
+// ─── KITCHEN MENU BOARD ───────────────────────────
+function KitchenMenuBoard({ burnWindow }: { burnWindow: string }) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div style={{ position: 'fixed', top: 60, right: 12, zIndex: 100 }}>
+      {/* Toggle button — looks like a hanging menu sign */}
+      <button
+        onClick={() => setOpen(!open)}
+        style={{
+          background: open ? '#5D2E0C' : '#7B3F1A',
+          color: '#FFF8E1',
+          border: '2px solid #3E1A00',
+          borderRadius: 8,
+          padding: '6px 12px',
+          fontFamily: "'Lilita One', cursive",
+          fontSize: 14,
+          cursor: 'pointer',
+          boxShadow: '0 3px 10px rgba(0,0,0,0.4)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}
+        title="Kitchen Menu — Prep & Cook Times"
+      >
+        <span style={{ fontSize: 18 }}>📋</span>
+        <span>Menu</span>
+        <span style={{ fontSize: 10, opacity: 0.7 }}>{open ? '▲' : '▼'}</span>
+      </button>
+
+      {/* Menu board panel */}
+      {open && (
+        <div
+          style={{
+            marginTop: 6,
+            background: 'linear-gradient(180deg, #3E2010 0%, #2A1508 100%)',
+            border: '3px solid #5D2E0C',
+            borderRadius: 10,
+            padding: '16px 18px 14px',
+            boxShadow: '0 6px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.05)',
+            width: 260,
+            position: 'relative',
+          }}
+        >
+          {/* Pushpin */}
+          <div style={{
+            position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50)',
+            width: 16, height: 16, borderRadius: '50%',
+            background: 'radial-gradient(circle at 40% 40%, #E53935, #B71C1C)',
+            border: '2px solid #7f0000',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.4)',
+          }} />
+
+          {/* Title */}
+          <div style={{ textAlign: 'center', marginBottom: 10 }}>
+            <div style={{
+              fontFamily: "'Lilita One', cursive",
+              fontSize: 18,
+              color: '#FFC107',
+              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+              letterSpacing: 1,
+            }}>
+              🍕 Today's Specials
+            </div>
+            <div style={{
+              height: 1,
+              background: 'linear-gradient(90deg, transparent, rgba(255,193,7,0.4), transparent)',
+              margin: '6px 0',
+            }} />
+          </div>
+
+          {/* Menu items */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[
+              { size: 'Small', emoji: '🟢', nickname: 'Quick Slice', prep: '0:30', oven: '0:40', total: '1:10' },
+              { size: 'Medium', emoji: '🟡', nickname: 'The Classic', prep: '1:00', oven: '1:00', total: '2:00' },
+              { size: 'Large', emoji: '🔴', nickname: 'The Big One', prep: '1:30', oven: '1:20', total: '2:50' },
+            ].map((item) => (
+              <div
+                key={item.size}
+                style={{
+                  background: 'rgba(255,255,255,0.05)',
+                  borderRadius: 6,
+                  padding: '8px 10px',
+                  borderLeft: `3px solid ${item.emoji === '🟢' ? '#4CAF50' : item.emoji === '🟡' ? '#FFC107' : '#F44336'}`,
+                }}
+              >
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{
+                    fontFamily: "'Lilita One', cursive",
+                    fontSize: 14,
+                    color: '#FFF8E1',
+                  }}>
+                    {item.emoji} {item.size}
+                  </span>
+                  <span style={{
+                    fontFamily: "'Caveat', cursive",
+                    fontSize: 13,
+                    color: 'rgba(255,248,225,0.5)',
+                    fontStyle: 'italic',
+                  }}>
+                    "{item.nickname}"
+                  </span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontFamily: "'JetBrains Mono', monospace" }}>
+                  <span style={{ color: '#FFC107' }}>Prep {item.prep}</span>
+                  <span style={{ color: '#FF7043' }}>Oven {item.oven}</span>
+                  <span style={{ color: '#81C784', fontWeight: 700 }}>= {item.total}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Burn warning footer */}
+          <div style={{
+            marginTop: 10,
+            padding: '6px 8px',
+            background: 'rgba(183,28,28,0.15)',
+            borderRadius: 4,
+            border: '1px dashed rgba(244,67,54,0.3)',
+            textAlign: 'center',
+          }}>
+            <span style={{
+              fontFamily: "'Caveat', cursive",
+              fontSize: 14,
+              color: '#FF8A65',
+            }}>
+              ⚠️ Burn window: {burnWindow} after bake done!
+            </span>
+          </div>
+
+          {/* Bottom chalk scribble */}
+          <div style={{
+            textAlign: 'center',
+            marginTop: 8,
+            fontFamily: "'Caveat', cursive",
+            fontSize: 11,
+            color: 'rgba(255,248,225,0.3)',
+          }}>
+            ~ Pull wisely, Chef ~
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── TIMER DISPLAY ─────────────────────────────────
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);

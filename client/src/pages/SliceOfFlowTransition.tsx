@@ -149,7 +149,7 @@ export default function SliceOfFlowTransition() {
                 { label: 'Orders Queue', limit: WIP_LIMITS.orderQueue, color: '#1976D2', icon: '📋' },
                 { label: 'Prep Station', limit: WIP_LIMITS.prep, color: '#F9A825', icon: '🔪' },
                 { label: 'Oven', limit: WIP_LIMITS.oven, color: '#E64A19', icon: '🔥' },
-                { label: 'Box & Deliver', limit: WIP_LIMITS.boxDeliver, color: '#388E3C', icon: '📦' },
+                { label: 'Pizza Box', limit: WIP_LIMITS.boxDeliver, color: '#388E3C', icon: '📦' },
               ].map((item) => (
                 <div
                   key={item.label}

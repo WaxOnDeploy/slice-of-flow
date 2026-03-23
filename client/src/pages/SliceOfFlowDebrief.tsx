@@ -107,7 +107,7 @@ const BRIDGE_ROWS = [
   { pizza: 'Orders Queue', team: 'Sprint Backlog', desc: 'Work committed for this iteration' },
   { pizza: 'Prep Station', team: 'In Development', desc: 'Actively being worked on' },
   { pizza: 'Oven', team: 'In Review / Testing', desc: 'Waiting for validation (you can\'t rush it)' },
-  { pizza: 'Box & Deliver', team: 'Deployment / Release', desc: 'Ready to ship to the customer' },
+  { pizza: 'Pizza Box', team: 'Deployment / Release', desc: 'Ready to ship to the customer' },
   { pizza: 'Served', team: 'Done / In Production', desc: 'Delivered and accepted' },
   { pizza: 'Burnt Pizza', team: 'Defect / Rework', desc: 'Left too long without attention' },
   { pizza: 'Angry Customer', team: 'Missed SLA / Unhappy Stakeholder', desc: 'Lead time exceeded expectations' },

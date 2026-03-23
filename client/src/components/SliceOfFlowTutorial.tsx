@@ -17,7 +17,7 @@ const STEPS: TutorialStep[] = [
   {
     icon: '🖱️',
     title: 'Drag Cards Forward',
-    description: 'Drag pizza orders left → right through each station: Orders → Prep → Oven → Box & Deliver → Served. One station at a time.',
+    description: 'Drag pizza orders left → right through each station: Orders → Prep → Oven → Pizza Box → Served. One station at a time.',
     tip: 'Cards glow with a ▶ arrow when ready to move.',
   },
   {
