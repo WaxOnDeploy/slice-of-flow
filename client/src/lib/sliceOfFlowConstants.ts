@@ -146,7 +146,7 @@ export const DIFFICULTY_PRESETS: Record<Difficulty, DifficultyPreset> = {
     label: 'Hard',
     description: 'Short rounds, fast orders, tight oven. Good luck.',
     icon: '🔥',
-    roundDuration: 4 * 60, // 4 minutes
+    roundDuration: 3 * 60, // 3 minutes
     orderFlipInterval: 10, // 10 seconds
     ovenBurnTime: 60, // 1:00 (halved)
     ovenDoneTime: 45, // 0:45 (halved)

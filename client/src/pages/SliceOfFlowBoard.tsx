@@ -507,15 +507,23 @@ function PizzaCard({
   const difficulty = useSliceOfFlowStore((s) => s.difficulty);
   const preset = DIFFICULTY_PRESETS[difficulty];
   const prepDone = card.column === 'prep' && card.prepTimerRemaining !== undefined && card.prepTimerRemaining <= 0;
-  const ovenElapsed = card.ovenTimerStarted ? (preset.ovenBurnTime - (card.ovenTimerRemaining ?? preset.ovenBurnTime)) : 0;
-  const ovenDone = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= preset.ovenDoneTime && !card.burnt;
-  const ovenWarning = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= preset.ovenWarningTime && !ovenDone && !card.burnt;
+
+  // Per-card oven timing: use card.ovenBurnAt / card.ovenDoneAt when available, fall back to preset
+  const burnBuffer = preset.ovenBurnTime - preset.ovenDoneTime;
+  const cardBurnAt = card.ovenBurnAt ?? (card.ovenTime + burnBuffer);
+  const cardDoneAt = card.ovenDoneAt ?? card.ovenTime;
+  // Warning at ~75% of bake time (proportional to card's bake time)
+  const cardWarningAt = cardDoneAt * (preset.ovenWarningTime / preset.ovenDoneTime);
+
+  const ovenElapsed = card.ovenTimerStarted ? (cardBurnAt - (card.ovenTimerRemaining ?? cardBurnAt)) : 0;
+  const ovenDone = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= cardDoneAt && !card.burnt;
+  const ovenWarning = card.column === 'oven' && card.ovenTimerStarted && ovenElapsed >= cardWarningAt && !ovenDone && !card.burnt;
 
   // Oven glow intensity based on baking progress
   const isInOven = card.column === 'oven' && card.ovenTimerStarted && !card.burnt;
   let ovenGlowClass = '';
   if (isInOven) {
-    const bakePct = ovenElapsed / preset.ovenBurnTime;
+    const bakePct = ovenElapsed / cardBurnAt;
     if (bakePct > 0.85) ovenGlowClass = 'sof-oven-glow-danger';
     else if (bakePct > 0.65) ovenGlowClass = 'sof-oven-glow-hot';
     else if (bakePct > 0.4) ovenGlowClass = 'sof-oven-glow-warm';
@@ -629,9 +637,9 @@ function PizzaCard({
           </div>
           <TimerProgressBar
             remaining={card.ovenTimerRemaining}
-            total={preset.ovenBurnTime}
-            doneAt={preset.ovenDoneTime}
-            warningAt={preset.ovenWarningTime}
+            total={cardBurnAt}
+            doneAt={cardDoneAt}
+            warningAt={cardWarningAt}
           />
         </div>
       )}
@@ -800,6 +808,9 @@ export default function SliceOfFlowBoard() {
     resumeGame,
   } = useSliceOfFlowStore();
 
+  const difficulty = useSliceOfFlowStore((s) => s.difficulty);
+  const preset = DIFFICULTY_PRESETS[difficulty];
+
   const [showTutorial, setShowTutorial] = useState(() => {
     return !localStorage.getItem(TUTORIAL_KEY);
   });
@@ -913,6 +924,7 @@ export default function SliceOfFlowBoard() {
   return (
     <>
       {showTutorial && <SliceOfFlowTutorial onClose={closeTutorial} />}
+      <KitchenMenuBoard burnWindow={`${Math.floor((preset.ovenBurnTime - preset.ovenDoneTime) / 60)}:${((preset.ovenBurnTime - preset.ovenDoneTime) % 60).toString().padStart(2, '0')}`} />
       <div
         className="h-screen flex flex-col overflow-hidden"
         style={{
@@ -1054,7 +1066,7 @@ export default function SliceOfFlowBoard() {
       )}
 
       {/* Round 1 — Auto-flip indicator */}
-      {round === 1 && isRunning && (
+      {round === 1 && isRunning && cardsByColumn.orderDeck.length > 0 && (
         <div className="flex items-center justify-center py-1.5 flex-shrink-0" style={{ background: 'rgba(230,74,25,0.1)', borderBottom: '1px solid rgba(230,74,25,0.2)' }}>
           <span className="text-xs" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#E64A19' }}>
             ⚡ Next order auto-flips in <strong>{orderFlipTimer}s</strong> — Orders flood in whether you're ready or not!
@@ -1141,10 +1153,15 @@ export default function SliceOfFlowBoard() {
               className="text-3xl text-center mb-1"
               style={{ fontFamily: "'Lilita One', cursive", color: '#D94F3B' }}
             >
-              {round === 1 ? '⏰ Time\'s Up!' : '🎉 Round 2 Complete!'}
+              {round === 1 ? '⏰ Time\'s Up!' : round1Metrics ? '🎉 Round 2 Complete!' : '🎉 Round Complete!'}
             </h2>
             <p className="text-center text-sm mb-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>
-              {round === 1 ? "That was chaos, wasn't it? Let's learn a better way." : "Feel the difference? That's the power of flow."}
+              {round === 1
+                ? "That was chaos, wasn't it? Let's learn a better way."
+                : round1Metrics
+                  ? "Feel the difference? That's the power of flow."
+                  : "Great job, Chef! Here's how you did with WIP limits."
+              }
             </p>
 
             <div className="grid grid-cols-2 gap-4 mb-6">
@@ -1178,7 +1195,7 @@ export default function SliceOfFlowBoard() {
             <div className="text-center mb-6 p-3 rounded-lg" style={{ background: '#E3F2FD' }}>
               <div className="text-xs mb-1" style={{ color: '#666' }}>Avg Lead Time</div>
               <div className="text-xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#1976D2' }}>
-                {formatTime(metrics.avgLeadTime)}
+                {metrics.served > 0 ? formatTime(metrics.avgLeadTime) : '—'}
               </div>
             </div>
 

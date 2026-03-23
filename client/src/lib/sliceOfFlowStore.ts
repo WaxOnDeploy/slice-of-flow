@@ -150,7 +150,17 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
 
   // ─── PAUSE / RESUME ─────────────────────────────
   pauseGame: () => set({ isRunning: false }),
-  resumeGame: () => set({ isRunning: true }),
+  resumeGame: () => {
+    // Reset timer to full duration on resume to prevent time loss during tutorial/pause
+    const state = get();
+    const preset = getPreset(state.difficulty);
+    // Only reset if the timer hasn't actually started counting (i.e., first resume after startGame/skipToRound2)
+    if (!state.isRunning && state.roundTimer === preset.roundDuration) {
+      set({ isRunning: true, roundTimer: preset.roundDuration });
+    } else {
+      set({ isRunning: true });
+    }
+  },
 
   // ─── START ROUND ─────────────────────────────────
   startRound: (round) => {
@@ -177,8 +187,8 @@ export const useSliceOfFlowStore = create<GameState>((set, get) => ({
     let newCards = [...state.cards];
     let shouldFlip = false;
 
-    // Round timer ALWAYS counts down in real time (1 second per tick)
-    const newRoundTimer = state.roundTimer - 1;
+    // Round timer ticks at speed rate — at 3x, a 4-min round finishes in ~80 real seconds
+    const newRoundTimer = state.roundTimer - spd;
 
     // Round 1: auto-flip orders
     let newFlipTimer = state.orderFlipTimer;
