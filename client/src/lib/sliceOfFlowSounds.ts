@@ -351,6 +351,38 @@ export function playPullOrder() {
   osc.stop(ctx.currentTime + 0.2);
 }
 
+// ─── SERVICE BELL — "ding ding!" to end round ────
+// Classic diner service bell — two bright metallic dings
+export function playServiceBell() {
+  if (!soundEnabled) return;
+  const ctx = getAudioContext();
+  
+  [0, 0.18].forEach((delay) => {
+    const osc = ctx.createOscillator();
+    const osc2 = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    osc.connect(gain);
+    osc2.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(2637, ctx.currentTime + delay); // E7 — bright bell
+    
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(3520, ctx.currentTime + delay); // A7 — overtone shimmer
+    
+    gain.gain.setValueAtTime(0, ctx.currentTime + delay);
+    gain.gain.linearRampToValueAtTime(0.35, ctx.currentTime + delay + 0.005);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + delay + 0.6);
+    
+    osc.start(ctx.currentTime + delay);
+    osc2.start(ctx.currentTime + delay);
+    osc.stop(ctx.currentTime + delay + 0.6);
+    osc2.stop(ctx.currentTime + delay + 0.6);
+  });
+}
+
 // ─── GAME START — upbeat jingle ───────────────────
 // Short upbeat jingle when starting the game
 export function playGameStart() {

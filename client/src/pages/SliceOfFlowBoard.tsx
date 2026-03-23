@@ -16,6 +16,7 @@ import {
   playPullOrder,
   playWipBlocked,
   playGameStart,
+  playServiceBell,
   isSoundEnabled,
   toggleSound,
 } from '@/lib/sliceOfFlowSounds';
@@ -640,7 +641,7 @@ export default function SliceOfFlowBoard() {
     setShowTutorial(false);
     localStorage.setItem(TUTORIAL_KEY, '1');
   }, []);
-  const {
+    const {
     round,
     cards,
     roundTimer,
@@ -652,6 +653,7 @@ export default function SliceOfFlowBoard() {
     moveCard,
     canMoveCard,
     pullNextOrder,
+    endRound,
     goToTransition,
     goToDebrief,
     speed,
@@ -738,8 +740,15 @@ export default function SliceOfFlowBoard() {
     setDragOverColumn(null);
   }, []);
 
+  // Check if all cards are complete (served or burnt, none in pipeline)
+  const allOrdersFlipped = cardsByColumn.orderDeck.length === 0;
+  const anyCardsInPlay = cards.some(
+    (c) => c.column !== 'orderDeck' && c.column !== 'served' && !c.burnt
+  );
+  const kitchenClear = allOrdersFlipped && !anyCardsInPlay && isRunning;
+
   // Round ended?
-  const roundEnded = !isRunning && roundTimer <= 0;
+  const roundEnded = !isRunning && (roundTimer <= 0 || round1Metrics !== null || round2Metrics !== null);
   const metrics = round === 1 ? round1Metrics : round2Metrics;
 
   return (
@@ -920,6 +929,44 @@ export default function SliceOfFlowBoard() {
           </div>
         ))}
       </div>
+
+      {/* Service Bell — Kitchen Clear! */}
+      {kitchenClear && (
+        <div
+          className="flex items-center justify-center py-3 flex-shrink-0"
+          style={{
+            background: 'linear-gradient(90deg, rgba(76,175,80,0.15) 0%, rgba(76,175,80,0.25) 50%, rgba(76,175,80,0.15) 100%)',
+            borderBottom: '2px solid rgba(76,175,80,0.4)',
+            borderTop: '2px solid rgba(76,175,80,0.4)',
+          }}
+        >
+          <div className="flex items-center gap-4">
+            <span className="text-lg" style={{ fontFamily: "'Lilita One', cursive", color: '#2E7D32' }}>
+              Kitchen Clear!
+            </span>
+            <button
+              onClick={() => {
+                playServiceBell();
+                // Small delay so the bell sound plays before the round-end overlay appears
+                setTimeout(() => endRound(), 400);
+              }}
+              className="group flex items-center gap-2 px-6 py-2.5 rounded-lg text-base font-bold text-white transition-all hover:scale-110 active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, #FFD54F 0%, #FFB300 100%)',
+                color: '#3E2723',
+                fontFamily: "'Lilita One', cursive",
+                boxShadow: '0 4px 20px rgba(255,179,0,0.4), 0 0 0 3px rgba(255,213,79,0.3)',
+              }}
+            >
+              <span className="text-2xl" style={{ filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))' }}>🛎️</span>
+              <span>Ring the Bell!</span>
+            </button>
+            <span className="text-sm" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#4CAF50' }}>
+              {formatTime(roundTimer)} remaining
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Round end overlay */}
       {roundEnded && metrics && (

@@ -11,32 +11,32 @@ const STEPS: TutorialStep[] = [
   {
     icon: '📋',
     title: 'Orders Arrive',
-    description: 'In Round 1, orders automatically appear in the queue every 15 seconds — whether you\'re ready or not. This is a PUSH system. In Round 2, YOU decide when to pull the next order.',
-    tip: 'Watch the auto-flip timer in the top bar to anticipate incoming orders.',
+    description: 'Round 1: Orders auto-appear every 15 sec — whether you\'re ready or not. That\'s PUSH. Round 2: YOU pull when ready.',
+    tip: 'Watch the auto-flip timer in the top bar.',
   },
   {
     icon: '🖱️',
     title: 'Drag Cards Forward',
-    description: 'Drag pizza order cards from left to right through each station: Order Queue → Prep → Oven → Box & Deliver → Served. Cards can only move one station at a time.',
-    tip: 'Cards glow with a ▶ arrow when they\'re ready to move to the next station.',
+    description: 'Drag pizza orders left → right through each station: Orders → Prep → Oven → Box & Deliver → Served. One station at a time.',
+    tip: 'Cards glow with a ▶ arrow when ready to move.',
   },
   {
     icon: '⏱️',
     title: 'Watch the Timers',
-    description: 'Each pizza has a PREP timer (based on complexity) and an OVEN timer. You can\'t move a pizza until prep is done. Leave it in the oven too long and it BURNS!',
-    tip: 'The oven card turns yellow as a warning, then red when it burns. Move fast!',
+    description: 'Each pizza has a PREP timer and an OVEN timer. Can\'t move until prep is done. Leave it in the oven too long? It BURNS!',
+    tip: 'Oven card turns yellow → then red = burnt. Move fast!',
   },
   {
     icon: '🎯',
     title: 'Score Points',
-    description: 'Earn +10 for each served pizza. Lose -5 for burns and -3 for angry customers (orders waiting too long). Get a +15 bonus if you serve zero burns in a round!',
-    tip: 'Quality over quantity — one burn costs half a served pizza.',
+    description: '+1 per served pizza. -2 for burns. -1 for angry customers. +3 bonus for zero burns in a round!',
+    tip: 'Quality over quantity — one burn costs two served.',
   },
   {
     icon: '🔄',
     title: 'Two Rounds',
-    description: 'Round 1 is chaos — no rules, orders pushed at you. After Round 1, you\'ll learn Kanban principles and WIP limits. Round 2 uses those rules. Compare your results!',
-    tip: 'The debrief at the end shows exactly how Kanban improved your flow.',
+    description: 'Round 1 = chaos, no rules. Then learn Kanban + WIP limits. Round 2 uses those rules. Compare your results!',
+    tip: 'The debrief shows exactly how Kanban improved flow.',
   },
 ];
 
@@ -52,87 +52,196 @@ export default function SliceOfFlowTutorial({ onClose }: Props) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(4px)' }}
+      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)' }}
     >
+      {/* Diner Order Ticket */}
       <div
-        className="relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden"
+        className="relative w-full max-w-xl mx-4"
         style={{
-          background: 'linear-gradient(145deg, #2D1B0E 0%, #1A0F06 100%)',
-          border: '2px solid rgba(255,183,77,0.4)',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.6), 0 0 40px rgba(255,183,77,0.1)',
+          /* Ticket shape with torn/perforated edges */
+          background: '#FFFEF5',
+          borderRadius: 4,
+          boxShadow: '0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.05)',
+          /* Subtle paper texture via repeating gradient */
+          backgroundImage: `
+            repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 28px,
+              rgba(200,180,160,0.12) 28px,
+              rgba(200,180,160,0.12) 29px
+            )
+          `,
         }}
       >
-        {/* Progress dots */}
-        <div className="flex justify-center gap-2 pt-5 pb-2">
+        {/* Torn top edge */}
+        <div
+          style={{
+            height: 12,
+            background: `repeating-linear-gradient(
+              90deg,
+              #FFFEF5 0px,
+              #FFFEF5 8px,
+              transparent 8px,
+              transparent 10px,
+              #FFFEF5 10px,
+              #FFFEF5 18px,
+              transparent 18px,
+              transparent 20px
+            )`,
+            borderRadius: '4px 4px 0 0',
+          }}
+        />
+
+        {/* Red stripe header — like a diner check */}
+        <div
+          className="px-6 py-3"
+          style={{
+            background: '#C62828',
+            borderTop: '3px solid #8E0000',
+            borderBottom: '3px solid #8E0000',
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h1
+                style={{
+                  fontFamily: "'Lilita One', cursive",
+                  fontSize: 28,
+                  color: '#FFFEF5',
+                  letterSpacing: 1,
+                  lineHeight: 1.1,
+                  textShadow: '2px 2px 0 rgba(0,0,0,0.2)',
+                }}
+              >
+                ORDER UP!
+              </h1>
+              <div
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  fontSize: 13,
+                  color: 'rgba(255,255,255,0.7)',
+                  letterSpacing: 2,
+                  marginTop: 2,
+                }}
+              >
+                HOW TO PLAY
+              </div>
+            </div>
+            <div
+              style={{
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 14,
+                color: 'rgba(255,255,255,0.6)',
+                textAlign: 'right',
+              }}
+            >
+              <div>TICKET</div>
+              <div style={{ fontSize: 28, fontWeight: 'bold', color: '#FFD54F', lineHeight: 1 }}>
+                #{step + 1}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Progress pips — like order number dots */}
+        <div className="flex justify-center gap-3 pt-4 pb-2">
           {STEPS.map((_, i) => (
             <div
               key={i}
-              className="w-2.5 h-2.5 rounded-full transition-all duration-300"
+              className="flex items-center justify-center"
               style={{
-                background: i === step ? '#FFB74D' : i < step ? '#8D6E63' : 'rgba(255,255,255,0.15)',
-                transform: i === step ? 'scale(1.3)' : 'scale(1)',
+                width: 28,
+                height: 28,
+                borderRadius: '50%',
+                background: i === step ? '#C62828' : i < step ? '#E8D5B7' : 'transparent',
+                border: `2px solid ${i === step ? '#C62828' : i < step ? '#C4A882' : '#D4C4A8'}`,
+                transition: 'all 0.3s',
+                fontFamily: "'JetBrains Mono', monospace",
+                fontSize: 12,
+                fontWeight: 'bold',
+                color: i === step ? '#fff' : i < step ? '#8B7355' : '#C4A882',
               }}
-            />
+            >
+              {i + 1}
+            </div>
           ))}
         </div>
 
-        {/* Content */}
-        <div className="px-8 pt-4 pb-6">
-          {/* Icon */}
-          <div className="text-center mb-4">
-            <span className="text-5xl">{current.icon}</span>
+        {/* Content area */}
+        <div className="px-8 pt-3 pb-6">
+          {/* Icon + Title row — diner style */}
+          <div className="flex items-center gap-3 mb-3">
+            <span style={{ fontSize: 44 }}>{current.icon}</span>
+            <div>
+              <h2
+                style={{
+                  fontFamily: "'Lilita One', cursive",
+                  fontSize: 30,
+                  color: '#3E2723',
+                  lineHeight: 1.1,
+                }}
+              >
+                {current.title}
+              </h2>
+            </div>
           </div>
 
-          {/* Step counter */}
-          <div className="text-center mb-2">
-            <span
-              className="text-xs font-bold tracking-widest uppercase"
-              style={{ color: '#FFB74D', fontFamily: "'JetBrains Mono', monospace" }}
-            >
-              Step {step + 1} of {STEPS.length}
-            </span>
-          </div>
+          {/* Dashed separator — like a receipt */}
+          <div
+            style={{
+              borderTop: '2px dashed #C4A882',
+              margin: '8px 0 16px',
+            }}
+          />
 
-          {/* Title */}
-          <h2
-            className="text-2xl text-center mb-3"
-            style={{ fontFamily: "'Lilita One', cursive", color: '#FFF8E1' }}
-          >
-            {current.title}
-          </h2>
-
-          {/* Description */}
+          {/* Description — LARGE readable text */}
           <p
-            className="text-sm leading-relaxed text-center mb-4"
-            style={{ color: 'rgba(255,255,255,0.8)', fontFamily: "'Caveat', cursive", fontSize: '17px' }}
+            style={{
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 20,
+              lineHeight: 1.5,
+              color: '#3E2723',
+              marginBottom: 16,
+            }}
           >
             {current.description}
           </p>
 
-          {/* Tip box */}
+          {/* Tip — styled like a handwritten note on the ticket */}
           <div
-            className="rounded-lg px-4 py-3 mb-5"
+            className="rounded px-5 py-3 mb-5"
             style={{
-              background: 'rgba(255,183,77,0.1)',
-              border: '1px solid rgba(255,183,77,0.25)',
+              background: '#FFF9E6',
+              border: '1px solid #E8D5B7',
+              borderLeft: '4px solid #FFB300',
             }}
           >
-            <p className="text-xs" style={{ color: '#FFB74D' }}>
-              <span className="font-bold">💡 TIP:</span>{' '}
-              <span style={{ color: 'rgba(255,255,255,0.7)' }}>{current.tip}</span>
+            <p
+              style={{
+                fontFamily: "'Caveat', cursive",
+                fontSize: 22,
+                color: '#5D4037',
+                lineHeight: 1.4,
+              }}
+            >
+              <span style={{ fontWeight: 'bold', color: '#E65100' }}>Chef's Tip: </span>
+              {current.tip}
             </p>
           </div>
 
-          {/* Navigation buttons */}
+          {/* Navigation buttons — styled like diner buttons */}
           <div className="flex items-center justify-between">
             <button
               onClick={() => setStep(Math.max(0, step - 1))}
-              className="px-4 py-2 rounded-lg text-sm font-bold transition-all hover:scale-105"
+              className="px-5 py-2.5 rounded text-base transition-all hover:scale-105"
               style={{
-                background: 'rgba(255,255,255,0.08)',
-                color: step > 0 ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.2)',
+                background: step > 0 ? '#E8D5B7' : '#F0EBE0',
+                color: step > 0 ? '#5D4037' : '#C4A882',
                 fontFamily: "'Lilita One', cursive",
+                fontSize: 18,
                 pointerEvents: step > 0 ? 'auto' : 'none',
+                border: '2px solid #C4A882',
               }}
             >
               ← Back
@@ -146,31 +255,52 @@ export default function SliceOfFlowTutorial({ onClose }: Props) {
                   setStep(step + 1);
                 }
               }}
-              className="px-6 py-2 rounded-lg text-sm font-bold transition-all hover:scale-105 active:scale-95"
+              className="px-7 py-2.5 rounded text-base transition-all hover:scale-105 active:scale-95"
               style={{
-                background: isLast
-                  ? 'linear-gradient(135deg, #D32F2F 0%, #B71C1C 100%)'
-                  : 'linear-gradient(135deg, #FFB74D 0%, #FF9800 100%)',
-                color: isLast ? '#fff' : '#2D1B0E',
+                background: isLast ? '#C62828' : '#FFB300',
+                color: isLast ? '#fff' : '#3E2723',
                 fontFamily: "'Lilita One', cursive",
+                fontSize: 18,
+                border: isLast ? '2px solid #8E0000' : '2px solid #E69500',
                 boxShadow: isLast
-                  ? '0 4px 15px rgba(211,47,47,0.4)'
-                  : '0 4px 15px rgba(255,152,0,0.3)',
+                  ? '0 4px 15px rgba(198,40,40,0.3)'
+                  : '0 4px 15px rgba(255,179,0,0.3)',
               }}
             >
-              {isLast ? "Let's Cook! 🍕" : 'Next →'}
+              {isLast ? "Fire it up! 🍕" : 'Next Order →'}
             </button>
           </div>
         </div>
 
-        {/* Skip button */}
+        {/* Torn bottom edge */}
+        <div
+          style={{
+            height: 12,
+            background: `repeating-linear-gradient(
+              90deg,
+              #FFFEF5 0px,
+              #FFFEF5 8px,
+              transparent 8px,
+              transparent 10px,
+              #FFFEF5 10px,
+              #FFFEF5 18px,
+              transparent 18px,
+              transparent 20px
+            )`,
+            borderRadius: '0 0 4px 4px',
+          }}
+        />
+
+        {/* Skip button — small, unobtrusive */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-xs px-3 py-1 rounded-full transition-all hover:scale-105"
+          className="absolute top-4 right-4 text-xs px-3 py-1 rounded-full transition-all hover:scale-105"
           style={{
-            background: 'rgba(255,255,255,0.08)',
-            color: 'rgba(255,255,255,0.4)',
+            background: 'rgba(255,255,255,0.9)',
+            color: '#999',
             fontFamily: "'JetBrains Mono', monospace",
+            fontSize: 11,
+            border: '1px solid #ddd',
           }}
         >
           Skip
