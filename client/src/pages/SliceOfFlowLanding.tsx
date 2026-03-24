@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import { DIFFICULTY_PRESETS, type Difficulty } from '@/lib/sliceOfFlowConstants';
 
-const HERO_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-landing-hero-BvjabfgNxM49wTAoo9T4aA.webp';
+const HERO_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-landing-hero-fixed_39508d4b.png';
 
 const DIFFICULTY_KEYS: Difficulty[] = ['easy', 'normal', 'hard'];
 

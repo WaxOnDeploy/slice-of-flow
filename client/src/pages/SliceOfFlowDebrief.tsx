@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 
 Chart.register(...registerables);
 
-const LANDING_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-landing-hero-BvjabfgNxM49wTAoo9T4aA.webp';
+const LANDING_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-landing-hero-fixed_39508d4b.png';
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
