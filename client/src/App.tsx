@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import SliceOfFlow from "./pages/SliceOfFlow";
+import Game from "./pages/Game";
 
 function SliceOfFlowRedirect() {
   window.location.replace("/");
@@ -18,6 +19,7 @@ function Router() {
       <Route path="/" component={SliceOfFlow} />
       <Route path="/deck-shop" component={Home} />
       <Route path="/slice-of-flow" component={SliceOfFlowRedirect} />
+      <Route path="/game" component={Game} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
