@@ -177,6 +177,17 @@ function formatTime(seconds: number): string {
   return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
+type GuidedFirstMoveStage = 'pending' | 'select' | 'move' | 'success' | 'complete';
+
+function getNextColumn(columnId: ColumnId): ColumnId | null {
+  const index = COLUMNS.findIndex((column) => column.id === columnId);
+  return index >= 0 && index < COLUMNS.length - 1 ? COLUMNS[index + 1].id : null;
+}
+
+function getColumnLabel(columnId: ColumnId | null): string {
+  return COLUMNS.find((column) => column.id === columnId)?.label ?? 'next station';
+}
+
 // ─── CSS KEYFRAMES (injected once) ─────────────────
 const STYLE_ID = 'sof-board-styles';
 function injectStyles() {
@@ -291,6 +302,21 @@ function injectStyles() {
     .sof-oven-glow-warm { animation: sof-oven-glow-warm 1.5s ease-in-out infinite; }
     .sof-oven-glow-hot { animation: sof-oven-glow-hot 1.2s ease-in-out infinite; }
     .sof-oven-glow-danger { animation: sof-oven-glow-danger 0.8s ease-in-out infinite; }
+
+    /* ─── GUIDED FIRST MOVE + SELECTED NEXT ACTION ─── */
+    @keyframes sof-guide-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(255,193,7,0.45), 0 0 18px 4px rgba(255,193,7,0.26); }
+      50% { box-shadow: 0 0 0 6px rgba(255,193,7,0.72), 0 0 30px 9px rgba(255,193,7,0.38); }
+    }
+    @keyframes sof-next-station-pulse {
+      0%, 100% { box-shadow: 0 0 0 3px rgba(25,118,210,0.32), 0 0 12px 2px rgba(25,118,210,0.18); }
+      50% { box-shadow: 0 0 0 6px rgba(25,118,210,0.58), 0 0 24px 6px rgba(25,118,210,0.30); }
+    }
+    .sof-guide-ticket { animation: sof-guide-pulse 1.1s ease-in-out infinite; }
+    .sof-next-station { animation: sof-next-station-pulse 1.2s ease-in-out infinite; }
+    @media (prefers-reduced-motion: reduce) {
+      .sof-guide-ticket, .sof-next-station { animation: none; }
+    }
   `;
   document.head.appendChild(style);
 }
@@ -498,11 +524,19 @@ function TimerProgressBar({
 function PizzaCard({
   card,
   isDragging,
+  isSelected,
+  isGuidedTicket,
   onDragStart,
+  onSelect,
+  onMoveForward,
 }: {
   card: OrderCard;
   isDragging?: boolean;
+  isSelected: boolean;
+  isGuidedTicket: boolean;
   onDragStart: (cardId: string) => void;
+  onSelect: (cardId: string) => void;
+  onMoveForward: (cardId: string) => void;
 }) {
   const difficulty = useSliceOfFlowStore((s) => s.difficulty);
   const preset = DIFFICULTY_PRESETS[difficulty];
@@ -537,6 +571,7 @@ function PizzaCard({
   else if (ovenDone || prepDone) animClass += ' sof-glow-ready';
   else if (ovenGlowClass) animClass += ` ${ovenGlowClass}`;
   if (isDragging) animClass += ' sof-dragging';
+  if (isGuidedTicket) animClass += ' sof-guide-ticket';
 
   // Ready-to-move indicator
   const canMoveForward = prepDone || ovenDone || card.column === 'orderQueue' || card.column === 'boxDeliver';
@@ -549,11 +584,33 @@ function PizzaCard({
         e.dataTransfer.effectAllowed = 'move';
         onDragStart(card.id);
       }}
+      onClick={() => {
+        if (!card.burnt) onSelect(card.id);
+      }}
+      onKeyDown={(event) => {
+        if (card.burnt) return;
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onSelect(card.id);
+        }
+        if (event.key === 'ArrowRight' && isSelected) {
+          event.preventDefault();
+          onMoveForward(card.id);
+        }
+      }}
+      role="button"
+      tabIndex={card.burnt ? -1 : 0}
+      aria-pressed={isSelected}
+      aria-label={`Order #${card.orderNumber}, ${card.pizzaType}, in ${getColumnLabel(card.column)}${isSelected ? '. Selected. Press right arrow to move it to the next station when available.' : '. Press Enter or Space to select it.'}`}
       className={`rounded-md border-2 p-2.5 transition-all duration-150 select-none cursor-grab active:cursor-grabbing ${animClass}`}
       style={{
         background: card.burnt ? '#4a4a4a' : '#FFF8E7',
-        borderColor: card.burnt ? '#333' : ovenWarning ? '#B71C1C' : ovenDone || prepDone ? '#2E7D32' : card.color,
-        boxShadow: isDragging ? '0 8px 24px rgba(0,0,0,0.3)' : '0 2px 6px rgba(0,0,0,0.1)',
+        borderColor: card.burnt ? '#333' : isGuidedTicket ? '#FFB300' : isSelected ? '#1976D2' : ovenWarning ? '#B71C1C' : ovenDone || prepDone ? '#2E7D32' : card.color,
+        boxShadow: isDragging
+          ? '0 8px 24px rgba(0,0,0,0.3)'
+          : isSelected
+            ? '0 0 0 3px rgba(25,118,210,0.25), 0 5px 14px rgba(25,118,210,0.24)'
+            : '0 2px 6px rgba(0,0,0,0.1)',
         minWidth: 140,
         cursor: card.burnt ? 'not-allowed' : undefined,
         position: 'relative' as const,
@@ -673,7 +730,15 @@ function BoardColumn({
   wipEnabled,
   isDropTarget,
   isValidDrop,
+  isSuggestedDestination,
+  isSuggestionReady,
+  suggestionText,
+  selectedCardId,
+  guidedCardId,
   onDragStart,
+  onSelect,
+  onMoveForward,
+  onSuggestedMove,
 }: {
   columnId: ColumnId;
   label: string;
@@ -684,7 +749,15 @@ function BoardColumn({
   wipEnabled: boolean;
   isDropTarget: boolean;
   isValidDrop: boolean | null;
+  isSuggestedDestination: boolean;
+  isSuggestionReady: boolean;
+  suggestionText?: string;
+  selectedCardId: string | null;
+  guidedCardId: string | null;
   onDragStart: (cardId: string) => void;
+  onSelect: (cardId: string) => void;
+  onMoveForward: (cardId: string) => void;
+  onSuggestedMove: () => void;
 }) {
   const isOverLimit = wipEnabled && wipLimit !== undefined && cards.length >= wipLimit;
   const isDeck = columnId === 'orderDeck';
@@ -695,12 +768,20 @@ function BoardColumn({
     dropClass = isValidDrop ? 'sof-drop-highlight' : 'sof-drop-invalid';
   }
 
+  const highlightColor = isDropTarget
+    ? (isValidDrop ? '#4CAF50' : '#B71C1C')
+    : isSuggestedDestination
+      ? (isSuggestionReady ? '#1976D2' : '#FF9800')
+      : bgColor;
+
   return (
     <div
-      className={`flex flex-col rounded-lg overflow-hidden transition-all duration-200 ${dropClass}`}
+      className={`flex flex-col rounded-lg overflow-hidden transition-all duration-200 ${dropClass} ${isSuggestedDestination ? 'sof-next-station' : ''}`}
+      role="region"
+      aria-label={`${label} station${isSuggestedDestination ? ', next suggested action' : ''}`}
       style={{
         background: `${bgColor}33`,
-        border: `2px solid ${isDropTarget ? (isValidDrop ? '#4CAF50' : '#B71C1C') : bgColor}`,
+        border: `${isSuggestedDestination || isDropTarget ? 3 : 2}px solid ${highlightColor}`,
         flex: '1 1 0',
         minHeight: 0,
       }}
@@ -751,6 +832,39 @@ function BoardColumn({
         </div>
       </div>
 
+      {/* Clear action target for the selected ticket — works with click, touch, and keyboard. */}
+      {isSuggestedDestination && suggestionText && (
+        <div
+          className="px-2 py-1.5 flex-shrink-0"
+          style={{
+            background: isSuggestionReady ? 'rgba(25,118,210,0.13)' : 'rgba(255,152,0,0.14)',
+            borderBottom: `1px solid ${isSuggestionReady ? 'rgba(25,118,210,0.32)' : 'rgba(255,152,0,0.35)'}`,
+          }}
+        >
+          {isSuggestionReady ? (
+            <button
+              onClick={onSuggestedMove}
+              className="w-full rounded px-2 py-1.5 text-xs font-bold transition-all hover:scale-[1.02] active:scale-[0.98]"
+              style={{
+                background: '#1976D2',
+                color: '#fff',
+                fontFamily: "'DM Sans', sans-serif",
+                boxShadow: '0 2px 6px rgba(25,118,210,0.25)',
+              }}
+            >
+              {suggestionText}
+            </button>
+          ) : (
+            <div
+              className="text-center text-xs font-semibold"
+              style={{ color: '#9A5A00', fontFamily: "'DM Sans', sans-serif", lineHeight: 1.25 }}
+            >
+              {suggestionText}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Cards area */}
       <div
         className="flex-1 p-2 space-y-2 overflow-y-auto"
@@ -795,7 +909,11 @@ function BoardColumn({
               key={card.id}
               card={card}
               isDragging={false}
+              isSelected={selectedCardId === card.id}
+              isGuidedTicket={guidedCardId === card.id}
               onDragStart={onDragStart}
+              onSelect={onSelect}
+              onMoveForward={onMoveForward}
             />
           ))
         )}
@@ -819,6 +937,7 @@ export default function SliceOfFlowBoard() {
     round2Metrics,
     moveCard,
     canMoveCard,
+    flipNextOrder,
     pullNextOrder,
     endRound,
     goToTransition,
@@ -834,17 +953,28 @@ export default function SliceOfFlowBoard() {
   const [showTutorial, setShowTutorial] = useState(() => {
     return !localStorage.getItem(TUTORIAL_KEY);
   });
+  const [guidedFirstMoveStage, setGuidedFirstMoveStage] = useState<GuidedFirstMoveStage>(() => (
+    round === 1 ? 'pending' : 'complete'
+  ));
+  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
 
   const closeTutorial = useCallback(() => {
     setShowTutorial(false);
     localStorage.setItem(TUTORIAL_KEY, '1');
-    // Start the round timer now that instructions are done
-    resumeGame();
-  }, [resumeGame]);
+    // Round 1 stays paused until the player completes the guided first move.
+    if (round !== 1 || guidedFirstMoveStage === 'complete') resumeGame();
+  }, [guidedFirstMoveStage, resumeGame, round]);
 
   // If tutorial was already seen (returning player), auto-start immediately
   useEffect(() => {
-    if (!showTutorial && !isRunning && roundTimer > 0 && !round1Metrics && !round2Metrics) {
+    if (
+      !showTutorial
+      && round !== 1
+      && !isRunning
+      && roundTimer > 0
+      && !round1Metrics
+      && !round2Metrics
+    ) {
       resumeGame();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -872,6 +1002,26 @@ export default function SliceOfFlowBoard() {
     return grouped;
   }, [cards]);
 
+  // The first Round 1 order is intentionally revealed while the round clock is paused.
+  // It gives a new player a safe, concrete first action before PUSH pressure starts.
+  useEffect(() => {
+    if (round !== 1 || showTutorial || guidedFirstMoveStage !== 'pending') return;
+
+    const firstAvailableOrder = cards.find((card) => card.column === 'orderQueue');
+    if (!firstAvailableOrder) flipNextOrder();
+    setGuidedFirstMoveStage('select');
+  }, [cards, flipNextOrder, guidedFirstMoveStage, round, showTutorial]);
+
+  // Let the success confirmation land, then start the normal Round 1 timer and auto-flips.
+  useEffect(() => {
+    if (guidedFirstMoveStage !== 'success') return;
+    const timer = window.setTimeout(() => {
+      setGuidedFirstMoveStage('complete');
+      resumeGame();
+    }, 1500);
+    return () => window.clearTimeout(timer);
+  }, [guidedFirstMoveStage, resumeGame]);
+
   // Counts
   const servedCount = cards.filter((c) => c.column === 'served' && !c.burnt).length;
   const burntCount = cards.filter((c) => c.burnt).length;
@@ -889,10 +1039,68 @@ export default function SliceOfFlowBoard() {
     return result.allowed;
   }, [draggedCardId, dragOverColumn, canMoveCard]);
 
+  const getInvalidMoveHelp = useCallback((cardId: string, reason?: string) => {
+    const card = cards.find((candidate) => candidate.id === cardId);
+    if (!card) return reason || 'Select a ticket, then move it one station right.';
+    if (card.column === 'prep') return 'Finish Prep first; then send it to the Oven.';
+    if (card.column === 'oven') return 'Let it finish baking; then send it to Pizza Box.';
+    if (reason?.includes('WIP limit')) return 'That station is at capacity. Finish work there first, then try again.';
+    if (reason?.includes('one station')) return `Move this ticket to ${getColumnLabel(getNextColumn(card.column))} next.`;
+    return reason || `Move this ticket to ${getColumnLabel(getNextColumn(card.column))} when it is available.`;
+  }, [cards]);
+
+  const completeMove = useCallback((cardId: string, toColumn: ColumnId, confettiPoint?: { x: number; y: number }) => {
+    const result = canMoveCard(cardId, toColumn);
+    if (!result.allowed) {
+      if (result.reason?.includes('WIP limit')) playWipBlocked();
+      toast.error(getInvalidMoveHelp(cardId, result.reason), { duration: 2600 });
+      return false;
+    }
+
+    moveCard(cardId, toColumn);
+    if (toColumn === 'oven') playOvenSizzle();
+    else if (toColumn === 'served') {
+      playServed();
+      if (confettiPoint) spawnConfetti(confettiPoint.x, confettiPoint.y);
+    } else playCardMove();
+
+    const card = cards.find((candidate) => candidate.id === cardId);
+    const movedToPrepDuringGuide = round === 1
+      && guidedFirstMoveStage === 'move'
+      && card?.column === 'orderQueue'
+      && toColumn === 'prep';
+    setSelectedCardId(null);
+    if (movedToPrepDuringGuide) {
+      setGuidedFirstMoveStage('success');
+    } else {
+      toast.success(`Moved to ${COLUMNS.find((column) => column.id === toColumn)?.label}`, { duration: 1500 });
+    }
+    return true;
+  }, [canMoveCard, cards, getInvalidMoveHelp, guidedFirstMoveStage, moveCard, round]);
+
+  const handleSelectCard = useCallback((cardId: string) => {
+    setSelectedCardId(cardId);
+    if (guidedFirstMoveStage === 'select') {
+      const firstQueuedCard = cards.find((card) => card.column === 'orderQueue');
+      if (firstQueuedCard?.id === cardId) setGuidedFirstMoveStage('move');
+    }
+  }, [cards, guidedFirstMoveStage]);
+
+  const moveSelectedCardForward = useCallback((cardId: string) => {
+    const card = cards.find((candidate) => candidate.id === cardId);
+    const nextColumn = card ? getNextColumn(card.column) : null;
+    if (!nextColumn) {
+      toast.error('This ticket has already completed its journey.', { duration: 2000 });
+      return;
+    }
+    completeMove(cardId, nextColumn);
+  }, [cards, completeMove]);
+
   // Handle drag
   const handleDragStart = useCallback((cardId: string) => {
     setDraggedCardId(cardId);
-  }, []);
+    handleSelectCard(cardId);
+  }, [handleSelectCard]);
 
   const handleDragOver = useCallback((e: React.DragEvent, columnId: ColumnId) => {
     e.preventDefault();
@@ -904,26 +1112,11 @@ export default function SliceOfFlowBoard() {
     e.preventDefault();
     const cardId = draggedCardId || e.dataTransfer.getData('text/plain');
     if (cardId) {
-      const result = canMoveCard(cardId, toColumn);
-      if (result.allowed) {
-        moveCard(cardId, toColumn);
-        // Play context-specific sound
-        if (toColumn === 'oven') playOvenSizzle();
-        else if (toColumn === 'served') {
-          playServed();
-          // Confetti burst at drop location
-          spawnConfetti(e.clientX, e.clientY);
-        }
-        else playCardMove();
-        toast.success(`Moved to ${COLUMNS.find(c => c.id === toColumn)?.label}`, { duration: 1500 });
-      } else {
-        if (result.reason?.includes('WIP limit')) playWipBlocked();
-        toast.error(result.reason || 'Cannot move here', { duration: 2000 });
-      }
+      completeMove(cardId, toColumn, { x: e.clientX, y: e.clientY });
     }
     setDraggedCardId(null);
     setDragOverColumn(null);
-  }, [draggedCardId, canMoveCard, moveCard]);
+  }, [completeMove, draggedCardId]);
 
   const handleDragEnd = useCallback(() => {
     setDraggedCardId(null);
@@ -940,6 +1133,21 @@ export default function SliceOfFlowBoard() {
   // Round ended?
   const roundEnded = !isRunning && (roundTimer <= 0 || round1Metrics !== null || round2Metrics !== null);
   const metrics = round === 1 ? round1Metrics : round2Metrics;
+  const selectedCard = selectedCardId ? cards.find((card) => card.id === selectedCardId) ?? null : null;
+  const selectedNextColumn = selectedCard ? getNextColumn(selectedCard.column) : null;
+  const selectedMoveResult = selectedCard && selectedNextColumn
+    ? canMoveCard(selectedCard.id, selectedNextColumn)
+    : null;
+  const guidedTicketId = guidedFirstMoveStage === 'select'
+    ? cardsByColumn.orderQueue[0]?.id ?? null
+    : null;
+  const guideMessage = guidedFirstMoveStage === 'select'
+    ? 'Start here: select this order.'
+    : guidedFirstMoveStage === 'move'
+      ? 'Move it to Prep — work moves one station at a time.'
+      : guidedFirstMoveStage === 'success'
+        ? 'Prep started. This ticket will be ready shortly.'
+        : null;
 
   return (
     <>
@@ -1065,6 +1273,50 @@ export default function SliceOfFlowBoard() {
         </div>
       </div>
 
+      {/* Persistent movement rule — visible while playing without competing with the board. */}
+      <div
+        className="flex items-center justify-center gap-2 py-1.5 px-3 flex-shrink-0"
+        style={{
+          background: 'rgba(255,248,225,0.92)',
+          borderBottom: '1px solid rgba(121,85,72,0.22)',
+          color: '#5D4037',
+          fontFamily: "'DM Sans', sans-serif",
+          fontSize: 13,
+          fontWeight: 600,
+        }}
+      >
+        <span aria-hidden="true">💡</span>
+        <span>Select a ticket → move it one station right when capacity is available.</span>
+      </div>
+
+      {/* Round 1 micro-onboarding: the clock stays paused through the first successful move. */}
+      {guideMessage && (
+        <div
+          className="flex items-center justify-center gap-2 px-4 py-2 flex-shrink-0"
+          role="status"
+          aria-live="polite"
+          style={{
+            background: guidedFirstMoveStage === 'success' ? 'rgba(76,175,80,0.17)' : 'rgba(255,193,7,0.20)',
+            borderBottom: `2px solid ${guidedFirstMoveStage === 'success' ? 'rgba(76,175,80,0.52)' : 'rgba(255,179,0,0.62)'}`,
+            color: guidedFirstMoveStage === 'success' ? '#1B5E20' : '#704B00',
+            fontFamily: "'Lilita One', cursive",
+            fontSize: 16,
+            letterSpacing: 0.2,
+          }}
+        >
+          <span aria-hidden="true">{guidedFirstMoveStage === 'success' ? '✓' : '👆'}</span>
+          <span>{guideMessage}</span>
+          {guidedFirstMoveStage !== 'success' && (
+            <span
+              className="text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full"
+              style={{ background: 'rgba(255,255,255,0.58)', fontFamily: "'JetBrains Mono', monospace" }}
+            >
+              Round clock paused
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Round 2 — Pull button bar */}
       {round === 2 && isRunning && (
         <div className="flex items-center justify-center gap-4 py-2 flex-shrink-0" style={{ background: 'rgba(25,118,210,0.15)', borderBottom: '1px solid rgba(25,118,210,0.3)' }}>
@@ -1115,7 +1367,21 @@ export default function SliceOfFlowBoard() {
               wipEnabled={wipEnabled}
               isDropTarget={dragOverColumn === col.id}
               isValidDrop={getDropValidity(col.id)}
+              isSuggestedDestination={selectedNextColumn === col.id}
+              isSuggestionReady={selectedMoveResult?.allowed ?? false}
+              suggestionText={selectedNextColumn === col.id && selectedCard
+                ? selectedMoveResult?.allowed
+                  ? `Move #${selectedCard.orderNumber} to ${col.label} →`
+                  : getInvalidMoveHelp(selectedCard.id, selectedMoveResult?.reason)
+                : undefined}
+              selectedCardId={selectedCardId}
+              guidedCardId={guidedTicketId}
               onDragStart={handleDragStart}
+              onSelect={handleSelectCard}
+              onMoveForward={moveSelectedCardForward}
+              onSuggestedMove={() => {
+                if (selectedCardId) moveSelectedCardForward(selectedCardId);
+              }}
             />
           </div>
         ))}
