@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import { DIFFICULTY_PRESETS, type Difficulty } from '@/lib/sliceOfFlowConstants';
+import { BUILT_BY, HERO_IMAGE } from '@/lib/sliceOfFlowBrand';
 
-const HERO_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-landing-hero-fixed_39508d4b.png';
+const HERO_IMG = HERO_IMAGE;
 
 const DIFFICULTY_KEYS: Difficulty[] = ['easy', 'normal', 'hard'];
 
@@ -24,18 +25,19 @@ export default function SliceOfFlowLanding() {
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAF7F2' }}>
       {/* Hero Section */}
-      <div className="relative w-full" style={{ minHeight: '50vh' }}>
+      <div className="relative w-full">
         <img
           src={HERO_IMG}
-          alt="Slice of Flow Pizza Kitchen"
-          className="w-full h-full object-cover absolute inset-0"
-          style={{ minHeight: '50vh' }}
+          alt="Cartoon Slice of Flow pizza shop, with Jeff Bourke as one of the kitchen chefs"
+          className="block w-full h-auto"
+          width={2560}
+          height={1440}
         />
         {/* Gradient overlay */}
         <div
           className="absolute inset-0"
           style={{
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 30%, rgba(250,247,242,1) 100%)',
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 70%, rgba(250,247,242,1) 100%)',
           }}
         />
         {/* Title overlay */}
@@ -46,6 +48,7 @@ export default function SliceOfFlowLanding() {
           >
             Slice of Flow
           </h1>
+          <p className="text-base md:text-lg mt-2 font-semibold" style={{ fontFamily: "'DM Sans', sans-serif", color: '#534334' }}>{BUILT_BY}</p>
           <p
             className="text-xl md:text-2xl mt-1"
             style={{ fontFamily: "'DM Sans', sans-serif", color: '#666', fontWeight: 500 }}
@@ -250,6 +253,10 @@ export default function SliceOfFlowLanding() {
             })}
           </div>
         </div>
+
+        <p className="text-center text-sm mt-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>
+          Best on a laptop or tablet (1024px+). Mouse, touch, and keyboard controls are available on the board.
+        </p>
 
         {/* Start Buttons */}
         <div className="mt-8 flex flex-col items-center gap-4">

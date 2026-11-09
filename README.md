@@ -2,6 +2,8 @@
 
 A browser-based **Kanban pizza shop simulation** for Scrum Masters, Agile coaches, RTEs, delivery leads, and self-paced learners. Run the same kitchen through **Round 1: Push** and **Round 2: Pull + WIP limits**, then compare throughput, quality, and lead time.
 
+**Built By Jeff Bourke, MHA, PMP, SAFe-RTE.** The storefront includes a hand-drawn Jeff chef and a proprietor-style credit plaque. The approved credit is also rendered as accessible HTML, not only illustration text.
+
 This public repository, [`WaxOnDeploy/slice-of-flow`](https://github.com/WaxOnDeploy/slice-of-flow), contains the React 19 / TypeScript / Vite 7 application, its retained legacy pages, and a small Node static-serving helper. Workshop teams can discuss moves around one projected browser; this is not a synchronized multiplayer game.
 
 ## Local setup
@@ -29,6 +31,8 @@ pnpm dev
 
 Corepack reads the pinned version from this project. If `corepack` is unavailable in your Node installation, install Corepack first; if enabling its shims requires permissions, use `corepack pnpm` in place of `pnpm` below.
 
+If an older bundled Corepack reports **“Cannot find matching keyid”**, update Corepack rather than disabling signature verification. A verified, non-global alternative is `npm exec --yes --package=pnpm@10.4.1 -- pnpm test` (replace `test` with `install --frozen-lockfile` or `build` as needed).
+
 Open **http://localhost:3000/**. Vite binds to all interfaces and tries another port if 3000 is occupied, so check the terminal URL. Use a wide desktop/tablet viewport (1024px+ is recommended); the five-column board is not optimized for narrow phones.
 
 ### Development commands
@@ -37,7 +41,9 @@ Open **http://localhost:3000/**. Vite binds to all interfaces and tries another 
 | --- | --- |
 | `pnpm dev` | Start the Vite development server, normally on port 3000. |
 | `pnpm check` | Type-check with `tsc --noEmit`. |
-| `pnpm build` | Build the Vite client and bundle the Node helper with esbuild. |
+| `pnpm test` | Run the tracked Vitest regression suite once. |
+| `pnpm test:watch` | Run regression tests in watch mode during development. |
+| `pnpm build` | Require passing regression tests and type checks, then build the Vite client and Node helper. |
 | `pnpm preview` | Inspect the built client with Vite preview; use the URL it prints. |
 | `pnpm start` | Run the built Node helper in production mode, normally on port 3000 (`PORT` overrides it). |
 | `pnpm format` | Rewrite project formatting with Prettier; this modifies files. |
@@ -48,7 +54,7 @@ pnpm build
 pnpm preview
 ```
 
-**Two build outputs, two purposes:** `dist/public/` is the deployable static site, including `index.html` and bundled assets. `dist/index.js` is the optional Express/Node helper, which serves `dist/public` and falls back to `index.html` for client routes. Static hosting does not need to run `pnpm start`; the helper is not a gameplay API or database. Run `pnpm build` before either preview or start. The current package has no `test` script; use the manual checklist below alongside type-checking and building.
+**Two build outputs, two purposes:** `dist/public/` is the deployable static site, including `index.html` and bundled assets. `dist/index.js` is the optional Express/Node helper, which serves `dist/public` and falls back to `index.html` for client routes. Static hosting does not need to run `pnpm start`; the helper is not a gameplay API or database. Run `pnpm build` before either preview or start. Both Vercel and Pages invoke this gated build; it is not a substitute for protected-branch review or human/device playtesting.
 
 ## How to play
 
@@ -85,7 +91,7 @@ Choose **“Choose Your Heat Level”** on the landing page before opening the k
 | Normal (default) | 4 simulated minutes | 15 simulated seconds | 3x | 15 simulated seconds |
 | Hard | 3 simulated minutes | 10 simulated seconds | 3x | 15 simulated seconds |
 
-The board's **1x / 2x / 3x** controls change how many simulated seconds advance per one-second tick, including prep, bake, arrivals, and the round clock. Choose **1x** for a gentler first attempt. Open **Menu** for size timings and the actual post-bake burn window. Some tutorial/transition copy assumes Normal's 15-second arrivals, and the landing selector's “Burn Window” value is not the actual post-bake buffer; the rules above follow the store implementation.
+The board's **1x / 2x / 3x** controls change how many simulated seconds advance per one-second tick, including prep, bake, arrivals, and the round clock. Choose **1x** for a gentler first attempt. Open **Menu** for size timings and the actual post-bake burn window. Some tutorial copy still assumes Normal's 15-second arrivals, and the landing selector's “Burn Window” value is not the actual post-bake buffer; the rules above follow the store implementation. The transition now uses the selected difficulty's actual arrival interval.
 
 ## Tutorial and your first move
 
@@ -112,6 +118,12 @@ The top bar offers sound mute/unmute and **How to Play** to reopen the tutorial.
 Score: **+1** per served pizza, **−2** per burn, **−1** per angry non-burnt customer, and **+3** for zero burns **only if at least one pizza was served**. Average lead time measures simulated time from Orders entry to service for served pizzas; undealt orders are not counted as in progress.
 
 Choose **“See Full Results →”** after a full game or **“See Your Results →”** after skipping Round 1. The debrief shows scores, served/burnt/angry counts, average lead time, unfinished work, charts, a **“The Bridge”** table mapping kitchen stages to team workflow, and discussion questions. Results reflect play; improvement is not guaranteed. **Share Results** uses native sharing or a clipboard fallback; **Play Again / Play Full Game** returns to the landing page. The landing page also has a **Facilitator Quick-Start Guide** for projected team sessions.
+
+### Step 1 reliability changes
+
+Missing averages and unavailable percentage comparisons display neutral **n/a**. Score percentage requires actual completed samples in both rounds and a positive Round 1 score; zero/negative baseline percentages are unavailable, while recorded raw scores remain visible. Each learning card states an observation only when its own numbers support it; otherwise it asks a neutral question. Shared results follow the same availability rules, link to `https://slice-of-flow.com`, and do not promise a better outcome. Native share cancellation does not automatically copy results.
+
+Round 1 reflection acknowledges fewer than two deliveries; stronger outcomes get a neutral baseline reflection. The transition introduces **four core practices**, not a complete set of Kanban principles, and uses the selected difficulty's simulated arrival interval. Tests cover comparison/scoring boundaries, truthful insights/share text, transition copy, rendered results/branding, pause/readiness/capacity, and a complete deterministic R1/R2 operator run. Automated runs are not evidence of a completed independent human workshop or full cross-browser certification. New rounds, general facilitator controls, timer/anger rebalance, offline caching, and PNG results export remain outside this Step 1 slice.
 
 ## Browser-local state and retained routes
 
@@ -145,7 +157,7 @@ These integrations publish from GitHub; source pushes alone do not alter DNS or 
 
 Vercel manages the custom-domain certificates and automatic renewal; no certificate private key belongs in this repository. The live domain was verified with TLS 1.2 and TLS 1.3. Vercel redirects HTTP to HTTPS. See [Vercel encryption and TLS](https://vercel.com/docs/cdn-security/encryption) for platform behavior.
 
-`vercel.json` applies an enforced **Content Security Policy** to all paths. Scripts must come from the same origin; inline script handlers and eval are not allowed. Images are restricted to this origin and the exact CloudFront asset host, and Google Fonts has explicit stylesheet/font allowances. Inline **styles**, but not scripts, remain permitted because the existing React styles, animated board, and toast library require them. Embedded objects, child frames, and workers are blocked; the page itself can only be framed by its own origin. This is defense in depth, not a substitute for secure code or a complete security audit. See [Vercel CSP guidance](https://vercel.com/docs/cdn-security/security-headers).
+`vercel.json` applies an enforced **Content Security Policy** to all paths. Scripts must come from the same origin; inline script handlers and eval are not allowed. Images are restricted to this origin, the exact CloudFront asset host, and `files.manuscdn.com` for the new cartoon storefront; Google Fonts has explicit stylesheet/font allowances. Inline **styles**, but not scripts, remain permitted because the existing React styles, animated board, and toast library require them. Embedded objects, child frames, and workers are blocked; the page itself can only be framed by its own origin. This is defense in depth, not a substitute for secure code or a complete security audit. See [Vercel CSP guidance](https://vercel.com/docs/cdn-security/security-headers).
 
 The response headers also set `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, and `Referrer-Policy: strict-origin-when-cross-origin`. **Permissions-Policy** denies camera, microphone, geolocation, payment, and USB access while preserving same-origin audio, fullscreen, native sharing, and clipboard copying. **Cross-Origin-Opener-Policy: same-origin** isolates cross-origin opener relationships; review this if popup-based authentication or payment is added later. Cross-Origin-Embedder-Policy is deliberately not set, to avoid blocking the external asset CDN.
 
@@ -155,9 +167,9 @@ If analytics is enabled, add the trusted endpoint's **exact origin** to both `sc
 
 ### Assets and optional analytics
 
-Illustrations, textures, favicons, and social images reference an external **CloudFront CDN**; fonts load from **Google Fonts**. A GitHub clone does not download those resources, so the complete visual experience needs network access. Review their availability and usage permissions before publishing.
+Illustrations, textures, favicons, and social images reference external **CloudFront and Manus CDNs**; fonts load from **Google Fonts**. A GitHub clone does not download those resources, so the complete visual experience needs network access. Review their availability and usage permissions before publishing. The cartoon storefront and its approved HTML credit are centralized in `client/src/lib/sliceOfFlowBrand.ts`.
 
-`client/src/main.tsx` loads an optional Umami-style analytics script **only when both `VITE_ANALYTICS_ENDPOINT` and `VITE_ANALYTICS_WEBSITE_ID` are configured**. No analytics keys or game API credentials are needed to play. Review the endpoint and privacy requirements before enabling it; Vite client variables are public build-time values, not a place for secrets. Manus/editor instrumentation is limited to Vite development serving and is omitted from production builds. Canonical/Open Graph URLs use **`slice-of-flow.com`**, while share copy says **`sliceofflow.com`**; reconcile those with the intended domain before publishing.
+`client/src/main.tsx` loads an optional Umami-style analytics script **only when both `VITE_ANALYTICS_ENDPOINT` and `VITE_ANALYTICS_WEBSITE_ID` are configured**. No analytics keys or game API credentials are needed to play. Review the endpoint and privacy requirements before enabling it; Vite client variables are public build-time values, not a place for secrets. Manus/editor instrumentation is limited to Vite development serving and is omitted from production builds. Canonical/Open Graph URLs and share copy use **`slice-of-flow.com`**.
 
 ## File map
 

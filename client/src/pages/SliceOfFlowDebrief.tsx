@@ -1,12 +1,14 @@
 import { useMemo, useEffect, useRef, useState, useCallback } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
+import { getResultsComparison, getDebriefInsights, generateShareText, hasLeadTime } from '@/lib/sliceOfFlowResults';
+import { BUILT_BY, HERO_IMAGE } from '@/lib/sliceOfFlowBrand';
 import { Chart, registerables } from 'chart.js';
 import { toast } from 'sonner';
 
 Chart.register(...registerables);
 
-const LANDING_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-landing-hero-fixed_39508d4b.png';
+const LANDING_IMG = HERO_IMAGE;
 
 function formatTime(seconds: number): string {
   const m = Math.floor(seconds / 60);
@@ -193,59 +195,6 @@ const BRIDGE_ROWS = [
   { pizza: 'Pull (Round 2)', team: 'Pull System / Kanban', desc: 'Take work only when you have capacity' },
 ];
 
-// ─── SHARE RESULTS ─────────────────────────────────
-function generateShareText(
-  r1: { served: number; burnt: number; angry: number; avgLeadTime: number; score: number; timeRemaining?: number } | null,
-  r2: { served: number; burnt: number; angry: number; avgLeadTime: number; score: number; timeRemaining?: number },
-  improvement: number,
-  difficultyLabel: string,
-  skippedRound1: boolean,
-) {
-  if (skippedRound1) {
-    return `🍕 Slice of Flow — My Results (${difficultyLabel} Mode)
-
-Round 2 (Pull + WIP Limits):
-
-  Served:     ${r2.served}
-  Burnt:      ${r2.burnt}
-  Angry:      ${r2.angry}
-  Lead Time:  ${formatTime(r2.avgLeadTime)}
-  Score:      ${r2.score}
-${r2.timeRemaining && r2.timeRemaining > 0 ? `\ud83d\udd14 Finished with ${formatTime(r2.timeRemaining)} to spare!\n` : ''}
-WIP limits + pull systems = better flow.
-Stop starting, start finishing. \ud83d\udea6
-
-Play it yourself \u2192 sliceofflow.com
-#SliceOfFlow #Kanban #Agile #FlowMetrics`;
-  }
-
-  const arrow = (v1: number, v2: number, lowerIsBetter = false) => {
-    const diff = v2 - v1;
-    if (diff === 0) return '→';
-    const improved = lowerIsBetter ? diff < 0 : diff > 0;
-    return improved ? '↑' : '↓';
-  };
-
-  const r1Data = r1!;
-  return `🍕 Slice of Flow — My Results (${difficultyLabel} Mode)
-
-Round 1 (Push) vs Round 2 (Pull):
-
-  Served:     ${r1Data.served} → ${r2.served}  ${arrow(r1Data.served, r2.served)}
-  Burnt:      ${r1Data.burnt} → ${r2.burnt}  ${arrow(r1Data.burnt, r2.burnt, true)}
-  Angry:      ${r1Data.angry} → ${r2.angry}  ${arrow(r1Data.angry, r2.angry, true)}
-  Lead Time:  ${formatTime(r1Data.avgLeadTime)} → ${formatTime(r2.avgLeadTime)}  ${arrow(r1Data.avgLeadTime, r2.avgLeadTime, true)}
-  Score:      ${r1Data.score} → ${r2.score}  ${arrow(r1Data.score, r2.score)}
-
-${improvement >= 0 ? '📈' : '📉'} ${improvement >= 0 ? '+' : ''}${improvement}% improvement
-
-WIP limits + pull systems = better flow.
-Stop starting, start finishing. 🚦
-
-Play it yourself → sliceofflow.com
-#SliceOfFlow #Kanban #Agile #FlowMetrics`;
-}
-
 export default function SliceOfFlowDebrief() {
   const { round1Metrics, round2Metrics, resetGame, difficulty } = useSliceOfFlowStore();
   const [shareState, setShareState] = useState<'idle' | 'copied'>('idle');
@@ -256,21 +205,14 @@ export default function SliceOfFlowDebrief() {
   const r1 = round1Metrics || { served: 0, burnt: 0, angry: 0, avgLeadTime: 0, stillInProgress: 0, score: 0 };
   const r2 = round2Metrics || { served: 0, burnt: 0, angry: 0, avgLeadTime: 0, stillInProgress: 0, score: 0 };
 
-  const improvement = useMemo(() => {
-    if (skippedRound1 || r1.score === 0) return 0;
-    return Math.round(((r2.score - r1.score) / Math.abs(r1.score)) * 100);
-  }, [r1.score, r2.score, skippedRound1]);
+  const comparison = useMemo(() => getResultsComparison(round1Metrics, round2Metrics), [round1Metrics, round2Metrics]);
+  const improvement = comparison.scorePercent === null ? null : Number(comparison.scorePercent.toFixed(1));
+  const insights = useMemo(() => getDebriefInsights(round1Metrics, round2Metrics), [round1Metrics, round2Metrics]);
 
   const difficultyLabel = DIFFICULTY_PRESETS[difficulty].label;
 
   const handleShare = useCallback(async () => {
-    const text = generateShareText(
-      skippedRound1 ? null : r1,
-      r2,
-      improvement,
-      difficultyLabel,
-      skippedRound1,
-    );
+    const text = generateShareText(round1Metrics, round2Metrics, difficultyLabel);
 
     // Try native share first (mobile/tablet), fall back to clipboard
     if (navigator.share) {
@@ -280,8 +222,9 @@ export default function SliceOfFlowDebrief() {
           text,
         });
         return;
-      } catch {
-        // User cancelled or share failed — fall through to clipboard
+      } catch (error) {
+        // Cancelling a share must not unexpectedly copy the results.
+        if (error && typeof error === 'object' && 'name' in error && error.name === 'AbortError') return;
       }
     }
 
@@ -305,7 +248,17 @@ export default function SliceOfFlowDebrief() {
       toast.success('Results copied to clipboard!', { duration: 3000 });
       setTimeout(() => setShareState('idle'), 3000);
     }
-  }, [r1, r2, improvement, difficultyLabel, skippedRound1]);
+  }, [round1Metrics, round2Metrics, difficultyLabel]);
+
+  if (!round2Metrics) {
+    return (
+      <div className="min-h-screen p-8" style={{ background: '#FAF7F2', color: '#444' }}>
+        <h1 className="text-3xl mb-4" style={{ fontFamily: "'Lilita One', cursive", color: '#D94F3B' }}>No Round 2 results yet</h1>
+        <p className="mb-6">Complete Round 2 to see your results. Missing results are not treated as a zero-score round.</p>
+        <button onClick={resetGame} className="px-6 py-3 rounded-lg text-white font-bold" style={{ background: '#D94F3B' }}>Return to the kitchen</button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: '#FAF7F2' }}>
@@ -335,6 +288,7 @@ export default function SliceOfFlowDebrief() {
               : `Push vs. Pull — Let the numbers speak (${difficultyLabel} Mode)`
             }
           </p>
+          <p className="text-sm mt-2 font-semibold" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>{BUILT_BY}</p>
         </div>
       </div>
 
@@ -414,7 +368,7 @@ export default function SliceOfFlowDebrief() {
                 { label: 'Served', value: r2.served, color: '#2E7D32', bg: '#E8F5E9' },
                 { label: 'Burnt', value: r2.burnt, color: '#B71C1C', bg: '#FFEBEE' },
                 { label: 'Angry', value: r2.angry, color: '#E65100', bg: '#FFF3E0' },
-                { label: 'Avg Lead Time', value: r2.served === 0 ? '\u2014' : formatTime(r2.avgLeadTime), color: '#1976D2', bg: '#E3F2FD' },
+                { label: 'Avg Lead Time', value: hasLeadTime(round2Metrics) ? formatTime(r2.avgLeadTime) : 'n/a', color: '#1976D2', bg: '#E3F2FD' },
                 { label: 'Still In Progress', value: r2.stillInProgress, color: '#666', bg: '#F5F5F5' },
               ].map((item) => (
                 <div key={item.label} className="text-center p-4 rounded-xl" style={{ background: item.bg }}>
@@ -451,15 +405,15 @@ export default function SliceOfFlowDebrief() {
                 <div className="text-xs mt-1" style={{ color: '#999' }}>points</div>
               </div>
 
-              <div className="text-center p-6 rounded-xl" style={{ background: '#E8F5E9', border: '2px solid #A5D6A7' }}>
-                <div className="text-sm font-semibold mb-2" style={{ fontFamily: "'Lilita One', cursive", color: '#2E7D32' }}>
+              <div className="text-center p-6 rounded-xl" style={{ background: improvement === null ? '#F5F5F5' : improvement > 0 ? '#E8F5E9' : improvement < 0 ? '#FFEBEE' : '#F5F5F5', border: `2px solid ${improvement === null || improvement === 0 ? '#E0E0E0' : improvement > 0 ? '#A5D6A7' : '#EF9A9A'}` }}>
+                <div className="text-sm font-semibold mb-2" style={{ fontFamily: "'Lilita One', cursive", color: '#555' }}>
                   Improvement
                 </div>
-                <div className="text-5xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: improvement > 0 ? '#2E7D32' : improvement < 0 ? '#B71C1C' : '#666' }}>
-                  {improvement === 0 && r1.score === r2.score ? '—' : `${improvement >= 0 ? '+' : ''}${improvement}%`}
+                <div data-testid="score-improvement" className="text-5xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: improvement === null || improvement === 0 ? '#666' : improvement > 0 ? '#2E7D32' : '#B71C1C' }}>
+                  {improvement === null ? 'n/a' : `${improvement > 0 ? '+' : ''}${improvement}%`}
                 </div>
                 <div className="text-xs mt-1" style={{ color: '#999' }}>
-                  {improvement === 0 && r1.score === r2.score ? 'Same score both rounds' : 'score change'}
+                  {improvement === null ? 'Score percentage unavailable' : improvement === 0 ? 'Same score both rounds' : 'score change'}
                 </div>
               </div>
 
@@ -508,6 +462,7 @@ export default function SliceOfFlowDebrief() {
                       { label: 'Final Score', v1: r1.score, v2: r2.score, unit: '', better: 'higher' },
                     ].map((row, i) => {
                       const diff = row.v2 - row.v1;
+                      const unavailable = row.unit === 'time' && comparison.leadTimeDelta === null;
                       const improved = row.better === 'higher' ? diff > 0 : diff < 0;
                       return (
                         <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAFA', borderBottom: '1px solid #F0F0F0' }}>
@@ -515,13 +470,15 @@ export default function SliceOfFlowDebrief() {
                             {row.label}
                           </td>
                           <td className="text-center px-4 py-3" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#E64A19' }}>
-                            {row.unit === 'time' ? ((row as any).served1 === 0 ? '\u2014' : formatTime(row.v1)) : row.v1}
+                            {row.unit === 'time' ? (hasLeadTime(round1Metrics) ? formatTime(row.v1) : 'n/a') : row.v1}
                           </td>
                           <td className="text-center px-4 py-3" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#1976D2' }}>
-                            {row.unit === 'time' ? ((row as any).served2 === 0 ? '\u2014' : formatTime(row.v2)) : row.v2}
+                            {row.unit === 'time' ? (hasLeadTime(round2Metrics) ? formatTime(row.v2) : 'n/a') : row.v2}
                           </td>
-                          <td className="text-center px-4 py-3 font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: improved ? '#2E7D32' : diff === 0 ? '#999' : '#B71C1C' }}>
-                            {diff === 0
+                          <td data-testid={row.unit === 'time' ? 'lead-time-change' : undefined} className="text-center px-4 py-3 font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: unavailable ? '#666' : improved ? '#2E7D32' : diff === 0 ? '#999' : '#B71C1C' }}>
+                            {unavailable
+                              ? 'n/a'
+                              : diff === 0
                               ? '\u2014'
                               : row.unit === 'time'
                                 ? (diff < 0 ? '-' : '+') + formatTime(Math.abs(diff))
@@ -590,32 +547,7 @@ export default function SliceOfFlowDebrief() {
             What Did We Learn?
           </h2>
           <div className="grid md:grid-cols-2 gap-4">
-            {[
-              {
-                icon: '🚦',
-                title: 'WIP Limits Reduce Chaos',
-                desc: 'When you limit how many pizzas are in the oven at once, fewer burn. In your team: limiting work-in-progress means fewer defects, less context-switching, and more focus.',
-                metric: 'Watch: Burnt count drops when WIP is enforced',
-              },
-              {
-                icon: '🎯',
-                title: 'Pull Systems Beat Push',
-                desc: 'In Round 1, orders flooded in regardless of capacity — just like scope creep. In Round 2, you pulled work only when ready. The result: better throughput with less stress.',
-                metric: 'Watch: Served count rises, angry customers fall',
-              },
-              {
-                icon: '🔥',
-                title: 'Bottlenecks Are Visible',
-                desc: 'The oven is your testing/review stage. When too many pizzas queue up there, everything slows down. Identifying and managing the constraint is the key to flow.',
-                metric: 'Watch: Lead time drops when oven queue is managed',
-              },
-              {
-                icon: '📊',
-                title: 'Quality and Throughput Aren\'t Tradeoffs',
-                desc: 'With WIP limits, you serve more AND burn less. Flow proves that quality and speed improve together when you stop overloading the system.',
-                metric: 'Watch: Score improves because both served and quality rise',
-              },
-            ].map((item, i) => (
+            {insights.map((item, i) => (
               <div
                 key={i}
                 className="flex gap-4 p-5 rounded-xl"

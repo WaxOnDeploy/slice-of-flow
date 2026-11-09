@@ -1,10 +1,16 @@
 import { useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import { WIP_LIMITS } from '@/lib/sliceOfFlowConstants';
+import {
+  formatTransitionAvgLeadTime,
+  getRound1OrderArrivalCopy,
+  getRound1Reflection,
+  KANBAN_PRACTICES_INTRO,
+} from '@/lib/sliceOfFlowTransitionCopy';
 
 const KITCHEN_BG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-hero-bg-GAkzomYox6u7BrLN2cai9V.webp';
 
-const KANBAN_PRINCIPLES = [
+const KANBAN_PRACTICES = [
   {
     icon: '🔄',
     title: 'Visualize the Work',
@@ -28,7 +34,7 @@ const KANBAN_PRINCIPLES = [
 ];
 
 export default function SliceOfFlowTransition() {
-  const { round1Metrics, startRound } = useSliceOfFlowStore();
+  const { round1Metrics, difficulty, startRound } = useSliceOfFlowStore();
   const [step, setStep] = useState(0);
 
   const handleNext = () => {
@@ -67,35 +73,37 @@ export default function SliceOfFlowTransition() {
       {/* Content */}
       <div className="flex-1 px-8 py-8 max-w-4xl mx-auto w-full">
         {/* Step 0: Reflection on Round 1 */}
-        {step === 0 && round1Metrics && (
+        {step === 0 && (
           <div>
-            <p className="text-lg mb-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
-              Round 1 was a <strong>push system</strong>. Orders came in every 15 seconds whether you were ready or not.
-              Sound like any sprint you've been in?
-            </p>
+            {round1Metrics && (
+              <p className="text-lg mb-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
+                Round 1 was a <strong>push system</strong>. {getRound1OrderArrivalCopy(difficulty)}{' '}
+                Sound like any sprint you've been in?
+              </p>
+            )}
 
             <div className="grid grid-cols-4 gap-4 mb-8">
               <div className="text-center p-5 rounded-xl" style={{ background: '#E8F5E9', border: '2px solid #A5D6A7' }}>
                 <div className="text-3xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#2E7D32' }}>
-                  {round1Metrics.served}
+                  {round1Metrics?.served ?? 'n/a'}
                 </div>
                 <div className="text-xs mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Served</div>
               </div>
               <div className="text-center p-5 rounded-xl" style={{ background: '#FFEBEE', border: '2px solid #EF9A9A' }}>
                 <div className="text-3xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#B71C1C' }}>
-                  {round1Metrics.burnt}
+                  {round1Metrics?.burnt ?? 'n/a'}
                 </div>
                 <div className="text-xs mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Burnt</div>
               </div>
               <div className="text-center p-5 rounded-xl" style={{ background: '#FFF3E0', border: '2px solid #FFCC80' }}>
                 <div className="text-3xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#E65100' }}>
-                  {round1Metrics.angry}
+                  {round1Metrics?.angry ?? 'n/a'}
                 </div>
                 <div className="text-xs mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Angry</div>
               </div>
               <div className="text-center p-5 rounded-xl" style={{ background: '#E3F2FD', border: '2px solid #90CAF9' }}>
                 <div className="text-3xl font-bold" style={{ fontFamily: "'JetBrains Mono', monospace", color: '#1976D2' }}>
-                  {round1Metrics.served > 0 ? formatTime(round1Metrics.avgLeadTime) : '\u2014'}
+                  {formatTransitionAvgLeadTime(round1Metrics)}
                 </div>
                 <div className="text-xs mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>Avg Lead Time</div>
               </div>
@@ -106,23 +114,22 @@ export default function SliceOfFlowTransition() {
               style={{ background: '#FFF8E1', border: '2px solid #FFE082' }}
             >
               <p className="text-base" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
-                <strong>The problem wasn't you.</strong> The problem was the system. When work is pushed in faster than you can process it,
-                everything backs up. Quality drops. Stress rises. Pizzas burn.
+                {getRound1Reflection(round1Metrics)}
               </p>
             </div>
           </div>
         )}
 
-        {/* Step 1: Kanban Principles */}
+        {/* Step 1: Kanban Practices */}
         {step === 1 && (
           <div>
             <p className="text-lg mb-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#444' }}>
-              Kanban is a method for managing the flow of work. It comes from Toyota's manufacturing system.
-              Here are the four principles you'll use in Round 2:
+              Kanban is a method for managing the flow of work. It comes from Toyota's manufacturing system.{' '}
+              {KANBAN_PRACTICES_INTRO}
             </p>
 
             <div className="space-y-4">
-              {KANBAN_PRINCIPLES.map((p, i) => (
+              {KANBAN_PRACTICES.map((p, i) => (
                 <div
                   key={i}
                   className="flex gap-4 p-5 rounded-xl"
@@ -233,10 +240,4 @@ export default function SliceOfFlowTransition() {
       </div>
     </div>
   );
-}
-
-function formatTime(seconds: number): string {
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, '0')}`;
 }
