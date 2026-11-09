@@ -96,7 +96,7 @@ Choose **“Choose Your Heat Level”** on the landing page before opening the k
 | Normal (default) | 4 simulated minutes | 15 simulated seconds | 3x | 15 simulated seconds |
 | Hard | 3 simulated minutes | 10 simulated seconds | 3x | 15 simulated seconds |
 
-The board's **1x / 2x / 3x** controls change how many simulated seconds advance per one-second tick, including prep, bake, arrivals, and the round clock. Choose **1x** for a gentler first attempt. Open **Menu** for deck-derived size timings, every actual order type, and the post-bake burn window. The tutorial and transition use the selected difficulty's actual arrival interval. The landing selector's legacy “Burn Window” value is not the actual post-bake buffer; the rules above follow the store implementation.
+The board's **1x / 2x / 3x** controls change how many simulated seconds advance per one-second tick, including prep, bake, arrivals, and the round clock. Choose **1x** for a gentler first attempt. Open **Menu** for deck-derived size timings, every actual order type, and the post-bake burn window. The tutorial and transition use the selected difficulty's actual arrival interval. The landing selector's **“After-bake buffer”** now shows the actual preset difference between burn and done thresholds, rather than a misleading total fallback oven duration.
 
 ## Tutorial and your first move
 

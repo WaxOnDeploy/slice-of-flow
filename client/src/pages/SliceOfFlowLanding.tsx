@@ -246,8 +246,8 @@ export default function SliceOfFlowLanding() {
                       <span style={{ color: colors.text, fontWeight: 700 }}>every {p.orderFlipInterval}s</span>
                     </div>
                     <div className="flex items-center justify-between text-xs" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                      <span style={{ color: '#888' }}>Burn Window</span>
-                      <span style={{ color: colors.text, fontWeight: 700 }}>{Math.floor(p.ovenBurnTime / 60)}:{(p.ovenBurnTime % 60).toString().padStart(2, '0')}</span>
+                      <span style={{ color: '#888' }}>After-bake buffer</span>
+                      <span style={{ color: colors.text, fontWeight: 700 }}>{p.ovenBurnTime - p.ovenDoneTime}s</span>
                     </div>
                     <div className="flex items-center justify-between text-xs" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
                       <span style={{ color: '#888' }}>Speed</span>
@@ -268,7 +268,7 @@ export default function SliceOfFlowLanding() {
         {/* Always visible before both play paths, even when the tutorial was seen. */}
         <SliceOfFlowOrderGuide className="mt-6" testId="landing-order-guide" />
         <p className="text-base leading-relaxed mt-3" style={{ fontFamily: "'DM Sans', sans-serif", color: '#534334' }} data-testid="landing-kitchen-time">
-          {`${preset.label}: ${Math.floor(preset.roundDuration / 60)} simulated kitchen minutes per round. Default clock speed is ${preset.defaultSpeed}x — ${preset.defaultSpeed} kitchen seconds pass per real second. You can change speed or pause on the board.`}
+          {`${preset.label}: ${Math.floor(preset.roundDuration / 60)} simulated kitchen minutes per round. Default clock speed is ${preset.defaultSpeed}x — ${preset.defaultSpeed} kitchen seconds pass per real second. You can change speed on the board; opening How to Play pauses the kitchen while you read.`}
         </p>
 
         {/* Start Buttons */}
