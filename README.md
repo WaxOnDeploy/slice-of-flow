@@ -2,22 +2,22 @@
 
 A browser-based **Kanban pizza shop simulation** for Scrum Masters, Agile coaches, RTEs, delivery leads, and self-paced learners. Run the same kitchen through **Round 1: Push** and **Round 2: Pull + WIP limits**, then compare throughput, quality, and lead time.
 
-This private repository, [`WaxOnDeploy/slice-of-flow`](https://github.com/WaxOnDeploy/slice-of-flow), contains the React 19 / TypeScript / Vite 7 application, its retained legacy pages, and a small Node static-serving helper. Workshop teams can discuss moves around one projected browser; this is not a synchronized multiplayer game.
+This public repository, [`WaxOnDeploy/slice-of-flow`](https://github.com/WaxOnDeploy/slice-of-flow), contains the React 19 / TypeScript / Vite 7 application, its retained legacy pages, and a small Node static-serving helper. Workshop teams can discuss moves around one projected browser; this is not a synchronized multiplayer game.
 
 ## Local setup
 
 ### Requirements
 
 - **Node.js 22, version 22.12 or newer, recommended.** Vite 7 requires Node **20.19+ or 22.12+**; older Node releases are not suitable.
-- Git and access to the private GitHub repository. GitHub CLI (`gh`) is optional; authenticate it before cloning with `gh`.
+- Git. This repository is public, so HTTPS cloning does not require credentials. GitHub CLI (`gh`) is optional.
 - Corepack, using the root `package.json` **`packageManager` pin: pnpm 10.4.1**. Do not substitute the separately listed pnpm development dependency for this pin.
 
 Clone with either command, then enter the directory:
 
 ```sh
-# GitHub CLI (requires an authenticated account with repository access)
+# GitHub CLI
 gh repo clone WaxOnDeploy/slice-of-flow
-# OR Git over HTTPS (requires your GitHub credentials)
+# OR Git over HTTPS (no credentials required for this public repository)
 git clone https://github.com/WaxOnDeploy/slice-of-flow.git
 
 cd slice-of-flow
@@ -127,16 +127,19 @@ The tutorial-seen flag is stored as **`sof-tutorial-seen` in localStorage**, sco
 | `/game` | Retained Agile text adventure, “The Quest for the Golden Sprint”; not the pizza board. |
 | `/404` and unmatched paths | Not-found page. |
 
-## Deployment setup — Vercel
+## Deployments — Vercel and GitHub Pages
 
-**Vercel configuration is present; hosting is not connected yet.** The steps below describe setup, not a live deployment. The root **`vercel.json`** supplies framework preset **`vite`**, install command **`pnpm install --frozen-lockfile`**, build command **`pnpm build`**, output directory **`dist/public`**, and an SPA rewrite from **`/(.*)` to `/index.html`**. It also sends `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` as actual HTTP headers.
+**Vercel production:** [slice-of-flow.vercel.app](https://slice-of-flow.vercel.app/). The project is linked to this repository's `main` branch. Pushes to `main` build and update production; other branches can receive Vercel preview deployments.
 
-1. In Vercel, create/import a project from **WaxOnDeploy/slice-of-flow** and grant access to the private repository.
-2. Keep the project root at the repository root (not `client`), select Vite, use Node 22, and verify the install/build/output settings above. Ensure installation honors the pinned pnpm version.
-3. Review optional analytics and external resources below, then create a preview deployment. Verify `/`, `/deck-shop`, `/game`, `/slice-of-flow`, and an unknown path, including direct navigation/reload through the SPA rewrite.
-4. Promote a tested deployment and attach a custom domain only as a separate, deliberate hosting/DNS step. Static Vercel hosting serves `dist/public`; it does not run `dist/index.js`.
+The root **`vercel.json`** sets the Vite preset, `pnpm install --frozen-lockfile`, `pnpm build`, static output `dist/public`, and SPA rewrite `/(.*)` → `/index.html`. It sends `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` as HTTP headers. For a new Vercel import, keep the root directory at the repository root, not `client`. No gameplay environment variables are required. **Do not set `VITE_BASE_PATH` on Vercel**; its app and assets are served at `/`.
 
-Copying or syncing source to GitHub **does not itself change existing hosting, domain registrations, or DNS**. An explicitly configured deployment integration may publish future commits; review those links before pushing. Existing hosting/domains remain unaffected by source sync alone.
+**GitHub Pages target:** [waxondeploy.github.io/slice-of-flow](https://waxondeploy.github.io/slice-of-flow/). The workflow [Deploy to GitHub Pages](https://github.com/WaxOnDeploy/slice-of-flow/actions/workflows/deploy-pages.yml) runs on every push to `main` or manually via **Actions → Deploy to GitHub Pages → Run workflow**. In repository **Settings → Pages**, the publishing Source must be **GitHub Actions**. Check the workflow's green deployment result before treating a new revision as live.
+
+The Pages workflow installs the package-manager pin, uses Node 22, type-checks, and builds with **`VITE_BASE_PATH=/slice-of-flow/`**. Vite asset URLs and the Wouter router share that base. Pages routes are `/slice-of-flow/`, `/slice-of-flow/deck-shop`, and `/slice-of-flow/game`; Vercel routes stay `/`, `/deck-shop`, and `/game`.
+
+Pages cannot configure a server-side SPA rewrite. The workflow copies `index.html` to `404.html`, so direct deep links still render the correct application route, but the initial document response is HTTP **404**. Use Vercel when deep links must return HTTP 200. Static hosting serves `dist/public`; neither host runs the optional `dist/index.js` helper.
+
+These integrations publish from GitHub; they do not change existing Manus hosting, custom domains, registrations, or DNS. Custom-domain migration is a separate step. The public repository exposes its source, retained pages, notes, assets, and Git history; never commit secrets.
 
 ### Assets and optional analytics
 
@@ -160,6 +163,7 @@ Illustrations, textures, favicons, and social images reference an external **Clo
 | `client/src/pages/Home.tsx`, `Game.tsx` | Retained deck-shop/coaching page and text adventure. |
 | `server/index.ts` | Optional static-serving Node helper with SPA fallback. |
 | `vercel.json` | Static deployment settings, SPA rewrite, and HTTP headers. |
+| `.github/workflows/deploy-pages.yml` | Automatic Pages build/deploy with the repository base path and custom 404 fallback. |
 
 ## Manual smoke-test checklist
 

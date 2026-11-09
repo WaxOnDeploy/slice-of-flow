@@ -6,6 +6,8 @@ import { defineConfig } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
 export default defineConfig(({ command }) => ({
+  // Only the Pages workflow sets this; Vercel and local builds stay at the root.
+  base: process.env.VITE_BASE_PATH || "/",
   // Editor instrumentation is useful locally, but is not needed on a static host.
   plugins: [
     react(),
