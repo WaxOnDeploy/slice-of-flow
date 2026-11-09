@@ -129,9 +129,9 @@ The tutorial-seen flag is stored as **`sof-tutorial-seen` in localStorage**, sco
 
 ## Deployments — Vercel and GitHub Pages
 
-**Vercel production:** [slice-of-flow.vercel.app](https://slice-of-flow.vercel.app/). The project is linked to this repository's `main` branch. Pushes to `main` build and update production; other branches can receive Vercel preview deployments.
+**Vercel production:** [slice-of-flow.com](https://slice-of-flow.com/), also available at [slice-of-flow.vercel.app](https://slice-of-flow.vercel.app/). `www.slice-of-flow.com` uses a permanent, path-preserving 308 redirect to the main domain. The domain stays registered at Porkbun; its apex A record and www CNAME point to Vercel. The project is linked to this repository's `main` branch. Pushes to `main` build and update production; other branches can receive Vercel preview deployments.
 
-The root **`vercel.json`** sets the Vite preset, `pnpm install --frozen-lockfile`, `pnpm build`, static output `dist/public`, and SPA rewrite `/(.*)` → `/index.html`. It sends `X-Content-Type-Options`, `X-Frame-Options`, and `Referrer-Policy` as HTTP headers. For a new Vercel import, keep the root directory at the repository root, not `client`. No gameplay environment variables are required. **Do not set `VITE_BASE_PATH` on Vercel**; its app and assets are served at `/`.
+The root **`vercel.json`** sets the Vite preset, `pnpm install --frozen-lockfile`, `pnpm build`, static output `dist/public`, and SPA rewrite `/(.*)` → `/index.html`. Security response headers are described below. For a new Vercel import, keep the root directory at the repository root, not `client`. No gameplay environment variables are required. **Do not set `VITE_BASE_PATH` on Vercel**; its app and assets are served at `/`.
 
 **GitHub Pages target:** [waxondeploy.github.io/slice-of-flow](https://waxondeploy.github.io/slice-of-flow/). The workflow [Deploy to GitHub Pages](https://github.com/WaxOnDeploy/slice-of-flow/actions/workflows/deploy-pages.yml) runs on every push to `main` or manually via **Actions → Deploy to GitHub Pages → Run workflow**. In repository **Settings → Pages**, the publishing Source must be **GitHub Actions**. Check the workflow's green deployment result before treating a new revision as live.
 
@@ -139,7 +139,19 @@ The Pages workflow installs the package-manager pin, uses Node 22, type-checks, 
 
 Pages cannot configure a server-side SPA rewrite. The workflow copies `index.html` to `404.html`, so direct deep links still render the correct application route, but the initial document response is HTTP **404**. Use Vercel when deep links must return HTTP 200. Static hosting serves `dist/public`; neither host runs the optional `dist/index.js` helper.
 
-These integrations publish from GitHub; they do not change existing Manus hosting, custom domains, registrations, or DNS. Custom-domain migration is a separate step. The public repository exposes its source, retained pages, notes, assets, and Git history; never commit secrets.
+These integrations publish from GitHub; source pushes alone do not alter DNS or domain registrations. `slice-of-flow.com` has been separately connected to Vercel; the existing Manus deployment and the GitHub Pages backup remain separate hosts. The public repository exposes its source, retained pages, notes, assets, and Git history; never commit secrets.
+
+### Vercel TLS and security headers
+
+Vercel manages the custom-domain certificates and automatic renewal; no certificate private key belongs in this repository. The live domain was verified with TLS 1.2 and TLS 1.3. Vercel redirects HTTP to HTTPS. See [Vercel encryption and TLS](https://vercel.com/docs/cdn-security/encryption) for platform behavior.
+
+`vercel.json` applies an enforced **Content Security Policy** to all paths. Scripts must come from the same origin; inline script handlers and eval are not allowed. Images are restricted to this origin and the exact CloudFront asset host, and Google Fonts has explicit stylesheet/font allowances. Inline **styles**, but not scripts, remain permitted because the existing React styles, animated board, and toast library require them. Embedded objects, child frames, and workers are blocked; the page itself can only be framed by its own origin. This is defense in depth, not a substitute for secure code or a complete security audit. See [Vercel CSP guidance](https://vercel.com/docs/cdn-security/security-headers).
+
+The response headers also set `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, and `Referrer-Policy: strict-origin-when-cross-origin`. **Permissions-Policy** denies camera, microphone, geolocation, payment, and USB access while preserving same-origin audio, fullscreen, native sharing, and clipboard copying. **Cross-Origin-Opener-Policy: same-origin** isolates cross-origin opener relationships; review this if popup-based authentication or payment is added later. Cross-Origin-Embedder-Policy is deliberately not set, to avoid blocking the external asset CDN.
+
+**HSTS** explicitly preserves Vercel's existing `max-age=63072000` host-only policy. Neither `includeSubDomains` nor `preload` is enabled: other subdomains have not been audited, and a preload submission is a separate, long-lived domain-wide decision. Header changes are version-controlled and deploy through the normal GitHub → Vercel integration. GitHub Pages does **not** apply `vercel.json` response headers; the HTML retains only a supported referrer-policy fallback.
+
+If analytics is enabled, add the trusted endpoint's **exact origin** to both `script-src` and `connect-src`, and allow any additional verified telemetry origin before redeploying. The default policy intentionally blocks third-party analytics scripts; do not weaken it to `https:`, wildcard script sources, or `unsafe-eval` to make an arbitrary endpoint work. Keep CSP allowances synchronized with new integrations and test the first-move flow, Round 2, fonts/images, and both retained routes after changes.
 
 ### Assets and optional analytics
 
