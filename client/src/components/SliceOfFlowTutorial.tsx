@@ -1,4 +1,9 @@
 import { useState } from 'react';
+import SliceOfFlowDialog from '@/components/SliceOfFlowDialog';
+import SliceOfFlowOrderGuide from '@/components/SliceOfFlowOrderGuide';
+import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
+import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
+import { getScoringCopy } from '@/lib/sliceOfFlowScoringCopy';
 
 interface TutorialStep {
   icon: string;
@@ -16,9 +21,9 @@ const STEPS: TutorialStep[] = [
   },
   {
     icon: '🖱️',
-    title: 'Drag Cards Forward',
-    description: 'Drag pizza orders left → right through each station: Orders → Prep → Oven → Pizza Box → Served. One station at a time.',
-    tip: 'Cards glow with a ▶ arrow when ready to move.',
+    title: 'Move Cards Forward',
+    description: 'Select a ticket, then use its highlighted destination. Or use Enter to select and the right arrow to move. Dragging works too: one station at a time.',
+    tip: 'Finish Prep before Oven; finish baking before Pizza Box.',
   },
   {
     icon: '⏱️',
@@ -29,34 +34,41 @@ const STEPS: TutorialStep[] = [
   {
     icon: '🎯',
     title: 'Score Points',
-    description: '+1 per served pizza. -2 for burns. -1 for angry customers. +3 bonus for zero burns in a round!',
+    description: 'Serve pizzas and avoid burns. A zero-burn bonus requires at least one served pizza. Burnt customers are not counted again as angry.',
     tip: 'Quality over quantity — one burn costs two served.',
   },
   {
     icon: '🔄',
     title: 'Two Rounds',
-    description: 'Round 1 = chaos, no rules. Then learn Kanban + WIP limits. Round 2 uses those rules. Compare your results!',
-    tip: 'The debrief shows exactly how Kanban improved flow.',
+    description: 'Round 1 pushes orders in without WIP limits. Round 2 uses pull and WIP limits. The same kitchen and orders let you compare your results.',
+    tip: 'The debrief reports what happened—better, equal, or worse results are all useful.',
   },
 ];
 
 interface Props {
   onClose: () => void;
+  onReturnFocus?: () => void;
+  open?: boolean;
 }
 
-export default function SliceOfFlowTutorial({ onClose }: Props) {
+export default function SliceOfFlowTutorial({ onClose, onReturnFocus, open = true }: Props) {
   const [step, setStep] = useState(0);
+  const difficulty = useSliceOfFlowStore(state => state.difficulty);
+  const preset = DIFFICULTY_PRESETS[difficulty];
   const current = STEPS[step];
   const isLast = step === STEPS.length - 1;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)' }}
+    <SliceOfFlowDialog
+      open={open}
+      title="How to play Slice of Flow"
+      description="Kitchen instructions. Escape closes this guide; the guided first move keeps Round 1 paused."
+      onDismiss={onClose}
+      onReturnFocus={onReturnFocus}
     >
       {/* Diner Order Ticket */}
       <div
-        className="relative w-full max-w-xl mx-4"
+        className="relative w-full max-w-xl"
         style={{
           /* Ticket shape with torn/perforated edges */
           background: '#FFFEF5',
@@ -105,6 +117,8 @@ export default function SliceOfFlowTutorial({ onClose }: Props) {
           <div className="flex items-center justify-between">
             <div>
               <h1
+                tabIndex={-1}
+                data-dialog-initial
                 style={{
                   fontFamily: "'Lilita One', cursive",
                   fontSize: 28,
@@ -205,8 +219,13 @@ export default function SliceOfFlowTutorial({ onClose }: Props) {
               marginBottom: 16,
             }}
           >
-            {current.description}
+            {step === 0
+              ? `Round 1 pushes in an order every ${preset.orderFlipInterval} kitchen seconds. Round 2 lets you pull when ready. The clock shows simulated kitchen time; the speed control compresses it.`
+              : current.description}
           </p>
+
+          {step === 0 && <SliceOfFlowOrderGuide compact headingLevel={3} title="Orders in this round" testId="tutorial-order-guide" className="mb-4" />}
+          {step === 3 && <p className="text-base mb-4" style={{ color: '#3E2723' }}>{getScoringCopy().formula}</p>}
 
           {/* Tip — styled like a handwritten note on the ticket */}
           <div
@@ -233,6 +252,7 @@ export default function SliceOfFlowTutorial({ onClose }: Props) {
           {/* Navigation buttons — styled like diner buttons */}
           <div className="flex items-center justify-between">
             <button
+              disabled={step === 0}
               onClick={() => setStep(Math.max(0, step - 1))}
               className="px-5 py-2.5 rounded text-base transition-all hover:scale-105"
               style={{
@@ -294,18 +314,18 @@ export default function SliceOfFlowTutorial({ onClose }: Props) {
         {/* Skip button — small, unobtrusive */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-xs px-3 py-1 rounded-full transition-all hover:scale-105"
+          className="absolute top-1 right-2 text-base px-3 py-1 rounded-full transition-all hover:scale-105"
           style={{
             background: 'rgba(255,255,255,0.9)',
-            color: '#999',
+            color: '#534334',
             fontFamily: "'JetBrains Mono', monospace",
-            fontSize: 11,
+            fontSize: 16,
             border: '1px solid #ddd',
           }}
         >
           Skip
         </button>
       </div>
-    </div>
+    </SliceOfFlowDialog>
   );
 }

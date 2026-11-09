@@ -3,6 +3,7 @@ import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import { DIFFICULTY_PRESETS, type Difficulty } from '@/lib/sliceOfFlowConstants';
 import { ACCESS_SUMMARY, getPrivacyDisclosure, HERO_IMAGE } from '@/lib/sliceOfFlowBrand';
 import SliceOfFlowAuthorCredit from '@/components/SliceOfFlowAuthorCredit';
+import SliceOfFlowOrderGuide from '@/components/SliceOfFlowOrderGuide';
 
 const HERO_IMG = HERO_IMAGE;
 
@@ -164,7 +165,7 @@ export default function SliceOfFlowLanding() {
                 { icon: '🔪', label: 'Prep', desc: 'Chop, sauce, top — Small (30s), Medium (1 min), Large (1:30)' },
                 { icon: '🍕', label: 'Oven', desc: 'Bake times vary! Small (40s), Medium (1 min), Large (1:20)' },
                 { icon: '📦', label: 'Box & Deliver', desc: 'Box it up and get it out the door' },
-                { icon: '⏱️', label: 'Timer', desc: `${Math.floor(preset.roundDuration / 60)} minutes per round. Every second counts.` },
+                { icon: '⏱️', label: 'Timer', desc: `${Math.floor(preset.roundDuration / 60)} simulated kitchen minutes per round. Clock speed controls how fast they pass.` },
               ].map((item) => (
                 <div key={item.label} className="flex items-start gap-3">
                   <span className="text-2xl flex-shrink-0 mt-0.5">{item.icon}</span>
@@ -237,7 +238,7 @@ export default function SliceOfFlowLanding() {
                   {/* Stats */}
                   <div className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
-                      <span style={{ color: '#888' }}>Round</span>
+                      <span style={{ color: '#888' }}>Kitchen time</span>
                       <span style={{ color: colors.text, fontWeight: 700 }}>{Math.floor(p.roundDuration / 60)} min</span>
                     </div>
                     <div className="flex items-center justify-between text-xs" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
@@ -262,6 +263,12 @@ export default function SliceOfFlowLanding() {
         <p className="text-center text-sm mt-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>
           <strong>Best on a laptop or tablet.</strong>{' '}
           The board is optimized for 1024px+ screens. Mouse, touch, and keyboard controls are available on the board.
+        </p>
+
+        {/* Always visible before both play paths, even when the tutorial was seen. */}
+        <SliceOfFlowOrderGuide className="mt-6" testId="landing-order-guide" />
+        <p className="text-base leading-relaxed mt-3" style={{ fontFamily: "'DM Sans', sans-serif", color: '#534334' }} data-testid="landing-kitchen-time">
+          {`${preset.label}: ${Math.floor(preset.roundDuration / 60)} simulated kitchen minutes per round. Default clock speed is ${preset.defaultSpeed}x — ${preset.defaultSpeed} kitchen seconds pass per real second. You can change speed or pause on the board.`}
         </p>
 
         {/* Start Buttons */}
@@ -293,7 +300,7 @@ export default function SliceOfFlowLanding() {
         </div>
 
         <p className="text-center text-xs mt-4 mb-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#999' }}>
-          {DIFFICULTY_PRESETS[difficulty].label} difficulty — {Math.floor(preset.roundDuration / 60)} minutes per round — 12 orders
+          {preset.label} difficulty — {Math.floor(preset.roundDuration / 60)} simulated kitchen minutes per round — 12 orders
         </p>
 
         {/* ─── FACILITATOR QUICK-START ─── */}
@@ -344,7 +351,7 @@ export default function SliceOfFlowLanding() {
 
                 <div>
                   <div className="text-sm font-bold mb-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>
-                    Round 1 — Push (4 min)
+                    {`Round 1 — Push (${Math.floor(preset.roundDuration / 60)} simulated kitchen min)`}
                   </div>
                   <ul className="text-xs space-y-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#555' }}>
                     <li>• Click <strong>"Open the Kitchen"</strong> — the team calls out moves together</li>
@@ -355,7 +362,7 @@ export default function SliceOfFlowLanding() {
 
                 <div>
                   <div className="text-sm font-bold mb-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#333' }}>
-                    Round 2 — Pull + WIP (4 min)
+                    {`Round 2 — Pull + WIP (${Math.floor(preset.roundDuration / 60)} simulated kitchen min)`}
                   </div>
                   <ul className="text-xs space-y-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#555' }}>
                     <li>• The transition screen explains WIP limits and pull — read it together</li>
@@ -379,7 +386,7 @@ export default function SliceOfFlowLanding() {
                   className="p-3 rounded-lg text-xs"
                   style={{ background: '#FFF8E7', border: '1px solid #D4A843', fontFamily: "'DM Sans', sans-serif", color: '#666' }}
                 >
-                  <strong style={{ color: '#D4A843' }}>Tip:</strong> For a shorter session, use "Skip to Round 2" and focus the debrief on what WIP limits feel like in practice. Total time: ~8 minutes.
+                  <strong style={{ color: '#D4A843' }}>Tip:</strong> For a shorter session, use "Skip to Round 2" and focus the debrief on what WIP limits feel like in practice. Round time is simulated kitchen time; allow extra real time for discussion and pauses.
                 </div>
               </div>
             </div>

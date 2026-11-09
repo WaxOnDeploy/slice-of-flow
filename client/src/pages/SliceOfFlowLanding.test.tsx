@@ -1,12 +1,41 @@
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { ACCESS_SUMMARY, AUTHOR_LINKEDIN_URL, BUILT_BY, getPrivacyDisclosure, HERO_IMAGE } from '@/lib/sliceOfFlowBrand';
+import { DIFFICULTY_PRESETS, type Difficulty } from '@/lib/sliceOfFlowConstants';
+import { ACTIVE_ORDER_TYPES } from '@/lib/sliceOfFlowOrderTypes';
 
-vi.mock('@/lib/sliceOfFlowStore', () => ({ useSliceOfFlowStore: (selector: (state: unknown) => unknown) => selector({ startGame: () => {}, skipToRound2: () => {}, difficulty: 'normal', setDifficulty: () => {} }) }));
+const mock = vi.hoisted(() => ({
+  difficulty: 'normal' as Difficulty,
+  showFacilitatorGuide: false,
+  tutorialSeen: false,
+  startGame: vi.fn(),
+  skipToRound2: vi.fn(),
+}));
+vi.mock('react', async importOriginal => {
+  const actual = await importOriginal<typeof import('react')>();
+  return { ...actual, useState: () => [mock.showFacilitatorGuide, vi.fn()] };
+});
+vi.mock('@/lib/sliceOfFlowStore', () => ({
+  useSliceOfFlowStore: (selector: (state: unknown) => unknown) => selector({
+    startGame: mock.startGame,
+    skipToRound2: mock.skipToRound2,
+    difficulty: mock.difficulty,
+    setDifficulty: () => {},
+    tutorialSeen: mock.tutorialSeen,
+  }),
+}));
 import SliceOfFlowLanding from './SliceOfFlowLanding';
 
 const renderLanding = () => renderToStaticMarkup(<SliceOfFlowLanding />);
 const textContent = (html: string) => html.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&');
+
+beforeEach(() => {
+  mock.difficulty = 'normal';
+  mock.showFacilitatorGuide = false;
+  mock.tutorialSeen = false;
+  mock.startGame.mockClear();
+  mock.skipToRound2.mockClear();
+});
 
 describe('approved landing credibility', () => {
   it('uses the exact real-text credit outside and before the hero illustration', () => {
@@ -72,5 +101,47 @@ describe('approved landing credibility', () => {
     const html = renderLanding();
     expect(html).toContain('grid-cols-1 sm:grid-cols-3');
     expect(html).toContain('w-full sm:w-auto max-w-full');
+  });
+});
+
+describe('pre-play pizza order introduction', () => {
+  it.each([false, true])('is always visible before both play paths when tutorialSeen=%s', tutorialSeen => {
+    mock.tutorialSeen = tutorialSeen;
+    const html = renderLanding();
+    const copy = textContent(html);
+    const guideIndex = html.indexOf('data-testid="landing-order-guide"');
+    expect(guideIndex).toBeGreaterThan(-1);
+    expect(html).toMatch(/<h2[^>]*>Meet today&#x27;s orders<\/h2>/);
+    expect(guideIndex).toBeLessThan(html.indexOf('Open the Kitchen'));
+    expect(guideIndex).toBeLessThan(html.indexOf('Skip to Round 2'));
+    for (const type of ACTIVE_ORDER_TYPES) expect(copy).toContain(type.pizzaType);
+    expect(copy).toContain('Custom Build is an ordinary Large pizza (90s Prep / 80s Oven).');
+    expect(copy).toContain('No VIP priority, no extra capacity, and no expedited handling.');
+    expect(html).not.toContain('role="dialog"');
+    expect(mock.startGame).not.toHaveBeenCalled();
+    expect(mock.skipToRound2).not.toHaveBeenCalled();
+  });
+
+  it.each(['easy', 'normal', 'hard'] as const)('separates %s preset kitchen duration from default clock speed', difficulty => {
+    mock.difficulty = difficulty;
+    const html = renderLanding();
+    const preset = DIFFICULTY_PRESETS[difficulty];
+    const copy = textContent(html);
+    expect(copy).toContain(`${preset.label}: ${Math.floor(preset.roundDuration / 60)} simulated kitchen minutes per round. Default clock speed is ${preset.defaultSpeed}x`);
+    expect(copy).toContain(`${preset.defaultSpeed} kitchen seconds pass per real second.`);
+    expect(html.indexOf('data-testid="landing-kitchen-time"')).toBeLessThan(html.indexOf('Open the Kitchen'));
+    expect(copy).not.toContain('4minutes');
+    expect(copy).not.toContain('Total time: ~8 minutes');
+  });
+
+  it.each(['easy', 'normal', 'hard'] as const)('derives %s facilitator round labels from the preset without real-time promises', difficulty => {
+    mock.showFacilitatorGuide = true;
+    mock.difficulty = difficulty;
+    const copy = textContent(renderLanding());
+    const minutes = Math.floor(DIFFICULTY_PRESETS[difficulty].roundDuration / 60);
+    expect(copy).toContain(`Round 1 — Push (${minutes} simulated kitchen min)`);
+    expect(copy).toContain(`Round 2 — Pull + WIP (${minutes} simulated kitchen min)`);
+    expect(copy).toContain('allow extra real time for discussion and pauses.');
+    expect(copy).not.toContain('Total time: ~8 minutes');
   });
 });
