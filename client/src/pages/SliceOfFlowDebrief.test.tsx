@@ -57,6 +57,6 @@ describe('results view regressions', () => {
   });
 
   it('prints the exact approved author credentials as accessible HTML', () => {
-    expect(render()).toContain('Built By Jeff Bourke, MHA, PMP, SAFe-RTE');
+    expect(render()).toContain('Built by Jeff Bourke, MHA, PMP, SAFe RTE');
   });
 });

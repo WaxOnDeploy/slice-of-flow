@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import { DIFFICULTY_PRESETS, type Difficulty } from '@/lib/sliceOfFlowConstants';
-import { BUILT_BY, HERO_IMAGE } from '@/lib/sliceOfFlowBrand';
+import { ACCESS_SUMMARY, getPrivacyDisclosure, HERO_IMAGE } from '@/lib/sliceOfFlowBrand';
+import SliceOfFlowAuthorCredit from '@/components/SliceOfFlowAuthorCredit';
 
 const HERO_IMG = HERO_IMAGE;
 
@@ -24,8 +25,35 @@ export default function SliceOfFlowLanding() {
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: '#FAF7F2' }}>
-      {/* Hero Section */}
-      <div className="relative w-full">
+      {/* Plain HTML credit: outside the illustration, visible before any scrolling. */}
+      <header className="px-5 pt-5 pb-4 sm:px-8" data-testid="landing-identity">
+        <div className="max-w-5xl mx-auto">
+          <h1
+            className="text-4xl sm:text-5xl lg:text-6xl tracking-tight"
+            style={{ fontFamily: "'Lilita One', cursive", color: '#D94F3B' }}
+          >
+            Slice of Flow
+          </h1>
+          <SliceOfFlowAuthorCredit className="mt-2" />
+          <p className="text-base sm:text-lg mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>
+            A Kanban Pizza Shop Simulation
+          </p>
+          <p className="text-sm mt-3 font-medium" style={{ fontFamily: "'DM Sans', sans-serif", color: '#534334' }} data-testid="access-summary">
+            {ACCESS_SUMMARY}
+          </p>
+          <details className="mt-2 text-sm" style={{ fontFamily: "'DM Sans', sans-serif", color: '#534334' }}>
+            <summary className="cursor-pointer w-fit rounded-sm underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#1976D2]">
+              Privacy &amp; browser storage
+            </summary>
+            <p className="mt-2 max-w-3xl leading-relaxed" data-testid="privacy-disclosure">
+              {getPrivacyDisclosure(Boolean(import.meta.env.VITE_ANALYTICS_ENDPOINT && import.meta.env.VITE_ANALYTICS_WEBSITE_ID))}
+            </p>
+          </details>
+        </div>
+      </header>
+
+      {/* Hero art retains the verified MHA door plaque as decoration. */}
+      <div className="w-full max-w-5xl mx-auto" data-testid="hero-art">
         <img
           src={HERO_IMG}
           alt="Cartoon Slice of Flow pizza shop, with Jeff Bourke as one of the kitchen chefs"
@@ -33,33 +61,10 @@ export default function SliceOfFlowLanding() {
           width={2560}
           height={1440}
         />
-        {/* Gradient overlay */}
-        <div
-          className="absolute inset-0"
-          style={{
-            background: 'linear-gradient(to bottom, rgba(0,0,0,0) 70%, rgba(250,247,242,1) 100%)',
-          }}
-        />
-        {/* Title overlay */}
-        <div className="absolute bottom-0 left-0 right-0 px-8 pb-4">
-          <h1
-            className="text-6xl md:text-7xl lg:text-8xl tracking-tight"
-            style={{ fontFamily: "'Lilita One', cursive", color: '#D94F3B', textShadow: '2px 2px 0 #FAF7F2, -1px -1px 0 #FAF7F2' }}
-          >
-            Slice of Flow
-          </h1>
-          <p className="text-base md:text-lg mt-2 font-semibold" style={{ fontFamily: "'DM Sans', sans-serif", color: '#534334' }}>{BUILT_BY}</p>
-          <p
-            className="text-xl md:text-2xl mt-1"
-            style={{ fontFamily: "'DM Sans', sans-serif", color: '#666', fontWeight: 500 }}
-          >
-            A Kanban Pizza Shop Simulation
-          </p>
-        </div>
       </div>
 
       {/* Content Section */}
-      <div className="flex-1 px-8 pt-6 pb-12 max-w-5xl mx-auto w-full">
+      <div className="flex-1 px-5 sm:px-8 pt-6 pb-12 max-w-5xl mx-auto w-full">
 
         {/* ─── WHO IS THIS FOR ─── */}
         <div
@@ -185,7 +190,7 @@ export default function SliceOfFlowLanding() {
           >
             Choose Your Heat Level
           </h2>
-          <div className="grid grid-cols-3 gap-4 max-w-3xl mx-auto">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
             {DIFFICULTY_KEYS.map((key) => {
               const p = DIFFICULTY_PRESETS[key];
               const colors = DIFFICULTY_COLORS[key];
@@ -255,14 +260,15 @@ export default function SliceOfFlowLanding() {
         </div>
 
         <p className="text-center text-sm mt-6" style={{ fontFamily: "'DM Sans', sans-serif", color: '#666' }}>
-          Best on a laptop or tablet (1024px+). Mouse, touch, and keyboard controls are available on the board.
+          <strong>Best on a laptop or tablet.</strong>{' '}
+          The board is optimized for 1024px+ screens. Mouse, touch, and keyboard controls are available on the board.
         </p>
 
         {/* Start Buttons */}
         <div className="mt-8 flex flex-col items-center gap-4">
           <button
             onClick={startGame}
-            className="group relative px-12 py-5 text-2xl font-bold text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
+            className="group relative w-full sm:w-auto max-w-full px-6 sm:px-12 py-5 text-2xl font-bold text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
             style={{
               fontFamily: "'Lilita One', cursive",
               background: 'linear-gradient(135deg, #D94F3B 0%, #E64A19 100%)',
@@ -271,10 +277,10 @@ export default function SliceOfFlowLanding() {
           >
             <span className="relative z-10">Open the Kitchen</span>
           </button>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 w-full sm:w-auto max-w-full">
             <button
               onClick={skipToRound2}
-              className="group relative px-8 py-3 text-lg font-bold text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
+              className="group relative w-full sm:w-auto max-w-full px-6 sm:px-8 py-3 text-lg font-bold text-white rounded-lg transition-all duration-200 hover:scale-105 active:scale-95"
               style={{
                 fontFamily: "'Lilita One', cursive",
                 background: 'linear-gradient(135deg, #1976D2 0%, #1565C0 100%)',

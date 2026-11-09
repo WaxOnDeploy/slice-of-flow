@@ -5,9 +5,10 @@
     <meta charset="UTF-8" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+      content="width=device-width, initial-scale=1.0" />
     <title>Slice of Flow — A Kanban Pizza Shop Simulation</title>
     <meta name="description" content="Run a pizza shop to learn Kanban flow. Experience push vs. pull, WIP limits, and bottleneck management in this interactive two-round training simulation for scrum teams and Agile coaches." />
+    <meta name="author" content="Jeff Bourke, MHA, PMP, SAFe RTE" />
 
     <!-- Canonical -->
     <link rel="canonical" href="https://slice-of-flow.com/" />
@@ -48,7 +49,15 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Real initial HTML, replaced by React; readable before JavaScript and by non-JS readers. -->
+      <header data-testid="initial-identity" style="padding: 20px; background: #FAF7F2; color: #534334; font: 16px/1.5 sans-serif;">
+        <h1>Slice of Flow</h1>
+        <p>Built by <a href="https://www.linkedin.com/in/jeffreybourke" target="_blank" rel="noopener noreferrer">Jeff Bourke</a>, MHA, PMP, SAFe RTE</p>
+        <p>Free to play. No account required. No automatic game-results upload.</p>
+        <noscript>The game needs JavaScript to run. Moves and results are not automatically uploaded; hosting, font, and image providers may log normal web requests.</noscript>
+      </header>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
     <!-- Optional analytics is loaded by main.tsx only when configured. -->
   </body>

@@ -2,7 +2,11 @@
 
 A browser-based **Kanban pizza shop simulation** for Scrum Masters, Agile coaches, RTEs, delivery leads, and self-paced learners. Run the same kitchen through **Round 1: Push** and **Round 2: Pull + WIP limits**, then compare throughput, quality, and lead time.
 
-**Built By Jeff Bourke, MHA, PMP, SAFe-RTE.** The storefront includes a hand-drawn Jeff chef and a proprietor-style credit plaque. The approved credit is also rendered as accessible HTML, not only illustration text.
+Built by [Jeff Bourke](https://www.linkedin.com/in/jeffreybourke), MHA, PMP, SAFe RTE. The plain-text credit sits in a responsive header **outside the hero image**, and appears on every first-visit splash variant too. Initial HTML carries the same linked credit and author metadata for non-JavaScript readers; React replaces that initial fallback when it starts. The storefront's decorative plaque already says **MHA**, consistent with Jeff's LinkedIn Education section (Master of Health Administration, Quinnipiac University). Its existing artwork is retained.
+
+**Free to play. No account required. No automatic game-results upload.** The landing page has a native, keyboard-accessible **Privacy & browser storage** disclosure: game state/results are browser-local, reload resets progress, onboarding flags use local/session storage, and normal hosting, Google Fonts, and image/CDN requests may be logged by their providers. Its analytics sentence reflects whether both analytics variables are configured for that particular build; do not advertise blanket “no data collected.” Sharing remains user-initiated.
+
+No team/session counts or testimonials are shown without verified product evidence and the quoted person's permission. No **The Fatal Five** pointer is added to the Slice of Flow landing page; any future pointer is limited to the approved **“forthcoming, early 2027”** wording, with no endorser names or quotes. This landing update does not change the separate legacy `/deck-shop` page. **“Best on a laptop or tablet.”** remains before the Start button, and difficulty cards stack on phones to prevent horizontal overflow.
 
 This public repository, [`WaxOnDeploy/slice-of-flow`](https://github.com/WaxOnDeploy/slice-of-flow), contains the React 19 / TypeScript / Vite 7 application, its retained legacy pages, and a small Node static-serving helper. Workshop teams can discuss moves around one projected browser; this is not a synchronized multiplayer game.
 

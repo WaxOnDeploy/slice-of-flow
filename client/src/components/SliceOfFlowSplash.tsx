@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import SliceOfFlowAuthorCredit from '@/components/SliceOfFlowAuthorCredit';
 
 const HERO_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-hero-bg-GAkzomYox6u7BrLN2cai9V.webp';
 
@@ -17,7 +18,8 @@ function NeonSplash({ onEnter }: { onEnter: () => void }) {
     <div
       onClick={onEnter}
       style={{
-        minHeight: '100vh',
+        minHeight: 0,
+        flex: 1,
         background: 'linear-gradient(180deg, #0d0907 0%, #1a110d 40%, #2d1810 100%)',
         display: 'flex',
         flexDirection: 'column',
@@ -127,7 +129,8 @@ function PizzaBoxSplash({ onEnter }: { onEnter: () => void }) {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: 0,
+        flex: 1,
         background: '#FAF7F2',
         display: 'flex',
         flexDirection: 'column',
@@ -298,7 +301,8 @@ function OrderTicketSplash({ onEnter }: { onEnter: () => void }) {
   return (
     <div
       style={{
-        minHeight: '100vh',
+        minHeight: 0,
+        flex: 1,
         background: 'linear-gradient(180deg, #2d1810 0%, #1a110d 100%)',
         display: 'flex',
         flexDirection: 'column',
@@ -415,10 +419,11 @@ function OrderTicketSplash({ onEnter }: { onEnter: () => void }) {
             textAlign: 'center',
             position: 'relative',
           }}>
-            <div style={{
+            <button type="button" style={{
               display: 'inline-block',
               fontFamily: "'Lilita One', cursive",
               fontSize: '28px',
+              background: 'transparent',
               color: '#D94F3B',
               border: '4px solid #D94F3B',
               borderRadius: '8px',
@@ -432,7 +437,7 @@ function OrderTicketSplash({ onEnter }: { onEnter: () => void }) {
               onClick={onEnter}
             >
               FIRE IT UP!
-            </div>
+            </button>
           </div>
 
           {/* Footer */}
@@ -486,16 +491,25 @@ interface SplashScreenProps {
 }
 
 export default function SliceOfFlowSplash({ onEnter, variant = 'ticket' }: SplashScreenProps) {
-  switch (variant) {
-    case 'neon':
-      return <NeonSplash onEnter={onEnter} />;
-    case 'pizzabox':
-      return <PizzaBoxSplash onEnter={onEnter} />;
-    case 'ticket':
-      return <OrderTicketSplash onEnter={onEnter} />;
-    default:
-      return <OrderTicketSplash onEnter={onEnter} />;
-  }
+  const content = variant === 'neon'
+    ? <NeonSplash onEnter={onEnter} />
+    : variant === 'pizzabox'
+      ? <PizzaBoxSplash onEnter={onEnter} />
+      : <OrderTicketSplash onEnter={onEnter} />;
+
+  return (
+    <div className="min-h-dvh flex flex-col" style={{ background: '#FAF7F2' }}>
+      <header className="flex-shrink-0 px-5 py-3 sm:px-8 border-b border-[#E0D8CC]" data-testid="splash-identity">
+        <div className="max-w-5xl mx-auto">
+          <SliceOfFlowAuthorCredit />
+          <p className="text-xs sm:text-sm mt-1" style={{ fontFamily: "'DM Sans', sans-serif", color: '#534334' }}>
+            Free to play. No account required.
+          </p>
+        </div>
+      </header>
+      {content}
+    </div>
+  );
 }
 
 export type { SplashVariant };
