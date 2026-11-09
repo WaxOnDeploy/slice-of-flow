@@ -104,3 +104,6 @@ temp/
 *.db
 *.sqlite
 *.sqlite3
+
+# Local Vercel project linkage and downloaded environment files
+.vercel/
