@@ -48,6 +48,7 @@ Open **http://localhost:3000/**. Vite binds to all interfaces and tries another 
 | `pnpm test` | Run the tracked Vitest regression suite once. |
 | `pnpm test:watch` | Run regression tests in watch mode during development. |
 | `pnpm test:e2e` | Run workshop browser acceptance tests against an existing production build; see below. |
+| `pnpm test:exports` | Run real-browser PNG, print, cancellation, privacy and cleanup tests against the production build. |
 | `pnpm build` | Require passing regression tests and type checks, then build the Vite client and Node helper. |
 | `pnpm preview` | Inspect the built client with Vite preview; use the URL it prints. |
 | `pnpm start` | Run the built Node helper in production mode, normally on port 3000 (`PORT` overrides it). |
@@ -128,7 +129,7 @@ Choose **“See Full Results →”** after a full game or **“See Your Results
 
 Missing averages and unavailable percentage comparisons display neutral **n/a**. Score percentage requires actual completed samples in both rounds and a positive Round 1 score; zero/negative baseline percentages are unavailable, while recorded raw scores remain visible. Each learning card states an observation only when its own numbers support it; otherwise it asks a neutral question. Shared results follow the same availability rules, link to `https://slice-of-flow.com`, and do not promise a better outcome. Native share cancellation does not automatically copy results.
 
-Round 1 reflection acknowledges fewer than two deliveries; stronger outcomes get a neutral baseline reflection. The transition introduces **four core practices**, not a complete set of Kanban principles, and uses the selected difficulty's simulated arrival interval. Tests cover comparison/scoring boundaries, truthful insights/share text, transition copy, rendered results/branding, pause/readiness/capacity, and a complete deterministic R1/R2 operator run. Automated runs are not evidence of a completed independent human workshop or full cross-browser certification. New rounds, general facilitator controls, timer/anger rebalance, offline caching, and PNG results export remain outside this Step 1 slice.
+Round 1 reflection acknowledges fewer than two deliveries; stronger outcomes get a neutral baseline reflection. The transition introduces **four core practices**, not a complete set of Kanban principles, and uses the selected difficulty's simulated arrival interval. Tests cover comparison/scoring boundaries, truthful insights/share text, transition copy, rendered results/branding, pause/readiness/capacity, and a complete deterministic R1/R2 operator run. Automated runs are not evidence of a completed independent human workshop or full cross-browser certification. New rounds, general facilitator controls, timer/anger rebalance and offline caching remain separate work. PNG and print exports are the later batch described below.
 
 ### Workshop-ready Rounds 1–2 batch
 
@@ -148,6 +149,24 @@ pnpm test:e2e
 The local suite requires **OpenSSL on PATH** to create a one-day, loopback-only test certificate in the operating system's temporary directory. It starts a temporary **HTTPS** production server applying the unchanged `vercel.json` headers, including `upgrade-insecure-requests`; generated certificate files are removed afterward and never committed. Certificate-error bypass is limited to that local test server, not a supplied production URL. Alternatively, supply an existing HTTPS preview with `SOF_TEST_URL`.
 
 The script tests 1280px and 1024px desktop boards, emulated tablet touch, modal focus, paused guidance/help, all splash variants, difficulty layouts with fallback fonts, a UI-only two-round playthrough, and skipped-R1 results. Results and screenshots go to ignored `test-results/workshop/`. It uses no debug-store injection or fabricated metrics. For a live-site smoke test, set `SOF_TEST_URL=https://slice-of-flow.com/`. `SOF_BROWSERS=chromium` selects one engine; `SOF_FULL_PAIR=0` and `SOF_EXTENDED=0` omit longer checks. Native device/browser and an uncoached human workshop remain separate acceptance work; Linux WebKit is not a claim of testing actual Safari/iPad hardware. Normal hosting builds retain the unit/typecheck gate; browser tests are a separate release check.
+
+### Local results exports
+
+Both debrief paths provide **Download PNG**, **Share image**, and **Print / Save PDF**. A native disclosure previews the included data. PNG output is a 1600px-wide, naturally sized diner-style summary with the selected difficulty, measured counts/times/scores, consistent missing-data rules and exact author/site credit. Native canvas draws only allowlisted results and system-font text: no screenshot of the board, cross-origin image capture, hosted-font capture, new dependency at runtime, upload, account or server is required.
+
+Image sharing uses a prepared local PNG under a fresh button activation. If native file sharing is unsupported, it requests a local PNG download; cancelling native sharing does not unexpectedly download or copy anything. Temporary download anchors are removed and object URLs are revoked. Text sharing retains its existing native/clipboard paths; if both modern and legacy copying fail, the UI shows a helpful export alternative instead of falsely claiming success.
+
+**Print / Save PDF** opens the browser's print dialog for the same document, without a popup or iframe. The dedicated black-on-white debrief includes a results table, score rules, supported observations, **The Bridge**, discussion questions and a next-experiment writing area. Gameplay, art, interactive controls and charts are not printed. Cancelling leaves the current results intact. The print layout is scoped to the debrief; it does not replace the interactive page or retained routes.
+
+Exports use a copied/frozen, numeric-field allowlist. Arbitrary card names, personal/facilitator/dependency labels and metadata are excluded; there are no free-text label fields in this export batch. Round 1 skipped/missing values stay **n/a**, not fictitious zeros. Measured zero counts and negative scores remain real values. Lead time is **Orders-to-served time for served tickets only**; unfinished tickets are excluded. Printing includes the same supported questions/mappings as the screen, not a second hard-coded copy.
+
+```sh
+pnpm build
+pnpm exec playwright install --with-deps chromium firefox webkit
+pnpm test:exports
+```
+
+The export suite uses the same temporary HTTPS/security policy and supports `SOF_TEST_URL`, `SOF_TEST_PORT`, `SOF_TEST_OUTPUT`, and `SOF_BROWSERS`. Evidence is written to ignored `test-results/exports/`; downloaded empty-round samples are explicitly test evidence, not real team results. Development-only jsdom supports DOM unit checks; it is not shipped in the app. See [native canvas PNG generation](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob), [browser printing](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Media_queries/Printing), and [native sharing](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share) for platform requirements.
 
 ## Browser-local state and retained routes
 
@@ -208,6 +227,9 @@ Illustrations, textures, favicons, and social images reference external **CloudF
 | `client/src/components/SliceOfFlowTutorial.tsx`, `SliceOfFlowSplash.tsx` | Intro tutorial and splash variants (both under `components/`). |
 | `client/src/lib/sliceOfFlowConstants.ts`, `sliceOfFlowStore.ts`, `sliceOfFlowSounds.ts` | Orders/presets/WIP/scoring, state/actions/timers, and synthesized audio (all under `lib/`). |
 | `client/src/pages/SliceOfFlowTransition.tsx`, `SliceOfFlowDebrief.tsx` | Kanban lesson and results/sharing (both under `pages/`). |
+| `client/src/lib/sliceOfFlowExportModel.ts`, `sliceOfFlowPng.ts`, `sliceOfFlowClipboard.ts`, `sliceOfFlowDebriefContent.ts` | Safe summary, native PNG/local download, honest copying and shared debrief copy. |
+| `client/src/components/SliceOfFlowExportActions.tsx`, `SliceOfFlowPrintSheet.tsx`, `client/src/lib/sliceOfFlowPrint.css` | Accessible local-export controls, data preview and print-only debrief. |
+| `tests/exports.e2e.mjs`, `tests/browserHarness.mjs` | Real-browser export acceptance and temporary production-equivalent HTTPS harness. |
 | `client/src/pages/Home.tsx`, `Game.tsx` | Retained deck-shop/coaching page and text adventure. |
 | `server/index.ts` | Optional static-serving Node helper with SPA fallback. |
 | `vercel.json` | Static deployment settings, SPA rewrite, and HTTP headers. |

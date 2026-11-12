@@ -4,6 +4,11 @@ import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
 import { getResultsComparison, getDebriefInsights, generateShareText, hasLeadTime } from '@/lib/sliceOfFlowResults';
 import { BUILT_BY, HERO_IMAGE } from '@/lib/sliceOfFlowBrand';
 import SliceOfFlowScoringExplanation from '@/components/SliceOfFlowScoringExplanation';
+import SliceOfFlowExportActions from '@/components/SliceOfFlowExportActions';
+import SliceOfFlowPrintSheet from '@/components/SliceOfFlowPrintSheet';
+import { buildResultsExportModel } from '@/lib/sliceOfFlowExportModel';
+import { BRIDGE_ROWS, DISCUSSION_QUESTIONS } from '@/lib/sliceOfFlowDebriefContent';
+import { copyResultsText } from '@/lib/sliceOfFlowClipboard';
 import { Chart, registerables } from 'chart.js';
 import { toast } from 'sonner';
 
@@ -182,19 +187,6 @@ function SingleRoundChart({
 }
 
 // ─── BRIDGE TABLE ──────────────────────────────────
-const BRIDGE_ROWS = [
-  { pizza: 'Order Deck', team: 'Product Backlog', desc: 'All the work that could be done' },
-  { pizza: 'Orders Queue', team: 'Sprint Backlog', desc: 'Work committed for this iteration' },
-  { pizza: 'Prep Station', team: 'In Development', desc: 'Actively being worked on' },
-  { pizza: 'Oven', team: 'In Review / Testing', desc: 'Waiting for validation (you can\'t rush it)' },
-  { pizza: 'Pizza Box', team: 'Deployment / Release', desc: 'Ready to ship to the customer' },
-  { pizza: 'Served', team: 'Done / In Production', desc: 'Delivered and accepted' },
-  { pizza: 'Burnt Pizza', team: 'Defect / Rework', desc: 'Left too long without attention' },
-  { pizza: 'Angry Customer', team: 'Missed SLA / Unhappy Stakeholder', desc: 'Lead time exceeded expectations' },
-  { pizza: 'WIP Limit', team: 'WIP Limit', desc: 'Stop starting, start finishing' },
-  { pizza: 'Push (Round 1)', team: 'Scope Creep / Overcommitment', desc: 'Work forced in regardless of capacity' },
-  { pizza: 'Pull (Round 2)', team: 'Pull System / Kanban', desc: 'Take work only when you have capacity' },
-];
 
 export default function SliceOfFlowDebrief() {
   const { round1Metrics, round2Metrics, resetGame, difficulty } = useSliceOfFlowStore();
@@ -211,6 +203,7 @@ export default function SliceOfFlowDebrief() {
   const insights = useMemo(() => getDebriefInsights(round1Metrics, round2Metrics), [round1Metrics, round2Metrics]);
 
   const difficultyLabel = DIFFICULTY_PRESETS[difficulty].label;
+  const exportModel = useMemo(() => buildResultsExportModel(round1Metrics, round2Metrics, difficulty), [round1Metrics, round2Metrics, difficulty]);
 
   const handleShare = useCallback(async () => {
     const text = generateShareText(round1Metrics, round2Metrics, difficultyLabel);
@@ -230,24 +223,12 @@ export default function SliceOfFlowDebrief() {
     }
 
     // Clipboard fallback
-    try {
-      await navigator.clipboard.writeText(text);
+    if (await copyResultsText(text)) {
       setShareState('copied');
       toast.success('Results copied to clipboard!', { duration: 3000 });
       setTimeout(() => setShareState('idle'), 3000);
-    } catch {
-      // Final fallback: select text in a textarea
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      setShareState('copied');
-      toast.success('Results copied to clipboard!', { duration: 3000 });
-      setTimeout(() => setShareState('idle'), 3000);
+    } else {
+      toast.error('Could not copy results. Use Download PNG or Print / Save PDF instead.');
     }
   }, [round1Metrics, round2Metrics, difficultyLabel]);
 
@@ -262,7 +243,8 @@ export default function SliceOfFlowDebrief() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#FAF7F2' }}>
+    <div className="sof-debrief-root min-h-screen" style={{ background: '#FAF7F2' }}>
+      <div className="sof-debrief-screen">
       {/* Header */}
       <div
         className="relative h-40 flex items-end"
@@ -321,6 +303,7 @@ export default function SliceOfFlowDebrief() {
             {skippedRound1 ? 'Play Full Game' : 'Play Again'}
           </button>
         </div>
+        <SliceOfFlowExportActions model={exportModel} />
 
         {/* ─── SKIPPED ROUND 1: Single-round summary ─── */}
         {skippedRound1 ? (
@@ -397,7 +380,7 @@ export default function SliceOfFlowDebrief() {
           <>
             {/* ─── FULL GAME: Push vs Pull comparison ─── */}
             {/* Score comparison */}
-            <div className="grid grid-cols-3 gap-6 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
               <div className="text-center p-6 rounded-xl" style={{ background: '#FFF3E0', border: '2px solid #FFCC80' }}>
                 <div className="text-sm font-semibold mb-2" style={{ fontFamily: "'Lilita One', cursive", color: '#E64A19' }}>
                   Round 1 — Push
@@ -585,14 +568,7 @@ export default function SliceOfFlowDebrief() {
           </h2>
           <div className="p-5 rounded-xl" style={{ background: '#F3E5F5', border: '1px solid #CE93D8' }}>
             <div className="grid md:grid-cols-2 gap-3">
-              {[
-                'Where are the "ovens" (bottlenecks) in our real workflow?',
-                'What happens to quality when we take on too much work at once?',
-                'How would explicit WIP limits change our daily standup?',
-                'What\'s our team\'s equivalent of a "burnt pizza"?',
-                'Do we push work into the system or pull it when we have capacity?',
-                'How could we measure lead time for our actual work items?',
-              ].map((q, i) => (
+              {DISCUSSION_QUESTIONS.map((q, i) => (
                 <div key={i} className="flex gap-2 items-start">
                   <span className="text-sm flex-shrink-0 font-bold" style={{ color: '#7B1FA2' }}>{i + 1}.</span>
                   <p className="text-sm" style={{ fontFamily: "'DM Sans', sans-serif", color: '#4A148C' }}>{q}</p>
@@ -642,6 +618,8 @@ export default function SliceOfFlowDebrief() {
           </p>
         </div>
       </div>
+      </div>
+      <SliceOfFlowPrintSheet model={exportModel} />
     </div>
   );
 }
