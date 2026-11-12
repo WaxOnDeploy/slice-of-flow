@@ -1,0 +1,100 @@
+/* Preview-only host styles. No legacy board, global theme, artwork, or rules are changed. */
+.sof-independent-lab {
+  --lab-cream: #faf7f2;
+  --lab-ink: #534334;
+  --lab-tomato: #a43a2a;
+  --lab-gold: #d4a843;
+  background: var(--lab-cream);
+  color: var(--lab-ink);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  border: 2px solid #dec59b;
+  border-radius: 18px;
+  padding: clamp(16px, 3vw, 28px);
+  margin: 24px auto;
+  max-width: 1240px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.sof-independent-lab p { margin: 8px 0; }
+.sof-independent-lab h2,
+.sof-independent-lab h3,
+.sof-lab-dialog h2 {
+  font-family: 'Lilita One', 'DM Sans', sans-serif;
+  color: #7b3f1a;
+  line-height: 1.25;
+  margin: 10px 0;
+}
+.sof-independent-lab h2,
+.sof-lab-dialog h2 { font-size: clamp(24px, 3vw, 32px); }
+.sof-independent-lab h3 { font-size: 22px; }
+.sof-lab-heading { border-bottom: 2px solid var(--lab-gold); padding-bottom: 16px; }
+.sof-lab-eyebrow { font-weight: 700; color: var(--lab-tomato); }
+.sof-lab-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+.sof-independent-lab button,
+.sof-lab-dialog button {
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.4;
+  padding: 10px 14px;
+  min-height: 44px;
+  border: 2px solid #925531;
+  border-radius: 9px;
+  background: #fff8e7;
+  color: #534334;
+  cursor: pointer;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.sof-independent-lab button:hover:not(:disabled),
+.sof-lab-dialog button:hover:not(:disabled) { background: #ffe9b4; }
+.sof-independent-lab button[aria-pressed='true'] { background: #ffe3a0; border-color: #a43a2a; box-shadow: inset 0 0 0 1px #a43a2a; }
+.sof-independent-lab button:disabled { color: #665c50; background: #eee9df; border-color: #aaa095; cursor: not-allowed; }
+.sof-independent-lab button:focus-visible,
+.sof-independent-lab [tabindex='-1']:focus,
+.sof-lab-dialog button:focus-visible {
+  outline: 3px solid #1976d2;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.9);
+}
+.sof-independent-lab fieldset { border: 1px solid #b29874; padding: 4px 8px 8px; border-radius: 9px; display: flex; gap: 8px; }
+.sof-independent-lab legend { padding: 0 4px; font-size: 16px; }
+.sof-lab-operational,
+.sof-lab-live-score { display: flex; flex-wrap: wrap; gap: 10px 20px; font-weight: 700; }
+.sof-lab-operational { background: #2a1508; color: #fff8e7; border-radius: 10px; padding: 12px 16px; }
+.sof-lab-live-score { flex-basis: 100%; border-top: 1px solid #d4a843; padding-top: 10px; }
+.sof-lab-helper,
+.sof-lab-pause { background: #fff8e7; border-left: 4px solid var(--lab-gold); padding: 10px 14px; }
+.sof-lab-feedback { min-height: 48px; padding: 10px 14px; border: 1px solid #dec59b; border-radius: 8px; }
+.sof-lab-stations { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; align-items: start; }
+.sof-lab-station { min-width: 0; padding: 12px; border: 1px solid #c5ac88; border-radius: 12px; background: #f5ebda; }
+.sof-lab-orderQueue { border-top: 5px solid #1976d2; }
+.sof-lab-prep { border-top: 5px solid #c08816; }
+.sof-lab-oven { border-top: 5px solid #a43a2a; }
+.sof-lab-boxDeliver { border-top: 5px solid #388e3c; }
+.sof-independent-lab .sof-lab-ticket { display: flex; flex-direction: column; align-items: start; text-align: left; width: 100%; margin: 10px 0; gap: 6px; padding: 12px; }
+.sof-lab-ticket strong { font-weight: 800; }
+.sof-lab-final { background: #fff8e7; border: 2px solid var(--lab-gold); border-radius: 12px; padding: 16px; }
+.sof-lab-final dl { margin: 12px 0; }
+.sof-lab-final dl > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 10px 0; border-bottom: 1px solid #dec59b; }
+.sof-lab-final dt { font-weight: 700; }
+.sof-lab-final dd { margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 16px; }
+.sof-lab-dialog { padding: 24px; font-family: 'DM Sans', sans-serif; font-size: 16px; line-height: 1.5; color: #534334; }
+.sof-lab-dialog p { margin: 12px 0; }
+.sof-lab-dialog button { margin: 16px 12px 0 0; }
+@media (max-width: 850px) { .sof-lab-stations { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 540px) {
+  .sof-lab-stations { grid-template-columns: minmax(0, 1fr); }
+  .sof-lab-final dl > div { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sof-independent-lab *,
+  .sof-lab-dialog * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

@@ -172,9 +172,9 @@ The export suite uses the same temporary HTTPS/security policy and supports `SOF
 
 `client/src/lib/sofEngine/` contains a separately tested pure fixed-deck engine, integer-ms/wall-us driver, canonical event accounting and copied/frozen final snapshots/archive values. `flow/sof018Metrics.ts` measures all-active Orders-admission-to-terminal-exit WIP, actual observation/rates, finished samples and a separately labelled short-run Orders-to-exit illustration. `sof/metricDefinitions.ts` preserves explicit source/units/sample definitions. The golden production deck uses seed 0 only; marked synthetic fixtures never become public scenarios. Inputs and commands fail closed; physical resources, policy WIP and score rules are distinct.
 
-These modules are **not imported into the playable application**. They do not replace the existing timer/store, record previous R1/R2 history, add facilitator controls, enable rounds 3–5, add storage or modify existing exports. The core has 151 dedicated tests; combined with the export release, the current suite has 518 tests. This is library evidence, not new human gameplay or native-device certification. A later host must own scheduling, stale-run checks, nested pause locks and final capture explicitly; a rejected control at the horizon must not swallow a successfully advanced terminal sample.
+These modules do not replace the **ordinary** Round 1 / Round 2 timer/store, record earlier R1/R2 history, enable rounds 3–5, add storage or modify existing exports. The core foundation release had 151 dedicated tests; its combined export-release suite had 518 tests. A separately flagged draft preview can import the modules only through the lazy composition seam documented below. Library/build evidence is not human gameplay or native-device certification.
 
-`validateSnapshot` is a lifecycle/measurement port, not proof an external ledger was played. `snapshotFromEngine`/`finalizeRun` additionally enforce replay-compatible producer state. A valid zero-duration served port fixture does not grant instant-service physics. Legacy positive-usable served means have unknown observation/sample history and are not silently interchangeable with the new nonnegative-elapsed definition. A later comparison authority must validate its actual producer evidence; equal seed or score is insufficient.
+`validateSnapshot` is a lifecycle/measurement port, not proof an external ledger was played. `snapshotFromEngine`/`finalizeRun` additionally enforce replay-compatible producer state. A valid zero-duration served port fixture does not grant instant-service physics. Legacy positive-usable served means have unknown observation/sample history and are not silently interchangeable with the new nonnegative-elapsed definition. The sole comparison assessor validates actual producer compatibility, configured policy change, observation and control traces; equal seed or score is insufficient and no human play is certified.
 
 ## Browser-local state and retained routes
 
@@ -251,3 +251,21 @@ Illustrations, textures, favicons, and social images reference external **CloudF
 - [ ] At 1x, verify Prep/bake readiness, rejected early/skipped/backward moves, Pizza Box → Served, burn behavior, and the three-pizza Oven cap.
 - [ ] Reach Round 2; verify manual pulls and WIP caps (4/2/3/2), then inspect the full debrief and share/replay controls. Also test the skip-to-Round-2 results path.
 - [ ] Reload to confirm gameplay resets but onboarding flags remain; verify supported routes, deployed deep-link fallback, CDN/fonts, and analytics behavior.
+
+## Default-off independent measurement lab — draft preview
+
+On a **draft preview build only**, add `?flow-lab=1` to the root URL, finish a normal or skipped-R1 journey, then explicitly select **Start lab run** below the existing debrief. The flag does not start a run, replace ordinary gameplay, or record its past history. The lab uses the official fixed deck, manual pull, original difficulty/speed defaults and its own immutable run/clock adapter. Its local opaque run codes are identity only, not randomized demand or personal labels.
+
+Pause/Resume belongs only to the facilitator. Instructions, the first-move guide, help, hidden tabs and exit confirmation retain independent pause ownership. Resume samples/rebases while still paused to avoid catch-up. One scheduler exists only during unpaused active lab play; page exit/unmount cancels it. This preview is intentionally silent, with no catch-up sounds. **Hide live scores** removes only live aggregates from DOM/accessibility while retaining operational timers and burn hazards. Ending records an actual terminal snapshot; confirmed exit abandons the active draft without inventing a completed result. Replay starts a fresh manual attempt, not replayed or synthetic played evidence.
+
+Completed lab runs provide measured all-active WIP, served-only delivery rate and Orders-to-served sample mean, distinct all-exit rate and a clearly caveated Orders-to-exit illustration. A read-only disclosure draws cumulative flow from **every** independently reconciled event prefix, including equal-time transitions; waiting outside Orders is not active WIP. Numeric tables and a keyboard event selector preserve exact ms timing. No chart is invented for a zero-duration observation.
+
+The second disclosure requires explicit, distinct baseline/subject selections and uses the sole comparison assessor once. It is deliberately **contextual**, never presented as a matched policy experiment, winner or causal benefit. Missing means stay unavailable; actual observation windows, populations, units and sample counts are retained. No automatic latest/best baseline is selected, and existing PNG/print/text exports remain the original R1/R2 summaries.
+
+```sh
+pnpm build
+pnpm exec playwright install --with-deps chromium firefox webkit
+pnpm test:lab
+```
+
+The lab test uses the same temporary local HTTPS/CSP harness and `SOF_TEST_*`/`SOF_BROWSERS` options. It performs real UI actions, complete independent play, keyboard/pointer/focus, owned pause/help/exit, score hiding, fresh replay/manual end, exact-history CFD, contextual pair selection, phone layout and no data-post checks. The ordinary full-game/export suites remain separate release gates. Engine tests and emulated browsers are not a human playtest, Safari/Edge/iPad/projector certification, or evidence of team usage. Keep this feature on a draft branch until human review; optional demand/scoring rounds remain disabled.
