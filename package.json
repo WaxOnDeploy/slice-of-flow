@@ -2,7 +2,8 @@
   "name": "release-train-chronicles-shop",
   "version": "1.0.0",
   "type": "module",
-  "license": "MIT",
+  "license": "SEE LICENSE IN LICENSE",
+  "private": true,
   "scripts": {
     "dev": "vite --host",
     "build": "pnpm test && pnpm check && vite build && esbuild server/index.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",

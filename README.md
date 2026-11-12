@@ -10,6 +10,34 @@ No team/session counts or testimonials are shown without verified product eviden
 
 This public repository, [`WaxOnDeploy/slice-of-flow`](https://github.com/WaxOnDeploy/slice-of-flow), contains the React 19 / TypeScript / Vite 7 application, its retained legacy pages, and a small Node static-serving helper. Workshop teams can discuss moves around one projected browser; this is not a synchronized multiplayer game.
 
+## License — proprietary, Jeff Bourke
+
+**Copyright © 2026 Jeff Bourke. All rights reserved in protectable material he
+authored or lawfully owns.** Slice of Flow is offered under the custom
+[proprietary LICENSE](LICENSE), version 1.0, beginning with the repository revision
+published with that notice on November 12, 2026. It is not offered under a general
+open-source project license.
+
+Free personal play and employee-led internal workshops are permitted. Outside
+facilitation, paid or unpaid, resale and rehosting require express written
+permission. Contact **jeff@thefatalfive.com**. Facilitation permission does not
+grant resale, white-labeling or source-distribution rights; a request is not a grant.
+
+Package metadata points to `LICENSE`; `private: true` prevents accidental npm
+publication and does **not** change GitHub visibility. Required third-party
+licenses/notices and valid prior permissions remain intact. No copyright over
+ideas, gameplay methods or otherwise unprotectable generated output is created.
+
+The separate [hosted Terms of Use draft](docs/ip/TERMS_OF_USE_DRAFT.md) is not yet a
+live visitor contract. The LICENSE's express hosted-use permissions operate
+independently of that draft; no acceptance of unpublished terms is claimed.
+
+See [license status](docs/ip/REVIEW_STATUS.md), [plugin findings](docs/ip/PLUGIN_LICENSE_REVIEW.md)
+and [asset provenance](docs/ip/ASSET_PROVENANCE.md). Jeff states he took the chef
+reference portrait himself; other photo/artwork and provider questions remain
+separate. Private originals, raw prompts, rights agreements and audit archives
+must stay outside the public repository. No plugin or game-code change is included.
+
 ## Local setup
 
 ### Requirements
