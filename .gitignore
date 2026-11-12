@@ -109,3 +109,6 @@ temp/
 
 # Local Vercel project linkage and downloaded environment files
 .vercel/
+
+# Local-only rights evidence; never publish raw contracts/prompts/photos.
+/private-ip-records/

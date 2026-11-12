@@ -10,6 +10,28 @@ No team/session counts or testimonials are shown without verified product eviden
 
 This public repository, [`WaxOnDeploy/slice-of-flow`](https://github.com/WaxOnDeploy/slice-of-flow), contains the React 19 / TypeScript / Vite 7 application, its retained legacy pages, and a small Node static-serving helper. Workshop teams can discuss moves around one projected browser; this is not a synchronized multiplayer game.
 
+## Licensing status — owner-approved rules, draft publication
+
+Jeff Bourke approved these usage boundaries on November 12, 2026: free personal
+play and employee-led internal workshops; outside facilitation, resale and
+rehosting require express written permission. Contact **jeff@thefatalfive.com**.
+A facilitation authorization does not grant resale, white-labeling or source
+rights, and sending a request does not grant permission.
+
+The [repository LICENSE](LICENSE) and [hosted terms](docs/ip/TERMS_OF_USE_DRAFT.md)
+remain **review drafts, not in effect**. This source branch does not impose new
+terms on current visitors. The inherited MIT package declaration remains pending
+historical/contribution-rights review; a new notice does not revoke valid prior
+permissions or replace third-party licenses. Copyright is reserved only in
+protectable material Jeff authored or lawfully owns, not ideas, gameplay methods
+or otherwise unprotectable generated output.
+
+See [approval status](docs/ip/REVIEW_STATUS.md), [plugin findings](docs/ip/PLUGIN_LICENSE_REVIEW.md)
+and [asset provenance](docs/ip/ASSET_PROVENANCE.md). Jeff states he took the chef
+reference portrait himself; other photo/artwork and provider questions remain
+separate. Private originals, raw prompts, rights agreements and audit archives
+must stay outside the public repository. No plugin or game-code change is included.
+
 ## Local setup
 
 ### Requirements
