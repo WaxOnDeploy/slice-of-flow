@@ -17,6 +17,8 @@
     "test:lab": "node tests/independent-lab.e2e.mjs",
     "test:lab-print": "node tests/lab-print.e2e.mjs",
     "test:round3": "node tests/round3.e2e.mjs",
+    "test:round3:3x": "node tests/run-vip-3x.mjs",
+    "test:round3:stress": "node tests/run-vip-3x.mjs --engine-only",
     "format": "prettier --write ."
   },
   "dependencies": {

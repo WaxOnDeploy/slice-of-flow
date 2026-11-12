@@ -342,3 +342,10 @@ pnpm test:lab-print    # Original debrief prints with lab pre-start, dialogs and
 ```
 
 The tracked browser suites use temporary HTTPS with the existing security headers. `SOF_BROWSERS=chromium,firefox,webkit` selects engines; `SOF_VIP_FULL_PAIR=0` uses explicitly short manual runs instead of a Chromium full-horizon pair. Use a browser-safe `SOF_TEST_PORT` (default 4186 for Round 3; avoid restricted 4190). They do not replace actual Safari/iPad/projector or human workshop review. Keep this pilot **draft and unmerged** until human interpretation and playability review. Rounds 4–5, the complete cross-round picker, all-round facilitator controls, VIP-specific export and multi-device play are not implemented here.
+
+
+### Automated Normal / 3× VIP FIFO and Expedite runs
+
+On the draft Round 3 branch, run `pnpm test:round3:3x` for exact engine/driver stress assertions, full unit/type gates, an isolated production build and a real-browser FIFO → expedite pair. Both browser runs use Normal/3×, finish at the actual 300-simulated-second horizon and explicitly select retained IDs for comparison. The player uses only visible controls and reports actual outcomes, not a guaranteed expedite win. Chromium is the default; `SOF_BROWSERS` enables more engines.
+
+Use `pnpm test:round3:stress` for fast deterministic virtual-wall-clock assertions only. Neither command deploys the app or changes a running UAT preview's build. Reports/screenshots go to ignored `test-results/round3-3x/`. Local browser serving requires OpenSSL on PATH and installed Playwright Chromium; engine-only checks do not. See [3× commands, exact timing landmarks and stress latency expectations](tests/VIP_3X_TESTING.md) for setup, PowerShell options, sample-size semantics and the distinction between simulated test evidence and observed browser play.
