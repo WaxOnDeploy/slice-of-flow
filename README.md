@@ -47,6 +47,7 @@ Open **http://localhost:3000/**. Vite binds to all interfaces and tries another 
 | `pnpm check` | Type-check with `tsc --noEmit`. |
 | `pnpm test` | Run the tracked Vitest regression suite once. |
 | `pnpm test:watch` | Run regression tests in watch mode during development. |
+| `pnpm test:e2e` | Run workshop browser acceptance tests against an existing production build; see below. |
 | `pnpm build` | Require passing regression tests and type checks, then build the Vite client and Node helper. |
 | `pnpm preview` | Inspect the built client with Vite preview; use the URL it prints. |
 | `pnpm start` | Run the built Node helper in production mode, normally on port 3000 (`PORT` overrides it). |
@@ -95,7 +96,7 @@ Choose **“Choose Your Heat Level”** on the landing page before opening the k
 | Normal (default) | 4 simulated minutes | 15 simulated seconds | 3x | 15 simulated seconds |
 | Hard | 3 simulated minutes | 10 simulated seconds | 3x | 15 simulated seconds |
 
-The board's **1x / 2x / 3x** controls change how many simulated seconds advance per one-second tick, including prep, bake, arrivals, and the round clock. Choose **1x** for a gentler first attempt. Open **Menu** for size timings and the actual post-bake burn window. Some tutorial copy still assumes Normal's 15-second arrivals, and the landing selector's “Burn Window” value is not the actual post-bake buffer; the rules above follow the store implementation. The transition now uses the selected difficulty's actual arrival interval.
+The board's **1x / 2x / 3x** controls change how many simulated seconds advance per one-second tick, including prep, bake, arrivals, and the round clock. Choose **1x** for a gentler first attempt. Open **Menu** for deck-derived size timings, every actual order type, and the post-bake burn window. The tutorial and transition use the selected difficulty's actual arrival interval. The landing selector's **“After-bake buffer”** now shows the actual preset difference between burn and done thresholds, rather than a misleading total fallback oven duration.
 
 ## Tutorial and your first move
 
@@ -113,9 +114,9 @@ The guided Round 1 first move runs again on subsequent full games even when the 
 
 The helper remains visible during play: **“Select a ticket → move it one station right when capacity is available.”** Selecting any ticket highlights its next station. When allowed, that station provides **“Move #<number> to <station> →”**; when blocked, it shows explanatory text rather than a move button, such as **“Finish Prep first; then send it to the Oven.”** or **“Let it finish baking; then send it to Pizza Box.”** Invalid drag/keyboard attempts also produce feedback.
 
-Use native pointer drag-and-drop, or the click/tap selection plus next-action button path. For board keyboard play, **Tab** focuses tickets/buttons, **Enter/Space** selects a focused ticket, and **ArrowRight** moves it only when that selected ticket has focus and the move is valid. Native buttons can be activated with Enter/Space. There is no global arrow-key navigation, keyboard drag mode, or implemented backward move. These board controls are not a claim of full-app keyboard accessibility: the default splash entry is currently click-only.
+Use native pointer drag-and-drop, or the click/tap selection plus next-action button path. For board keyboard play, **Tab** focuses tickets/buttons, **Enter/Space** selects a focused ticket, and **ArrowRight** moves it only when that selected ticket has focus and the move is valid. Native splash and gameplay buttons can be activated with Enter/Space. A moved ticket retains keyboard focus, but must be selected again before its next move. There is no global arrow-key navigation, keyboard drag mode, or implemented backward move. Keyboard-initiated phase changes and reduced-motion phase changes bypass the decorative curtain; pointer changes retain it.
 
-The top bar offers sound mute/unmute and **How to Play** to reopen the tutorial. Sound effects are synthesized with Web Audio. **Reopening the tutorial does not pause an already-running round**; there is no visible general pause control.
+The top bar offers sound mute/unmute and **How to Play** to reopen the tutorial. Sound effects are synthesized with Web Audio. **Reopening the tutorial pauses the simulation until it closes**; this is instructional help, not a new general facilitator pause control. The existing accessible dialog primitive contains Tab/Shift+Tab focus and hides the background. Escape closes the tutorial without bypassing Round 1's guided pause. Focus returns to the first ticket after onboarding or to How to Play after reopening help. Round-end results cannot be dismissed with Escape or an outside click: continue with their labelled button.
 
 ## Results and facilitation
 
@@ -128,6 +129,25 @@ Choose **“See Full Results →”** after a full game or **“See Your Results
 Missing averages and unavailable percentage comparisons display neutral **n/a**. Score percentage requires actual completed samples in both rounds and a positive Round 1 score; zero/negative baseline percentages are unavailable, while recorded raw scores remain visible. Each learning card states an observation only when its own numbers support it; otherwise it asks a neutral question. Shared results follow the same availability rules, link to `https://slice-of-flow.com`, and do not promise a better outcome. Native share cancellation does not automatically copy results.
 
 Round 1 reflection acknowledges fewer than two deliveries; stronger outcomes get a neutral baseline reflection. The transition introduces **four core practices**, not a complete set of Kanban principles, and uses the selected difficulty's simulated arrival interval. Tests cover comparison/scoring boundaries, truthful insights/share text, transition copy, rendered results/branding, pause/readiness/capacity, and a complete deterministic R1/R2 operator run. Automated runs are not evidence of a completed independent human workshop or full cross-browser certification. New rounds, general facilitator controls, timer/anger rebalance, offline caching, and PNG results export remain outside this Step 1 slice.
+
+### Workshop-ready Rounds 1–2 batch
+
+- **F4:** “How scoring works” appears in both full and skipped-R1 debriefs. Numeric wording comes from the existing scoring constants. Bonus notes appear only for qualifying recorded rounds; burnt customers are not counted again as angry.
+- **F5:** Every actual order type and its timing is derived from the fixed deck. Custom Build is ordinary Large work (90 simulated seconds Prep / 80 Oven), without VIP priority, extra capacity or expedited handling. The guide appears before Start and Skip on landing, before starting Round 2 on the transition, in the tutorial, and in Today's Specials.
+- **F7:** Required board ticket, station, action and helper text is at least 16px. Served, Burnt, Angry and Orders left are visible labels, not tooltip-only icons. Numeric WIP labels count non-burnt active tickets, matching existing capacity validation. Five columns retain independent vertical scrolling.
+- **N3:** Tutorial and round-end focus handling uses the existing dialog primitive. Background controls are inert during dialogs/curtains; visible focus and deliberate phase targets support the existing keyboard/pointer/touch paths. No new round or scoring/timing rebalance is included.
+
+Build first, install the development-only browser engines, then run the tracked acceptance script:
+
+```sh
+pnpm build
+pnpm exec playwright install --with-deps chromium firefox webkit
+pnpm test:e2e
+```
+
+The local suite requires **OpenSSL on PATH** to create a one-day, loopback-only test certificate in the operating system's temporary directory. It starts a temporary **HTTPS** production server applying the unchanged `vercel.json` headers, including `upgrade-insecure-requests`; generated certificate files are removed afterward and never committed. Certificate-error bypass is limited to that local test server, not a supplied production URL. Alternatively, supply an existing HTTPS preview with `SOF_TEST_URL`.
+
+The script tests 1280px and 1024px desktop boards, emulated tablet touch, modal focus, paused guidance/help, all splash variants, difficulty layouts with fallback fonts, a UI-only two-round playthrough, and skipped-R1 results. Results and screenshots go to ignored `test-results/workshop/`. It uses no debug-store injection or fabricated metrics. For a live-site smoke test, set `SOF_TEST_URL=https://slice-of-flow.com/`. `SOF_BROWSERS=chromium` selects one engine; `SOF_FULL_PAIR=0` and `SOF_EXTENDED=0` omit longer checks. Native device/browser and an uncoached human workshop remain separate acceptance work; Linux WebKit is not a claim of testing actual Safari/iPad hardware. Normal hosting builds retain the unit/typecheck gate; browser tests are a separate release check.
 
 ## Browser-local state and retained routes
 

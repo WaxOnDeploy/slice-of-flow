@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
-import { WIP_LIMITS } from '@/lib/sliceOfFlowConstants';
+import { DIFFICULTY_PRESETS, WIP_LIMITS } from '@/lib/sliceOfFlowConstants';
+import SliceOfFlowOrderGuide from '@/components/SliceOfFlowOrderGuide';
 import {
   formatTransitionAvgLeadTime,
   getRound1OrderArrivalCopy,
@@ -36,6 +37,7 @@ const KANBAN_PRACTICES = [
 export default function SliceOfFlowTransition() {
   const { round1Metrics, difficulty, startRound } = useSliceOfFlowStore();
   const [step, setStep] = useState(0);
+  const preset = DIFFICULTY_PRESETS[difficulty];
 
   const handleNext = () => {
     if (step < 2) {
@@ -194,6 +196,11 @@ export default function SliceOfFlowTransition() {
                 Use the <strong>"Pull Next Order"</strong> button when you have capacity. Focus on finishing, not starting.
               </p>
             </div>
+
+            <SliceOfFlowOrderGuide title="Same menu, a fresh round" testId="transition-order-guide" />
+            <p className="text-base leading-relaxed mt-3" style={{ fontFamily: "'DM Sans', sans-serif", color: '#534334' }} data-testid="transition-kitchen-time">
+              {`Round 2 has ${Math.floor(preset.roundDuration / 60)} simulated kitchen minutes, not real-time minutes. Clock speed controls how quickly they pass; pizza sizes and times stay the same.`}
+            </p>
           </div>
         )}
 

@@ -1,0 +1,107 @@
+/* Workshop-only styles. No global theme or gameplay-rule changes. */
+.sof-board {
+  height: 100dvh;
+  color: #333;
+}
+.sof-board .text-xs,
+.sof-board .text-sm,
+.sof-board .sof-ticket-text,
+.sof-board .sof-helper {
+  font-size: 16px !important;
+  line-height: 1.35;
+}
+.sof-board .sof-ticket {
+  min-width: 0 !important;
+  overflow-wrap: anywhere;
+}
+.sof-board .sof-ticket [style*="font-size: 13px"] {
+  font-size: 16px !important;
+}
+.sof-board .sof-column-header {
+  flex-wrap: wrap;
+  gap: 5px 8px;
+  padding: 8px;
+  min-height: 52px;
+}
+.sof-board .sof-column-header > div {
+  flex-wrap: wrap;
+}
+.sof-board .sof-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.sof-board .sof-scoreboard {
+  flex-basis: 100%;
+  width: 100%;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+}
+.sof-board .sof-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.sof-board .sof-counter strong {
+  font-family: 'JetBrains Mono', monospace;
+}
+.sof-board .sof-helper {
+  flex-wrap: wrap;
+  text-align: center;
+}
+.sof-board button:focus-visible,
+.sof-board [role="button"]:focus-visible,
+.sof-dialog button:focus-visible,
+.sof-dialog [tabindex]:focus-visible,
+.sof-phase button:focus-visible,
+.sof-splash button:focus-visible,
+.sof-phase [tabindex="-1"]:focus-visible {
+  outline: 3px solid #1976D2 !important;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px rgba(255,255,255,0.85) !important;
+}
+.sof-menu-panel {
+  max-height: min(520px, calc(100dvh - 155px));
+  overflow-y: auto;
+  width: min(420px, calc(100vw - 32px));
+  z-index: 60;
+}
+.sof-dialog {
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  font-size: 16px;
+  animation: none !important;
+  transition: none !important;
+}
+.sof-dialog-overlay {
+  animation: none !important;
+  transition: none !important;
+}
+.sof-dialog .text-xs,
+.sof-dialog .text-sm {
+  font-size: 16px;
+  line-height: 1.35;
+}
+.sof-focus-heading:focus {
+  outline: 3px solid #1976D2;
+  outline-offset: 4px;
+}
+.sof-splash:focus-within * {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sof-board *,
+  .sof-dialog *,
+  .sof-phase *,
+  .sof-splash * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

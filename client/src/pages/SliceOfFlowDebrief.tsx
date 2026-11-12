@@ -3,6 +3,7 @@ import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
 import { getResultsComparison, getDebriefInsights, generateShareText, hasLeadTime } from '@/lib/sliceOfFlowResults';
 import { BUILT_BY, HERO_IMAGE } from '@/lib/sliceOfFlowBrand';
+import SliceOfFlowScoringExplanation from '@/components/SliceOfFlowScoringExplanation';
 import { Chart, registerables } from 'chart.js';
 import { toast } from 'sonner';
 
@@ -353,6 +354,8 @@ export default function SliceOfFlowDebrief() {
               </div>
             </div>
 
+            <SliceOfFlowScoringExplanation rounds={[{ label: 'Round 2', metrics: round2Metrics }]} />
+
             {/* Service bell — finished early */}
             {r2.timeRemaining && r2.timeRemaining > 0 && (
               <div className="text-center mb-6 p-3 rounded-xl" style={{ background: '#E8F5E9', border: '1px solid #A5D6A7' }}>
@@ -427,6 +430,11 @@ export default function SliceOfFlowDebrief() {
                 <div className="text-xs mt-1" style={{ color: '#999' }}>points</div>
               </div>
             </div>
+
+            <SliceOfFlowScoringExplanation rounds={[
+              { label: 'Round 1', metrics: round1Metrics },
+              { label: 'Round 2', metrics: round2Metrics },
+            ]} />
 
             {/* Service bell — finished early */}
             {r2.timeRemaining && r2.timeRemaining > 0 && (

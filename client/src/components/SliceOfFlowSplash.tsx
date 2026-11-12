@@ -3,13 +3,18 @@ import SliceOfFlowAuthorCredit from '@/components/SliceOfFlowAuthorCredit';
 
 const HERO_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-hero-bg-GAkzomYox6u7BrLN2cai9V.webp';
 
+function initialSplashPhase() {
+  return typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 3 : 0;
+}
+
 // ─── OPTION A: NEON DINER SIGN ─────────────────────
 function NeonSplash({ onEnter }: { onEnter: () => void }) {
-  const [phase, setPhase] = useState(0); // 0=dark, 1=flicker, 2=glow, 3=subtitle
+  const [phase, setPhase] = useState(initialSplashPhase); // 0=dark, 1=flicker, 2=glow, 3=subtitle
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 400);
-    const t2 = setTimeout(() => setPhase(2), 1200);
+    if (phase === 3) return;
+    const t1 = setTimeout(() => setPhase(current => Math.max(current, 1)), 400);
+    const t2 = setTimeout(() => setPhase(current => Math.max(current, 2)), 1200);
     const t3 = setTimeout(() => setPhase(3), 1800);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
@@ -83,6 +88,7 @@ function NeonSplash({ onEnter }: { onEnter: () => void }) {
 
       {/* Enter button */}
       <button
+        onFocus={() => setPhase(3)}
         onClick={(e) => { e.stopPropagation(); onEnter(); }}
         style={{
           fontFamily: "'Lilita One', cursive",
@@ -117,11 +123,12 @@ function NeonSplash({ onEnter }: { onEnter: () => void }) {
 
 // ─── OPTION B: PIZZA BOX UNBOXING ──────────────────
 function PizzaBoxSplash({ onEnter }: { onEnter: () => void }) {
-  const [phase, setPhase] = useState(0); // 0=closed, 1=opening, 2=open, 3=content
+  const [phase, setPhase] = useState(initialSplashPhase); // 0=closed, 1=opening, 2=open, 3=content
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 600);
-    const t2 = setTimeout(() => setPhase(2), 1400);
+    if (phase === 3) return;
+    const t1 = setTimeout(() => setPhase(current => Math.max(current, 1)), 600);
+    const t2 = setTimeout(() => setPhase(current => Math.max(current, 2)), 1400);
     const t3 = setTimeout(() => setPhase(3), 2000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
@@ -264,6 +271,7 @@ function PizzaBoxSplash({ onEnter }: { onEnter: () => void }) {
           </div>
 
           <button
+            onFocus={() => setPhase(3)}
             onClick={onEnter}
             style={{
               fontFamily: "'Lilita One', cursive",
@@ -289,11 +297,12 @@ function PizzaBoxSplash({ onEnter }: { onEnter: () => void }) {
 
 // ─── OPTION C: ORDER TICKET DROP ───────────────────
 function OrderTicketSplash({ onEnter }: { onEnter: () => void }) {
-  const [phase, setPhase] = useState(0); // 0=empty, 1=drop, 2=landed, 3=stamp
+  const [phase, setPhase] = useState(initialSplashPhase); // 0=empty, 1=drop, 2=landed, 3=stamp
 
   useEffect(() => {
-    const t1 = setTimeout(() => setPhase(1), 200);
-    const t2 = setTimeout(() => setPhase(2), 700);
+    if (phase === 3) return;
+    const t1 = setTimeout(() => setPhase(current => Math.max(current, 1)), 200);
+    const t2 = setTimeout(() => setPhase(current => Math.max(current, 2)), 700);
     const t3 = setTimeout(() => setPhase(3), 1200);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
@@ -434,6 +443,7 @@ function OrderTicketSplash({ onEnter }: { onEnter: () => void }) {
               letterSpacing: '2px',
               cursor: 'pointer',
             }}
+              onFocus={() => setPhase(3)}
               onClick={onEnter}
             >
               FIRE IT UP!
@@ -498,7 +508,7 @@ export default function SliceOfFlowSplash({ onEnter, variant = 'ticket' }: Splas
       : <OrderTicketSplash onEnter={onEnter} />;
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#FAF7F2' }}>
+    <div className="sof-splash min-h-dvh flex flex-col" style={{ background: '#FAF7F2' }}>
       <header className="flex-shrink-0 px-5 py-3 sm:px-8 border-b border-[#E0D8CC]" data-testid="splash-identity">
         <div className="max-w-5xl mx-auto">
           <SliceOfFlowAuthorCredit />

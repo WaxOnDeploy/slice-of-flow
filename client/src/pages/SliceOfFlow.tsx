@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import SliceOfFlowLanding from './SliceOfFlowLanding';
 import SliceOfFlowBoard from './SliceOfFlowBoard';
@@ -16,6 +16,7 @@ import {
   playPrepDone,
 } from '@/lib/sliceOfFlowSounds';
 import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
+import '@/lib/sliceOfFlowWorkshop.css';
 
 // ─── PHASE TRANSITION OVERLAY ─────────────────────
 function PhaseTransitionOverlay({
@@ -27,6 +28,9 @@ function PhaseTransitionOverlay({
 }) {
   return (
     <div
+      role="status"
+      aria-live="polite"
+      aria-hidden={!isVisible}
       style={{
         position: 'fixed',
         inset: 0,
@@ -135,6 +139,31 @@ export default function SliceOfFlow() {
   const [transitionLabel, setTransitionLabel] = useState('');
   const [displayedPhase, setDisplayedPhase] = useState(phase);
   const prevPhaseRef = useRef(phase);
+  const phaseRootRef = useRef<HTMLDivElement>(null);
+  const keyboardInputRef = useRef(false);
+
+  useEffect(() => {
+    const onKeyboard = () => { keyboardInputRef.current = true; };
+    const onPointer = () => { keyboardInputRef.current = false; };
+    window.addEventListener('keydown', onKeyboard, true);
+    window.addEventListener('pointerdown', onPointer, true);
+    return () => {
+      window.removeEventListener('keydown', onKeyboard, true);
+      window.removeEventListener('pointerdown', onPointer, true);
+    };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (showSplash || transitionVisible) return;
+    // A tutorial or round-end dialog owns its own focus while open.
+    if (document.querySelector('[role="dialog"][data-state="open"]')) return;
+    const heading = phaseRootRef.current?.querySelector<HTMLElement>('h1, h2');
+    if (heading) {
+      heading.tabIndex = -1;
+      heading.classList.add('sof-focus-heading');
+      heading.focus({ preventScroll: true });
+    }
+  }, [displayedPhase, showSplash, transitionVisible]);
 
   useEffect(() => {
     if (phase !== prevPhaseRef.current) {
@@ -151,6 +180,12 @@ export default function SliceOfFlow() {
       // Skip animation for landing → landing or if no label
       if (!label || oldPhase === 'landing' && phase === 'landing') {
         setDisplayedPhase(phase);
+        return;
+      }
+
+      if (keyboardInputRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setDisplayedPhase(phase);
+        setTransitionVisible(false);
         return;
       }
 
@@ -278,7 +313,7 @@ export default function SliceOfFlow() {
         return <SliceOfFlowLanding />;
       case 'round1':
       case 'round2':
-        return <SliceOfFlowBoard />;
+        return <SliceOfFlowBoard transitioning={transitionVisible} />;
       case 'transition':
         return <SliceOfFlowTransition />;
       case 'debrief':
@@ -291,7 +326,9 @@ export default function SliceOfFlow() {
   return (
     <>
       <PhaseTransitionOverlay isVisible={transitionVisible} label={transitionLabel} />
-      {renderPhase()}
+      <div ref={phaseRootRef} className="sof-phase" data-phase={displayedPhase} inert={transitionVisible} aria-busy={transitionVisible}>
+        {renderPhase()}
+      </div>
     </>
   );
 }
