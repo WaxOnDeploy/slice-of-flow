@@ -20,12 +20,14 @@ export type OrderRef = Readonly<{ orderKey: OrderKey; orderId: OrderId }>;
 export type DemandOrder = Readonly<{
   orderKey: OrderKey; ordinal: number; orderTypeId: string; complexity: Complexity;
   availableAtMs: SimMs; prepMs: SimMs; bakeMs: SimMs;
+  /** Present together only on VIP demand; normals preserve the original exact shape. */
+  serviceClass?: 'vip'; deadlineAtMs?: SimMs;
 }>;
 export type HoldSpec = Readonly<{
   holdId: string; orderKey: OrderKey; startMs: SimMs; endMs: SimMs; reason: 'fixture-dependency';
 }>;
 export type Manifest = DeepReadonly<{
-  schema: 'sof-manifest/v1'; scenarioId: 'fixed-deck'; scenarioVersion: string;
+  schema: 'sof-manifest/v1'; scenarioId: 'fixed-deck' | 'vip-expedite'; scenarioVersion: string;
   generatorVersion: string; seed: 0; difficulty: Difficulty; horizonMs: SimMs;
   pushIntervalMs: SimMs; burnBufferMs: SimMs; patienceMs: SimMs;
   orders: DemandOrder[]; holds: HoldSpec[];
@@ -39,7 +41,7 @@ export type RunConfig = DeepReadonly<{
   manifest: Manifest; resources: Resources; initialSpeed: Speed; guidedStart: boolean;
   endCondition: EndCondition;
   policy: {
-    dimensionId: string; version: string; variantId: 'interval-push' | 'manual-pull';
+    dimensionId: string; version: string; variantId: 'interval-push' | 'manual-pull' | 'fifo' | 'expedite';
     wip: Record<Station, number | null>;
   };
 }>;

@@ -21,6 +21,7 @@ import '@/lib/sliceOfFlowWorkshop.css';
 
 // Preview-only sibling: never loaded or scheduled on the default game path.
 const IndependentLab = lazy(() => import('@/components/SliceOfFlowIndependentPreview'));
+const VipRound = lazy(() => import('@/components/SliceOfFlowVipRound'));
 
 // ─── PHASE TRANSITION OVERLAY ─────────────────────
 function PhaseTransitionOverlay({
@@ -118,6 +119,9 @@ export default function SliceOfFlow() {
   const speed = useSliceOfFlowStore((s) => s.speed);
   const [labEnabled] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('flow-lab') === '1');
   const [labClosed, setLabClosed] = useState(false);
+  const [vipEnabled] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('round3') === '1');
+  // Mounting the pilot is not starting its clock; each run still needs an explicit Start.
+  const [vipOpen, setVipOpen] = useState(vipEnabled);
 
   // Splash screen state
   const [showSplash, setShowSplash] = useState(true);
@@ -171,7 +175,7 @@ export default function SliceOfFlow() {
       heading.classList.add('sof-focus-heading');
       heading.focus({ preventScroll: true });
     }
-  }, [displayedPhase, showSplash, transitionVisible]);
+  }, [displayedPhase, showSplash, transitionVisible, vipOpen]);
 
   useEffect(() => {
     if (phase !== prevPhaseRef.current) {
@@ -316,9 +320,17 @@ export default function SliceOfFlow() {
   }
 
   const renderPhase = () => {
+    if (vipOpen) return <Suspense fallback={<p role="status">Loading Round 3 — VIP / Expedite…</p>}>
+      <VipRound difficulty={difficulty} speed={speed} onClose={() => setVipOpen(false)} />
+    </Suspense>;
     switch (displayedPhase) {
       case 'landing':
-        return <SliceOfFlowLanding />;
+        return <>
+          <SliceOfFlowLanding />
+          {vipEnabled && <div style={{ padding: 24, background: '#FFF8ED', textAlign: 'center' }}>
+            <button type="button" className="sof-focus-heading" onClick={() => setVipOpen(true)}>Open optional Round 3 preview</button>
+          </div>}
+        </>;
       case 'round1':
       case 'round2':
         return <SliceOfFlowBoard transitioning={transitionVisible} />;
@@ -327,6 +339,9 @@ export default function SliceOfFlow() {
       case 'debrief':
         return <>
           <SliceOfFlowDebrief />
+          {vipEnabled && <div style={{ padding: 24, background: '#FFF8ED', textAlign: 'center' }}>
+            <button type="button" onClick={() => setVipOpen(true)}>Try optional Round 3 — VIP / Expedite</button>
+          </div>}
           {labEnabled && !labClosed && <Suspense fallback={<p role="status">Loading the independent lab preview…</p>}>
             <IndependentLab difficulty={difficulty} speed={speed} onClose={() => setLabClosed(true)} />
           </Suspense>}
@@ -339,7 +354,7 @@ export default function SliceOfFlow() {
   return (
     <>
       <PhaseTransitionOverlay isVisible={transitionVisible} label={transitionLabel} />
-      <div ref={phaseRootRef} className="sof-phase" data-phase={displayedPhase} inert={transitionVisible} aria-busy={transitionVisible}>
+      <div ref={phaseRootRef} className="sof-phase" data-phase={vipOpen ? 'round3-preview' : displayedPhase} inert={transitionVisible} aria-busy={transitionVisible}>
         {renderPhase()}
         <SliceOfFlowRightsFooter />
       </div>

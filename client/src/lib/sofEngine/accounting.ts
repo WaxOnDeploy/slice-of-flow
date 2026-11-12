@@ -4,6 +4,7 @@ import {
   type RunConfig, type Station,
 } from './types';
 import { validateConfig } from './scenario';
+import { isVip, policyLimit } from './vipRules';
 
 const EVENT_FIELDS: Record<string, readonly string[]> = {
   runStarted: [], arrival: ['orderKey', 'orderId'], admission: ['orderKey', 'orderId', 'by'],
@@ -113,17 +114,28 @@ export function account(configInput: unknown, runId: unknown, historyInput: unkn
     } else if (e.kind === 'admission') {
       if (!r.arrived || r.admittedAtMs !== null || r.outcome !== 'not-admitted') return bad('INVALID_LIFECYCLE', e.seq);
       if ((e.by === 'push' && (config.policy.variantId !== 'interval-push' || e.atMs === 0 || e.atMs % config.manifest.pushIntervalMs !== 0)) ||
-        (e.by === 'pull' && config.policy.variantId !== 'manual-pull') || (e.by === 'guide' && (!config.guidedStart || e.atMs !== 0))) return bad('INVALID_ADMISSION', e.seq);
+        (e.by === 'pull' && config.policy.variantId === 'interval-push') || (e.by === 'guide' && (!config.guidedStart || e.atMs !== 0))) return bad('INVALID_ADMISSION', e.seq);
+      if (config.manifest.scenarioId === 'vip-expedite') {
+        const vip = isVip(config, r.orderKey), expedited = config.policy.variantId === 'expedite';
+        if (expedited && vip && rows.some(row => row.outcome === 'active' && isVip(config, row.orderKey))) return bad('VIP_TOKEN', e.seq);
+        const available = config.manifest.orders.filter(o => rows.some(row => row.orderKey === o.orderKey && row.arrived && row.admittedAtMs === null) &&
+          (!expedited || isVip(config, o.orderKey) === vip)).sort((a, b) => a.availableAtMs - b.availableAtMs || a.ordinal - b.ordinal);
+        if (available[0]?.orderKey !== r.orderKey) return bad('FIFO', e.seq);
+        const limit = policyLimit(config, 'orderQueue', vip);
+        if (limit !== null && byStation.orderQueue >= limit) return bad('CAPACITY', e.seq);
+      }
       r.outcome = 'active'; r.finalStation = 'orderQueue'; r.admittedAtMs = e.atMs; admitted++; byStation.orderQueue++;
     } else {
       if (r.outcome !== 'active' || r.finalStation === null) return bad('INVALID_LIFECYCLE', e.seq);
       if (e.kind === 'movement') {
         if (r.finalStation !== e.from || STATIONS.indexOf(e.to) !== STATIONS.indexOf(e.from) + 1) return bad('INVALID_MOVEMENT', e.seq);
+        const limit = policyLimit(config, e.to, isVip(config, r.orderKey));
+        if (limit !== null && byStation[e.to] >= limit) return bad('CAPACITY', e.seq);
         byStation[e.from]--; byStation[e.to]++; r.finalStation = e.to;
       } else if (e.kind === 'ready') {
         if (r.finalStation !== e.station) return bad('INVALID_MOVEMENT', e.seq);
       } else if (e.kind === 'anger') {
-        if (r.angry || e.atMs !== r.admittedAtMs! + config.manifest.patienceMs) return bad('INVALID_LIFECYCLE', e.seq);
+        if (isVip(config, r.orderKey) || r.angry || e.atMs !== r.admittedAtMs! + config.manifest.patienceMs) return bad('INVALID_LIFECYCLE', e.seq);
         r.angry = true;
       } else if (e.kind === 'service' || e.kind === 'discard') {
         if (r.finalStation !== e.from) return bad('INVALID_MOVEMENT', e.seq);
@@ -135,7 +147,7 @@ export function account(configInput: unknown, runId: unknown, historyInput: unkn
     }
     const active = rows.filter(r => r.outcome === 'active').length;
     if (admitted !== active + served + burnt + otherDiscard || arrived !== rows.filter(r => r.arrived && r.admittedAtMs === null).length + admitted || STATIONS.reduce((n, s) => n + byStation[s], 0) !== active) return bad('UNRECONCILED', e.seq);
-    for (const s of STATIONS) if ([config.resources.occupancy[s], config.policy.wip[s]].some(cap => cap !== null && byStation[s] > cap)) return bad('CAPACITY', e.seq);
+    for (const s of STATIONS) if ([config.resources.occupancy[s], policyLimit(config, s, rows.some(row => row.outcome === 'active' && row.finalStation === s && isVip(config, row.orderKey)))].some(cap => cap !== null && byStation[s] > cap)) return bad('CAPACITY', e.seq);
   }
   if (requireEnded && (!started || !ended)) return failure('INCOMPLETE_HISTORY', 'history');
   if (requireEnded) {

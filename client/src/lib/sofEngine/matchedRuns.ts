@@ -1,6 +1,7 @@
 import { replay } from './engine';
 import { getRun, snapshotFromEngine, validateSnapshot } from './runSnapshots';
-import { makeFixedDeckConfig, VERSIONS } from './scenario';
+import { makeFixedDeckConfig, VERSIONS, VIP_VERSIONS } from './scenario';
+import { makeVipConfig, type VipVariant } from './vip';
 import { compatibleServedDefinitions } from '../sof/metricDefinitions';
 import {
   equivalent, exactKeys, failure, immutable, isCode, isRecord, success,
@@ -22,7 +23,7 @@ export type MatchReason =
   | 'CLOCK_RULES_MISMATCH' | 'SCORING_RULES_MISMATCH' | 'INITIAL_SPEED_MISMATCH'
   | 'GUIDANCE_MISMATCH' | 'END_CONDITION_MISMATCH' | 'INVARIANT_CONFIG_MISMATCH'
   | 'NONPOSITIVE_OBSERVATION' | 'OBSERVATION_MISMATCH' | 'END_REASON_MISMATCH'
-  | 'SERVED_DEFINITION_MISMATCH' | 'CONTROL_TRACE_MISMATCH';
+  | 'SERVED_DEFINITION_MISMATCH' | 'CONTROL_TRACE_MISMATCH' | 'MANUAL_END_NOT_MATCHABLE';
 export type MatchAssessment = DeepReadonly<{
   pairId: string | null; baselineRunId: string | null; subjectRunId: string | null;
   kind: 'missing' | 'contextual' | 'unmatched' | 'matched';
@@ -36,7 +37,8 @@ export type ProducerCompatibility = Readonly<{
 
 function canonicalConfig(snapshot: FinalRunSnapshot): boolean {
   const c = snapshot.config;
-  const built = makeFixedDeckConfig({ difficulty: c.manifest.difficulty, policy: c.policy.variantId,
+  const built = c.manifest.scenarioId === 'vip-expedite' ? makeVipConfig({ difficulty: c.manifest.difficulty, variant: c.policy.variantId as VipVariant,
+    initialSpeed: c.initialSpeed, guidedStart: c.guidedStart }) : makeFixedDeckConfig({ difficulty: c.manifest.difficulty, policy: c.policy.variantId,
     initialSpeed: c.initialSpeed, guidedStart: c.guidedStart, endCondition: c.endCondition });
   return built.ok && equivalent(c, built.value);
 }
@@ -53,7 +55,7 @@ export function inspectProducerCompatibility(input: unknown): Checked<ProducerCo
     if (!reproduced.ok) return failure('PRODUCER_REPLAY_REJECTED', 'history');
     const captured = snapshotFromEngine(reproduced.value.state);
     if (!captured.ok || !equivalent(s, captured.value)) return failure('PRODUCER_SNAPSHOT_MISMATCH', 'snapshot');
-    return success(immutable({ evidence: 'producer-compatible', productionManifest: canonicalConfig(s), humanPlay: 'not-established' }));
+    return success(immutable({ evidence: 'producer-compatible', productionManifest: s.config.manifest.scenarioId === 'fixed-deck' && canonicalConfig(s), humanPlay: 'not-established' }));
   } catch {
     return failure('INVALID_PRODUCER_INPUT', 'snapshot');
   }
@@ -107,10 +109,10 @@ export function assessComparison(archive: unknown, explicitPair: unknown): Match
     if (pair.requestedBasis === 'contextual') { issues.push('CONTEXTUAL_REQUESTED'); return finish('contextual'); }
     const b = bChecked.value, a = aChecked.value, bc = b.config, ac = a.config, bm = bc.manifest, am = ac.manifest;
     const change = pair.change;
-    add(change === null || change.dimensionId !== VERSIONS.policy || change.version !== VERSIONS.policyVersion ||
-      change.beforeVariantId === change.afterVariantId ||
-      !['interval-push', 'manual-pull'].includes(change.beforeVariantId) ||
-      !['interval-push', 'manual-pull'].includes(change.afterVariantId), 'UNAPPROVED_POLICY_CHANGE');
+    const approvedChange = change !== null && change.version === 'v1' && change.beforeVariantId !== change.afterVariantId &&
+      ((change.dimensionId === VERSIONS.policy && ['interval-push', 'manual-pull'].includes(change.beforeVariantId) && ['interval-push', 'manual-pull'].includes(change.afterVariantId)) ||
+       (change.dimensionId === VIP_VERSIONS.policy && ['fifo', 'expedite'].includes(change.beforeVariantId) && ['fifo', 'expedite'].includes(change.afterVariantId)));
+    add(!approvedChange, 'UNAPPROVED_POLICY_CHANGE');
     add(change !== null && (bc.policy.variantId !== change.beforeVariantId || ac.policy.variantId !== change.afterVariantId), 'POLICY_VARIANT_MISMATCH');
     add(!canonicalConfig(b), 'BASELINE_NOT_PRODUCTION_MANIFEST'); add(!canonicalConfig(a), 'SUBJECT_NOT_PRODUCTION_MANIFEST');
     const bp = inspectProducerCompatibility(b), ap = inspectProducerCompatibility(a);
@@ -129,6 +131,7 @@ export function assessComparison(archive: unknown, explicitPair: unknown): Match
     add(b.observation.durationMs <= 0 || a.observation.durationMs <= 0, 'NONPOSITIVE_OBSERVATION');
     add(!equivalent(b.observation, a.observation), 'OBSERVATION_MISMATCH'); add(b.endReason !== a.endReason, 'END_REASON_MISMATCH');
     add(!compatibleServedDefinitions(b.metrics.servedSample.definition, a.metrics.servedSample.definition), 'SERVED_DEFINITION_MISMATCH');
+    add((bm.scenarioId === 'vip-expedite' || am.scenarioId === 'vip-expedite') && (b.endReason === 'manual-stop' || a.endReason === 'manual-stop'), 'MANUAL_END_NOT_MATCHABLE');
     add(!equivalent(controls(b), controls(a)), 'CONTROL_TRACE_MISMATCH');
     return finish(issues.length === 0 ? 'matched' : 'unmatched');
   } catch {

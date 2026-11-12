@@ -1,11 +1,12 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { validateSnapshot } from '../sofEngine/runSnapshots';
 import { makeFixedDeckConfig } from '../sofEngine/scenario';
+import { makeVipConfig, measureVipResults } from '../sofEngine/vip';
 import { equivalent, type Checked } from '../sofEngine/types';
 import {
   abandonIndependentSession, commandIndependentSession, exitConfirmationCommand, facilitatorCommand,
   integerWallUs, replayIndependentSession, sampleIndependentSession, sessionToken,
-  startIndependentSession, visibilityCommand, type IndependentSession,
+  startIndependentSession, startVipSession, replayVipSession, visibilityCommand, type IndependentSession,
 } from './independentSession';
 let useSliceOfFlowStore: typeof import('../sliceOfFlowStore').useSliceOfFlowStore;
 beforeAll(async () => {
@@ -171,5 +172,88 @@ describe('independent manual-pull session boundary', () => {
     expect(integerWallUs(1.2349)).toBe(1234); expect(integerWallUs(1.2, 1234)).toBe(1234);
     expect(() => integerWallUs(Infinity)).toThrow(); expect(() => integerWallUs(-1)).toThrow();
     expect(equivalent(start().engine.config.manifest, running().engine.config.manifest)).toBe(true);
+  });
+});
+
+const vipStart = (variant: 'fifo' | 'expedite' = 'expedite', speed: 1 | 2 | 3 = 1, code = 'vipA') => value(startVipSession({ sessionCode: code, difficulty: 'normal', speed, variant }, 0));
+function vipRunning(variant: 'fifo' | 'expedite' = 'expedite', speed: 1 | 2 | 3 = 1) {
+  let s = vipStart(variant, speed);
+  s = command(s, { kind: 'set-pause', reason: 'instruction', active: false }).state;
+  s = command(s, { kind: 'move', orderKey: 'order-1', to: 'prep' }).state;
+  return command(s, { kind: 'set-pause', reason: 'guide', active: false }).state;
+}
+describe('VIP preview session uses the same independent lifecycle', () => {
+  it.each(['fifo', 'expedite'] as const)('starts strict canonical %s settings with a normal guide and scheduled VIPs', variant => {
+    const s = vipStart(variant, 2);
+    expect(s.engine.config).toEqual(value(makeVipConfig({ difficulty: 'normal', variant, initialSpeed: 2, guidedStart: true })));
+    expect(s.engine.pausedBy).toEqual(['instruction', 'guide']);
+    expect(s.engine.tickets[0]).toMatchObject({ orderKey: 'order-1', station: 'orderQueue', status: 'active', admittedAtMs: 0 });
+    expect(s.engine.tickets.slice(12).every(t => t.status === 'scheduled')).toBe(true);
+    expect(s.engine.nowMs).toBe(0); expect(s.archive.runs).toHaveLength(0);
+    const guide = command(s, { kind: 'set-pause', reason: 'instruction', active: false }).state;
+    expect(command(guide, { kind: 'move', orderKey: 'order-13', to: 'prep' }).accepted).toBe(false);
+    expect(command(guide, { kind: 'move', orderKey: 'order-1', to: 'prep' }).accepted).toBe(true);
+  });
+  it('keeps both start APIs exact and rejects any arbitrary configuration injection', () => {
+    for (const extra of [{ config: {} }, { scenarioId: 'fixed-deck' }, { seed: 0 }, { guidedStart: false }, { endCondition: 'all-resolved-or-horizon' }]) {
+      expect(startVipSession({ sessionCode: 'vip', difficulty: 'normal', speed: 1, variant: 'expedite', ...extra } as never, 0).ok).toBe(false);
+    }
+    expect(startVipSession({ sessionCode: 'vip', difficulty: 'normal', speed: 1 } as never, 0).ok).toBe(false);
+    expect(startVipSession({ sessionCode: 'vip', difficulty: 'normal', speed: 1, variant: 'manual-pull' } as never, 0).ok).toBe(false);
+    expect(startIndependentSession({ sessionCode: 'vip', difficulty: 'normal', speed: 1, variant: 'fifo' } as never, 0).ok).toBe(false);
+  });
+  it.each([1, 2, 3] as const)('excludes hidden time and shared owner pause under VIP speed %s', speed => {
+    let s = vipRunning('expedite', speed);
+    s = command(s, visibilityCommand(true), 2_000_000).state;
+    expect(s.engine.nowMs).toBe(2000 * speed);
+    s = command(s, facilitatorCommand(true), 50_000_000).state;
+    s = command(s, visibilityCommand(false), 80_000_000).state;
+    expect(s.engine.pausedBy).toEqual(['facilitator']);
+    expect(s.engine.nowMs).toBe(2000 * speed);
+    s = command(s, facilitatorCommand(false), 100_000_000).state;
+    const sampled = sampleIndependentSession(s, sessionToken(s), 101_000_000);
+    expect(sampled.accepted).toBe(true); expect(sampled.state.engine.nowMs).toBe(3000 * speed);
+    expect(sampled.state.engine.tickets[12].status).toBe('scheduled');
+  });
+  it('samples under old speed with fractional carry and rolls back rejected VIP admissions atomically', () => {
+    let s = vipRunning(); s = command(s, { kind: 'speed', speed: 3 }, 1_000_500).state;
+    expect(s.engine.nowMs).toBe(1000); expect(s.driver.remainderUs).toBe(500);
+    const rejected = command(s, { kind: 'admit', orderKey: 'order-14' }, 4_000_500);
+    expect(rejected.accepted).toBe(false); expect(rejected.state).toBe(s);
+    const sampled = sampleIndependentSession(s, sessionToken(s), 4_000_500).state;
+    expect(sampled.engine.nowMs).toBe(10000); expect(sampled.driver.remainderUs).toBe(500);
+    s = command(sampled, { kind: 'admit', orderKey: 'order-13' }, 4_000_500).state;
+    expect(s.engine.tickets[12].status).toBe('active');
+    expect(commandIndependentSession(s, sessionToken(sampled), 5_000_500, facilitatorCommand(true)).state).toBe(s);
+  });
+  it.each(['fifo', 'expedite'] as const)('captures the real pilot %s horizon while rejecting a coincident command', variant => {
+    const r = command(vipRunning(variant), { kind: 'speed', speed: 2 }, 310_000_000);
+    expect(r.accepted).toBe(false); expect(r.state.status).toBe('final');
+    const s = r.state.snapshot!;
+    expect(s.endReason).toBe('horizon'); expect(s.observation.durationMs).toBe(300000);
+    expect(s.orders).toHaveLength(15); expect(r.state.archive.runs).toHaveLength(1);
+    expect(value(measureVipResults(s))).toMatchObject({ vipLate: 3, deadlinePenaltyCount: 3, score: -6, vipServedN: 0 });
+    expect(r.state.measured).toMatchObject({ averageWip: 1, servedCount: 0, externalCount: 14 });
+    expect(validateSnapshot(s).ok).toBe(true); expect(r.state.engine.events.filter(e => e.kind === 'runEnded')).toHaveLength(1);
+  });
+  it('replays with explicit fresh code/variant and retains immutable evidence without manufacturing played frames', () => {
+    const final = command(vipRunning('fifo'), { kind: 'end', reason: 'manual-stop' }, 1_000_000).state;
+    const before = JSON.stringify(final.archive);
+    expect(replayVipSession(vipRunning(), { sessionCode: 'vipB', difficulty: 'hard', speed: 2, variant: 'expedite' }, 0).ok).toBe(false);
+    expect(replayVipSession(final, { sessionCode: 'vipA', difficulty: 'hard', speed: 2, variant: 'expedite' }, 2_000_000).ok).toBe(false);
+    const fresh = value(replayVipSession(final, { sessionCode: 'vipB', difficulty: 'hard', speed: 2, variant: 'expedite' }, 2_000_000));
+    expect(fresh.engine.config.policy.variantId).toBe('expedite'); expect(fresh.attempt).toBe(2); expect(fresh.snapshot).toBeNull();
+    expect(fresh.engine.nowMs).toBe(0); expect(fresh.archive.runs).toHaveLength(1); expect(JSON.stringify(final.archive)).toBe(before);
+    expect(fresh.engine.tickets[12].status).toBe('scheduled');
+    expect(commandIndependentSession(fresh, sessionToken(final), 3_000_000, facilitatorCommand(false)).state).toBe(fresh);
+    expect(Object.isFrozen(fresh.archive.runs[0].config.manifest.orders[12])).toBe(true);
+  });
+  it('does not change the released store or manufacture a snapshot on VIP abandonment', () => {
+    const before = useSliceOfFlowStore.getState(), json = JSON.stringify(before);
+    const s = vipRunning();
+    const abandoned = abandonIndependentSession(s, sessionToken(s), 'unmount').state;
+    expect(abandoned.status).toBe('abandoned'); expect(abandoned.snapshot).toBeNull(); expect(abandoned.archive.runs).toHaveLength(0);
+    expect(abandoned.engine.events.some(e => e.kind === 'runEnded')).toBe(false);
+    expect(useSliceOfFlowStore.getState()).toBe(before); expect(JSON.stringify(before)).toBe(json);
   });
 });
