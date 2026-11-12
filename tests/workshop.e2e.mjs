@@ -263,7 +263,7 @@ async function completePair(browser) {
   }
   await page.getByText('How scoring works', { exact: true }).waitFor();
   assert((await page.locator('body').innerText()).includes('only when at least one pizza is served and none are burnt'));
-  assert(await page.locator('[data-phase="debrief"] h1').evaluate(node => document.activeElement === node));
+  assert(await page.locator('[data-phase="debrief"] .sof-debrief-screen h1').evaluate(node => document.activeElement === node));
   await page.screenshot({ path: path.join(output, 'full-debrief.png'), fullPage: true });
   results.push({ fullRound1Round2UiPlaythrough: true, roundEndFocus: true, requiredEndDialogEscapePolicy: true, transitionOrderGuide: true, debriefScoring: true });
   console.log('PASS complete UI-only Round 1 → Round 2 → debrief');
