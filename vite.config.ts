@@ -1,19 +1,14 @@
-import { jsxLocPlugin } from "@builder.io/vite-plugin-jsx-loc";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
 import { defineConfig } from "vite";
-import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
 
-export default defineConfig(({ command }) => ({
+// Standalone GitHub/Vercel copy: no Manus/editor instrumentation is installed.
+// The separate Manus-managed project retains its original configuration.
+export default defineConfig({
   // Only the Pages workflow sets this; Vercel and local builds stay at the root.
   base: process.env.VITE_BASE_PATH || "/",
-  // Editor instrumentation is useful locally, but is not needed on a static host.
-  plugins: [
-    react(),
-    tailwindcss(),
-    ...(command === "serve" ? [jsxLocPlugin(), vitePluginManusRuntime()] : []),
-  ],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "client", "src"),
@@ -45,4 +40,4 @@ export default defineConfig(({ command }) => ({
       deny: ["**/.*"],
     },
   },
-}));
+});

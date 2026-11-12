@@ -1,24 +1,28 @@
-# Development-plugin licensing status
+# Standalone editor-plugin removal and historical findings
 
-**Reviewed November 12, 2026. These findings do not certify complete license compliance or ownership.** Neither plugin is relicensed by Jeff Bourke's proprietary project license; their applicable third-party terms are preserved.
+**Updated November 12, 2026.** The two editor-only development plugins have been removed from this standalone GitHub/Vercel repository's current package manifest, pinned dependency graph and Vite configuration. Their publisher-license questions are not being recast as resolved permissions. Jeff Bourke's proprietary project license does not relicense third-party software.
 
-## Builder plugin 0.1.1
+## What changed
 
-`@builder.io/vite-plugin-jsx-loc@0.1.1` has no registry license field, but the publisher's exact-version README declares **MIT**. The downloaded publisher archive matched registry integrity and the installed package files. There is no bundled standalone LICENSE or full copyright notice. An authoritative upstream commit/tag and version-applicable full notice were not located. [1] [2]
+`@builder.io/vite-plugin-jsx-loc@0.1.1` and `vite-plugin-manus-runtime@0.0.57` were used for development-serving instrumentation, not the production application. The current standalone configuration uses the existing React and Tailwind plugins without those editor imports. The dependency declarations and lockfile entries were removed using the pinned package manager; no third-party package was copied into source or given a new license.
 
-Record this as **MIT declared; complete notice evidence unresolved**, not simply unlicensed. Do not substitute a current Builder repository license that has not been mapped to this plugin version. Retain the actual published declaration and obtain/preserve a version-applicable notice where required before claiming redistribution clearance.
+This is a forward-looking dependency cleanup. The separate original Manus-managed project retains its configuration and editor instrumentation. Its package/configuration files were not changed. Previous commits and the actual historical findings below are retained; removal does not revoke valid earlier permissions or retroactively settle a redistribution question.
 
-## Manus runtime 0.0.57
+## Historical Builder plugin finding
 
-`vite-plugin-manus-runtime@0.0.57` has no registry license or repository field, and its publisher archive contains no README or LICENSE. No authoritative version-applicable package license or public upstream mapping was located. This remains **unresolved**; public package availability is not proof of a general distribution grant, and absence of metadata is not proof that use is prohibited. [3] [4]
+The exact-version registry metadata for `@builder.io/vite-plugin-jsx-loc@0.1.1` has no license field, but its publisher README declares **MIT**. The downloaded publisher archive matched registry integrity and the previously installed package files. A version-applicable standalone LICENSE and complete copyright notice were not located. This is **a publisher declaration with incomplete notice evidence**, not a declaration that Slice of Flow is an open-source project. Do not substitute an unrelated current Builder repository license. [1] [2]
 
-Manus's generated-output ownership provisions do not grant ownership of, or a redistribution license for, its service/plugin software. Obtain documented permission for the version and intended use, or separately evaluate approved removal/replacement in a dedicated deployment clone. Do not silently remove instrumentation from a Manus-managed project. [5]
+## Historical Manus runtime finding
 
-## Production configuration
+The exact-version `vite-plugin-manus-runtime@0.0.57` metadata has no license/repository field, and its archive contains no README or LICENSE. A public version-applicable distribution grant was not located. Public package availability does not prove a redistribution license, and missing metadata does not prove that all use was prohibited. The historical permission question remains unresolved. [3] [4]
 
-The inspected `vite.config.ts` adds both plugins only when Vite's command is `serve`. Their own implementations do not independently enforce that restriction. Top-level imports and development dependency declarations remain. Existing artifact searches showed no targeted runtime/plugin markers, but were not fresh-build or live-deployment verification.
+Provider terms for generated outputs do not grant ownership of the provider's service/plugin software. If either plugin is reintroduced, obtain the applicable documented permissions and notices for that intended use before treating redistribution as cleared. [5]
 
-This project-license update does not change the plugins, their versions or activation. A future removal/replacement needs its own frozen-lockfile installation, fresh root/Pages builds, development-server verification and gameplay/export/route regressions. Archive the actual evidence and tested revision; do not mark permissions resolved merely because a build passed.
+## Validation and scope
+
+The cleanup is checked with pinned/frozen dependency installation, the full regression suite, TypeScript, fresh root and Pages builds, a standalone development-server check and browser gameplay/export/license regressions. Runtime source, gameplay rules, artwork, author credit, the public proprietary LICENSE and Vercel security policy are unchanged. Build success is not a legal clearance certificate; the actual evidence and tested revision are recorded in the pull request.
+
+Remaining application dependencies retain their own licenses and notices. Their rights are not replaced by Jeff's proprietary project license. No full supply-chain or legal-compliance certification is claimed.
 
 ## References
 

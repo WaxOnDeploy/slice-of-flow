@@ -258,7 +258,18 @@ If analytics is enabled, add the trusted endpoint's **exact origin** to both `sc
 
 Illustrations, textures, favicons, and social images reference external **CloudFront and Manus CDNs**; fonts load from **Google Fonts**. A GitHub clone does not download those resources, so the complete visual experience needs network access. Review their availability and usage permissions before publishing. The cartoon storefront and its approved HTML credit are centralized in `client/src/lib/sliceOfFlowBrand.ts`.
 
-`client/src/main.tsx` loads an optional Umami-style analytics script **only when both `VITE_ANALYTICS_ENDPOINT` and `VITE_ANALYTICS_WEBSITE_ID` are configured**. No analytics keys or game API credentials are needed to play. Review the endpoint and privacy requirements before enabling it; Vite client variables are public build-time values, not a place for secrets. Manus/editor instrumentation is limited to Vite development serving and is omitted from production builds. Canonical/Open Graph URLs and share copy use **`slice-of-flow.com`**.
+`client/src/main.tsx` loads an optional Umami-style analytics script **only when both `VITE_ANALYTICS_ENDPOINT` and `VITE_ANALYTICS_WEBSITE_ID` are configured**. No analytics keys or game API credentials are needed to play. Review the endpoint and privacy requirements before enabling it; Vite client variables are public build-time values, not a place for secrets. Canonical/Open Graph URLs and share copy use **`slice-of-flow.com`**.
+
+The standalone GitHub/Vercel copy no longer installs the two unneeded editor-only
+plugins: `@builder.io/vite-plugin-jsx-loc` and `vite-plugin-manus-runtime`. Normal
+React/Tailwind Vite development and both static builds remain supported. The
+separate original Manus-managed project keeps its editor configuration; it has
+not been modified. Removal avoids carrying these unneeded dependencies forward,
+but does not retroactively settle their historical publisher-license questions
+or relicense the remaining third-party dependencies. See the
+[plugin record](docs/ip/PLUGIN_LICENSE_REVIEW.md). Keep private source-art and
+rights records outside this public repository; an archive is not legal clearance
+or a completed copyright registration.
 
 ## File map
 

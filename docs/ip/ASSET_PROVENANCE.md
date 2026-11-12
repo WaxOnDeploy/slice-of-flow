@@ -40,7 +40,7 @@ Copyright is claimed only in qualifying human-authored expression or material la
 
 ## Evidence still needed
 
-The reference portrait now has Jeff’s first-person authorship statement on record. Do not extend that statement to the other retained/legacy photos, the generated base or every generated expressive element. Record the applicable creation-date provider terms and any relevant third-party rights or transfers for the remaining material. Preserve original capture files and creation evidence privately when available; do not demand a separate outside-photographer license for a portrait Jeff states he took. Do not replace, remove or relicense photos/art in this documentation-only PR.
+The reference portrait now has Jeff’s first-person authorship statement on record. Do not extend that statement to the other retained/legacy photos, the generated base or every generated expressive element. Record the applicable creation-date provider terms and any relevant third-party rights or transfers for the remaining material. Preserve original capture files and creation evidence privately when available; do not demand a separate outside-photographer license for a portrait Jeff states he took. The standalone dependency cleanup does not replace, remove or relicense photos/art. A private evidence archive is a preservation step, not independent authorship verification or legal clearance.
 
 ## References
 
