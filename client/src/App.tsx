@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import SliceOfFlow from "./pages/SliceOfFlow";
 import Game from "./pages/Game";
+import SliceOfFlowLicense from "./pages/SliceOfFlowLicense";
 
 function SliceOfFlowRedirect() {
   return <Redirect to="/" replace />;
@@ -18,6 +19,7 @@ function Router() {
     <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
       <Switch>
         <Route path="/" component={SliceOfFlow} />
+        <Route path="/license" component={SliceOfFlowLicense} />
         <Route path="/deck-shop" component={Home} />
         <Route path="/slice-of-flow" component={SliceOfFlowRedirect} />
         <Route path="/game" component={Game} />

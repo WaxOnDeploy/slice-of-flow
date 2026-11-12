@@ -36,7 +36,16 @@ See [license status](docs/ip/REVIEW_STATUS.md), [plugin findings](docs/ip/PLUGIN
 and [asset provenance](docs/ip/ASSET_PROVENANCE.md). Jeff states he took the chef
 reference portrait himself; other photo/artwork and provider questions remain
 separate. Private originals, raw prompts, rights agreements and audit archives
-must stay outside the public repository. No plugin or game-code change is included.
+must stay outside the public repository. Gameplay rules remain unchanged.
+
+The public [License & Permissions page](https://slice-of-flow.com/license) shows
+the approved use summary and full root LICENSE text, imported directly at build
+time rather than maintained as a second legal document. Plain-text copyright,
+permissions contact and a license link appear on the splash and every game phase.
+License links open in a separate tab so they do not discard an ongoing game.
+The separate visitor contract remains draft; no acceptance checkbox or claim of
+copyright registration has been added. Run `node tests/license.e2e.mjs` after
+the production build for desktop/phone, exact-text and game-preservation checks.
 
 ## Local setup
 
@@ -213,6 +222,7 @@ The tutorial-seen flag is stored as **`sof-tutorial-seen` in localStorage**, sco
 | Route | Purpose |
 | --- | --- |
 | `/` | Slice of Flow splash, landing, both rounds, transition, and debrief; phases do not have separate URLs. |
+| `/license` | Public License & Permissions page, full proprietary notice and permissions contact. |
 | `/slice-of-flow` | Compatibility route that replaces the location with `/`. |
 | `/deck-shop` | Retained original coaching/deck-shop page (`Home.tsx`), preserved in this history-preserving copy. |
 | `/game` | Retained Agile text adventure, “The Quest for the Golden Sprint”; not the pizza board. |
