@@ -1,0 +1,38 @@
+.sof-lab-evidence {
+  color: #493327;
+  background: #fffaf3;
+  border: 2px solid #d8c8b5;
+  border-radius: 16px;
+  margin: 24px auto;
+  padding: 24px;
+  max-width: 1200px;
+  font: 16px/1.5 'DM Sans', sans-serif;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.sof-lab-evidence h2 { font: 30px/1.2 'Lilita One', cursive; margin: 0 0 12px; color: #713c2b; }
+.sof-lab-evidence p { margin: 12px 0; }
+.sof-lab-evidence details { margin-top: 16px; padding: 16px; border: 1px solid #d8c8b5; border-radius: 10px; min-width: 0; }
+.sof-lab-evidence summary { cursor: pointer; font-weight: 700; font-size: 18px; }
+.sof-lab-evidence-field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 6px; overflow: hidden; margin-top: 18px; font-weight: 700; min-width: 0; }
+.sof-lab-evidence select { min-width: 0; max-width: 100%; width: 100%; overflow: hidden; text-overflow: ellipsis; padding: 10px; color: #493327; background: #fff; border: 1px solid #846753; border-radius: 8px; font: inherit; }
+.sof-lab-evidence input[type=range] { width: 100%; accent-color: #91452d; }
+.sof-lab-cfd-chart { height: 340px; width: 100%; margin-top: 18px; }
+.sof-lab-cfd-legend { display: flex; flex-wrap: wrap; gap: 12px 20px; list-style: none; padding: 0; }
+.sof-lab-cfd-legend li { display: flex; align-items: center; gap: 8px; }
+.sof-lab-cfd-legend span { display: inline-block; width: 16px; height: 16px; border: 1px solid #493327; border-radius: 3px; flex: none; }
+.sof-lab-evidence-scroll { max-width: 100%; overflow-x: auto; max-height: 440px; margin-top: 16px; border: 1px solid #d8c8b5; border-radius: 8px; }
+.sof-lab-evidence table { width: 100%; border-collapse: collapse; min-width: 720px; font: 16px/1.45 'DM Sans', sans-serif; }
+.sof-lab-evidence caption { text-align: left; padding: 12px; font-weight: 700; }
+.sof-lab-evidence th, .sof-lab-evidence td { text-align: left; padding: 10px 12px; border-top: 1px solid #e3d8cb; vertical-align: top; }
+.sof-lab-evidence th { background: #efe3d4; overflow-wrap: normal; word-break: normal; }
+.sof-lab-evidence td { font-variant-numeric: tabular-nums; }
+.sof-lab-pair-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.sof-lab-evidence :focus-visible { outline: 3px solid #823c26; outline-offset: 3px; }
+@media (max-width: 640px) {
+  .sof-lab-evidence { margin: 16px 10px; padding: 16px; }
+  .sof-lab-evidence details { padding: 12px; }
+  .sof-lab-pair-selectors { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .sof-lab-cfd-chart { height: 300px; }
+}
+@media print { .sof-lab-evidence { display: none !important; } }

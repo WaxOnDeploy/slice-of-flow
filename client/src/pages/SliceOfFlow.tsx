@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useSliceOfFlowStore } from '@/lib/sliceOfFlowStore';
 import SliceOfFlowLanding from './SliceOfFlowLanding';
 import SliceOfFlowBoard from './SliceOfFlowBoard';
@@ -18,6 +18,9 @@ import {
 } from '@/lib/sliceOfFlowSounds';
 import { DIFFICULTY_PRESETS } from '@/lib/sliceOfFlowConstants';
 import '@/lib/sliceOfFlowWorkshop.css';
+
+// Preview-only sibling: never loaded or scheduled on the default game path.
+const IndependentLab = lazy(() => import('@/components/SliceOfFlowIndependentPreview'));
 
 // ─── PHASE TRANSITION OVERLAY ─────────────────────
 function PhaseTransitionOverlay({
@@ -111,6 +114,10 @@ export default function SliceOfFlow() {
   const isRunning = useSliceOfFlowStore((s) => s.isRunning);
   const tick = useSliceOfFlowStore((s) => s.tick);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const difficulty = useSliceOfFlowStore((s) => s.difficulty);
+  const speed = useSliceOfFlowStore((s) => s.speed);
+  const [labEnabled] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('flow-lab') === '1');
+  const [labClosed, setLabClosed] = useState(false);
 
   // Splash screen state
   const [showSplash, setShowSplash] = useState(true);
@@ -318,7 +325,12 @@ export default function SliceOfFlow() {
       case 'transition':
         return <SliceOfFlowTransition />;
       case 'debrief':
-        return <SliceOfFlowDebrief />;
+        return <>
+          <SliceOfFlowDebrief />
+          {labEnabled && !labClosed && <Suspense fallback={<p role="status">Loading the independent lab preview…</p>}>
+            <IndependentLab difficulty={difficulty} speed={speed} onClose={() => setLabClosed(true)} />
+          </Suspense>}
+        </>;
       default:
         return <SliceOfFlowLanding />;
     }

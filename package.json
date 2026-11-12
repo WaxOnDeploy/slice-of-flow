@@ -14,6 +14,7 @@
     "test:watch": "vitest --config vitest.config.ts",
     "test:e2e": "node tests/workshop.e2e.mjs",
     "test:exports": "node tests/exports.e2e.mjs",
+    "test:lab": "node tests/independent-lab.e2e.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {
