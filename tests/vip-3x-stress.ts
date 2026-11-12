@@ -46,7 +46,7 @@ const near = (actual: number, expected: number, tolerance: number, message: stri
   check(Number.isFinite(actual) && Math.abs(actual - expected) <= tolerance, `${message}: expected ${expected}, observed ${actual}`);
 };
 
-/** Unguided canonical engine fixture; wall samples/actions are real producer operations. */
+/** Canonical engine fixture; optional real guided start, wall samples/actions are real producer operations. */
 class Rig {
   engine: Engine;
   driver: Driver;
@@ -56,10 +56,15 @@ class Rig {
   readonly arrivalWall = new Map<string, number>();
   readonly admissionWall = new Map<string, number>();
   readonly serviceWall = new Map<string, number>();
-  constructor(readonly id: string, readonly variant: VipVariant = 'expedite') {
-    this.engine = value(createEngine(id, value(makeVipConfig({ difficulty: 'normal', variant, initialSpeed: 3, guidedStart: false })))).state;
+  constructor(readonly id: string, readonly variant: VipVariant = 'expedite', guidedStart = false) {
+    const created = value(createEngine(id, value(makeVipConfig({ difficulty: 'normal', variant, initialSpeed: 3, guidedStart }))));
+    this.engine = created.state;
     this.driver = value(createDriver(id));
     this.sampleUs(0);
+    for (const event of created.emitted) {
+      if (event.kind === 'arrival') this.arrivalWall.set(event.orderKey, this.wallUs);
+      if (event.kind === 'admission') this.admissionWall.set(event.orderKey, this.wallUs);
+    }
     this.command({ kind: 'set-pause', reason: 'instruction', active: false });
     eq(this.engine.config.initialSpeed, 3);
     eq(this.engine.speed, 3);
@@ -156,7 +161,7 @@ function latency(stressId: string, rig: Rig, n: number, arrivalToServedSimMs: nu
   eq(ticket.status, 'served');
   const admitted = ticket.admittedAtMs!, exited = ticket.exitedAtMs!;
   const sampledAdmission = rig.admissionWall.get(key(n)), sampledService = rig.serviceWall.get(key(n));
-  check(sampledAdmission !== undefined && sampledService !== undefined, 'actual accepted command wall timestamps available');
+  check(sampledAdmission !== undefined && sampledService !== undefined, 'actual admission/service producer wall timestamps available');
   const expected = {
     arrivalToServedSimMs, ordersToServedSimMs, externalWaitingSimMs: arrivalToServedSimMs - ordersToServedSimMs,
     arrivalToServedWallSeconds: arrivalToServedSimMs / 3000,
@@ -174,7 +179,115 @@ function latency(stressId: string, rig: Rig, n: number, arrivalToServedSimMs: nu
   near(observed.arrivalToServedWallSeconds, expected.arrivalToServedWallSeconds, 0.0000011, 'arrival-to-served wall latency');
   near(observed.ordersToServedWallSeconds, expected.ordersToServedWallSeconds, 0.0000011, 'admission-to-served wall latency');
   latencyRows.push({ stressId, runId: rig.id, variant: rig.variant, orderKey: key(n), serviceClass: spec.serviceClass === 'vip' ? 'vip' : 'normal', expected, observed,
-    assertion: 'Exact simulated elapsed timestamps; observed virtual-wall command latency within 1.1µs of ideal 3× mapping.' });
+    assertion: 'Exact simulated elapsed timestamps; observed virtual-wall producer latency within 1.1µs of ideal 3× mapping. Guided admission, when present, is emitted by real engine creation at wall 0.' });
+}
+
+type CapacityStrategy = 'fifo' | 'expedite-saturate' | 'expedite-protect-prep';
+/** Test-only player choices, not game automation: one legal command per 1,000 simulated ms.
+ * Downstream-first, VIP-first within a station for expedite; ordinal breaks ties.
+ * Protected Prep voluntarily defers normals when one normal is already in Prep
+ * while any VIP remains unresolved. No added slot, discard, preemption or fixture injection.
+ */
+function capacityReference(stressId: string, strategy: CapacityStrategy) {
+  const variant = strategy === 'fifo' ? 'fifo' : 'expedite';
+  const r = new Rig(`${stressId}-${strategy}`, variant, true);
+  const config = r.engine.config, specs = config.manifest.orders;
+  const isVip = (orderKey: string) => specs.find(order => order.orderKey === orderKey)!.serviceClass === 'vip';
+  const ordinal = (orderKey: string) => specs.find(order => order.orderKey === orderKey)!.ordinal;
+  const next: Record<Station, Station | 'served'> = { orderQueue: 'prep', prep: 'oven', oven: 'boxDeliver', boxDeliver: 'served' };
+  const quantumSimMs = 1000;
+  eq(config.manifest.holds, []);
+  eq(config.endCondition, 'fixed-horizon');
+  eq(config.resources.occupancy.prep, 2); eq(config.resources.occupancy.oven, 3);
+  eq(config.policy.wip.prep, 2); eq(config.policy.wip.oven, 3);
+  const vipSpecs = specs.filter(order => order.serviceClass === 'vip');
+  eq(vipSpecs.map(order => [order.availableAtMs, order.deadlineAtMs, order.prepMs, order.bakeMs]),
+    [[10000, 100000, 30000, 40000], [90000, 180000, 30000, 40000], [170000, 260000, 30000, 40000]]);
+  eq(vipSpecs.map(order => order.deadlineAtMs! - order.availableAtMs), [90000, 90000, 90000]);
+  r.move(1, 'prep').command({ kind: 'set-pause', reason: 'guide', active: false });
+  let maxPrep = 0, maxOven = 0, acceptedHandlingCommands = 0;
+  const observeCapacity = () => {
+    const prep = r.occupancy('prep'), oven = r.occupancy('oven');
+    check(prep <= 2 && oven <= 3, `${strategy}: physical Prep/Oven bounds after every sample and accepted command`);
+    maxPrep = Math.max(maxPrep, prep); maxOven = Math.max(maxOven, oven);
+  };
+  observeCapacity();
+  for (let at = quantumSimMs; at <= config.manifest.horizonMs; at += quantumSimMs) {
+    r.at(at); observeCapacity();
+    if (r.engine.ended) break;
+    const vipRemaining = r.engine.tickets.some(ticket => isVip(ticket.orderKey) && !['served', 'burnt', 'discarded'].includes(ticket.status));
+    let chosen: EngineCommand | null = null;
+    for (const station of ['boxDeliver', 'oven', 'prep', 'orderQueue'] as const) {
+      const candidates = r.engine.tickets.filter(ticket => ticket.status === 'active' && ticket.station === station &&
+        (station !== 'prep' && station !== 'oven' || ticket.ready)).sort((a, b) =>
+          (variant === 'expedite' ? Number(isVip(b.orderKey)) - Number(isVip(a.orderKey)) : 0) || ordinal(a.orderKey) - ordinal(b.orderKey));
+      for (const ticket of candidates) {
+        if (strategy === 'expedite-protect-prep' && vipRemaining && station === 'orderQueue' && !isVip(ticket.orderKey) &&
+          r.engine.tickets.some(other => other.status === 'active' && other.station === 'prep' && !isVip(other.orderKey))) continue;
+        const command: EngineCommand = { kind: 'move', orderKey: ticket.orderKey, to: next[station] };
+        // Immutable preflight only; Rig.command asserts acceptance of every executed action.
+        if (applyAction(r.engine, command).accepted) { chosen = command; break; }
+      }
+      if (chosen) break;
+    }
+    if (!chosen) {
+      const external = r.engine.tickets.filter(ticket => ticket.status === 'external').sort((a, b) => {
+        const x = specs.find(order => order.orderKey === a.orderKey)!, y = specs.find(order => order.orderKey === b.orderKey)!;
+        return x.availableAtMs - y.availableAtMs || x.ordinal - y.ordinal;
+      });
+      const candidates = variant === 'expedite' ? [...external.filter(ticket => isVip(ticket.orderKey)), ...external.filter(ticket => !isVip(ticket.orderKey))] : external;
+      for (const ticket of candidates) {
+        const command: EngineCommand = { kind: 'admit', orderKey: ticket.orderKey };
+        if (applyAction(r.engine, command).accepted) { chosen = command; break; }
+      }
+    }
+    if (chosen) { r.command(chosen); acceptedHandlingCommands++; observeCapacity(); }
+  }
+  eq(r.engine.ended, 'horizon'); eq(r.engine.nowMs, 300000); eq(r.wallUs, 100_000_000);
+  const snapshot = r.observation(), measured = value(measureVipResults(snapshot));
+  eq(snapshot.config, config, 'player strategy cannot change config, recipes, deadlines, resources or scoring rules');
+  eq(snapshot.history.source, 'engine-boundary'); eq(snapshot.history.completeness, 'complete');
+  eq(snapshot.observation, { startMs: 0, endMs: 300000, durationMs: 300000 });
+  eq(snapshot.metrics.burnt, 0); eq(snapshot.history.events.filter(event => event.kind === 'discard'), []);
+  eq(maxPrep, 2); eq(maxOven, 3);
+  eq(snapshot.history.events.filter(event => event.kind === 'commandAccepted').length, acceptedHandlingCommands + 3);
+  const serviceLedger = snapshot.history.events.flatMap(event => {
+    if (event.kind !== 'service') return [];
+    eq(event.from, 'boxDeliver');
+    const spec = specs.find(order => order.orderKey === event.orderKey)!, ticket = r.engine.tickets.find(order => order.orderKey === event.orderKey)!;
+    eq(ticket.status, 'served'); eq(ticket.exitedAtMs, event.atMs);
+    eq(r.serviceWall.get(event.orderKey), wallFor(event.atMs));
+    latency(stressId, r, spec.ordinal, event.atMs - spec.availableAtMs, event.atMs - ticket.admittedAtMs!);
+    const admissionBy = snapshot.history.events.flatMap(admission => admission.kind === 'admission' && admission.orderKey === event.orderKey ? [admission.by] : []);
+    eq(admissionBy.length, 1);
+    return [{ orderKey: event.orderKey, serviceClass: isVip(event.orderKey) ? 'vip' : 'normal', from: event.from,
+      admissionBy: admissionBy[0],
+      arrivalAtMs: spec.availableAtMs, admittedAtMs: ticket.admittedAtMs, servedAtMs: event.atMs,
+      arrivalToServedMs: event.atMs - spec.availableAtMs, ordersToServedMs: event.atMs - ticket.admittedAtMs!,
+      serviceWallUs: r.serviceWall.get(event.orderKey) }];
+  });
+  eq(serviceLedger.length, snapshot.metrics.served);
+  const vips = vipSpecs.map(spec => {
+    const ticket = r.engine.tickets.find(order => order.orderKey === spec.orderKey)!;
+    const moves = snapshot.history.events.flatMap(event => event.kind === 'movement' && event.orderKey === spec.orderKey ? [event] : []);
+    const prepEntry = moves.find(event => event.to === 'prep')?.atMs ?? null;
+    const ovenEntry = moves.find(event => event.to === 'oven')?.atMs ?? null;
+    if (prepEntry !== null) eq(ticket.prepReadyAtMs, prepEntry + 30000);
+    if (ovenEntry !== null) eq(ticket.ovenReadyAtMs, ovenEntry + 40000);
+    for (const move of moves) {
+      if (move.to === 'oven') check(move.atMs >= ticket.prepReadyAtMs!, 'true 30s Prep recipe before Oven entry');
+      if (move.to === 'boxDeliver') check(move.atMs >= ticket.ovenReadyAtMs!, 'true 40s Oven recipe before Box entry');
+    }
+    return { orderKey: spec.orderKey, status: ticket.status, arrivalAtMs: spec.availableAtMs, deadlineAtMs: spec.deadlineAtMs,
+      deadlineWindowMs: spec.deadlineAtMs! - spec.availableAtMs, prepMs: spec.prepMs, bakeMs: spec.bakeMs,
+      admittedAtMs: ticket.admittedAtMs, prepEntryMs: prepEntry, prepReadyMs: ticket.prepReadyAtMs,
+      ovenEntryMs: ovenEntry, ovenReadyMs: ticket.ovenReadyAtMs, servedAtMs: ticket.status === 'served' ? ticket.exitedAtMs : null };
+  });
+  return { strategy, variant, handlingQuantumSimMs: quantumSimMs, handlingQuantumIdealWallMs: quantumSimMs / WALL_SPEED,
+    acceptedHandlingCommands, maxPrep, maxOven, burnt: snapshot.metrics.burnt, totalServed: snapshot.metrics.served,
+    endReason: snapshot.endReason, horizonSimMs: snapshot.observation.durationMs, horizonWallUs: r.wallUs,
+    serviceBoundary: 'Actual engine-boundary service from boxDeliver to served; external arrival-to-service and Orders admission-to-service are distinct, served-only.',
+    measured, vips, serviceLedger };
 }
 
 type Case = { id: string; name: string; checklist: string[]; note: string; run: () => unknown };
@@ -525,6 +638,32 @@ const cases: Case[] = [
         manualAssessment: manual, priorArchiveUnchanged: true, freshArchiveRunCount: fresh.archive.runs.length };
     },
   },
+  {
+    id: 'S13', name: 'Full-horizon saturated expedite versus FIFO capacity reference at 1,000ms handling quantum', checklist: ['D2', 'D3', 'D6', 'D7', 'E1'],
+    note: 'Exact chosen-strategy fixture only: same guided start, downstream-first commands, unchanged 30s Prep + 40s Oven and three 90s deadlines. Not a general expedite win requirement.',
+    run() {
+      const fifo = capacityReference('S13', 'fifo'), saturated = capacityReference('S13', 'expedite-saturate');
+      subset(fifo, { totalServed: 8, acceptedHandlingCommands: 51, burnt: 0, maxPrep: 2, maxOven: 3 });
+      subset(fifo.measured, { normalServedN: 8, vipServedN: 0, vipOnTime: 0, vipLate: 3, vipMeanArrivalToServedMs: null, score: 5, deadlinePenaltyCount: 3 });
+      eq(fifo.vips.map(vip => [vip.admittedAtMs, vip.servedAtMs]), [[157000, null], [187000, null], [250000, null]]);
+      subset(saturated, { totalServed: 11, acceptedHandlingCommands: 61, burnt: 0, maxPrep: 2, maxOven: 3 });
+      subset(saturated.measured, { normalServedN: 8, vipServedN: 3, vipOnTime: 0, vipLate: 3, vipMeanArrivalToServedMs: 106000, score: 8, deadlinePenaltyCount: 3 });
+      eq(saturated.vips.map(vip => [vip.admittedAtMs, vip.servedAtMs]), [[10000, 102000], [103000, 197000], [198000, 289000]]);
+      return { fifo, saturated, interpretation: 'This saturated expedite command schedule increases total service but still misses every VIP commitment. Queue priority does not add physical capacity.' };
+    },
+  },
+  {
+    id: 'S14', name: 'Full-horizon protected-Prep expedite reference meets commitments with fewer normal deliveries', checklist: ['D2', 'D3', 'D6', 'D7', 'E1'],
+    note: 'Voluntary test-driver choices only, never an automatic game reserve. Exact illustration at one command per 1,000 simulated ms, not human/browser performance or a guarantee.',
+    run() {
+      const protectedPrep = capacityReference('S14', 'expedite-protect-prep');
+      subset(protectedPrep, { totalServed: 9, acceptedHandlingCommands: 53, burnt: 0, maxPrep: 2, maxOven: 3 });
+      subset(protectedPrep.measured, { normalServedN: 6, vipServedN: 3, vipOnTime: 3, vipLate: 0, vipPending: 0,
+        vipNotYetArrived: 0, vipBurnt: 0, vipMeanArrivalToServedMs: 72000, score: 12, deadlinePenaltyCount: 0 });
+      eq(protectedPrep.vips.map(vip => [vip.admittedAtMs, vip.servedAtMs]), [[10000, 82000], [90000, 162000], [170000, 242000]]);
+      return { protectedPrep, interpretation: 'This protected-Prep command schedule meets all three VIP commitments while delivering six normals and nine total tickets. Compare commitments, normal work and total deliveries; do not assume universal benefit.' };
+    },
+  },
 ];
 
 const start = performance.now();
@@ -547,10 +686,10 @@ const report = {
   settings: { difficulty: 'normal', initialSpeed: 3, clock: 'virtual integer wall microseconds', horizonSimMs: 300000, uninterruptedHorizonWallSeconds: 100 },
   execution: { testCount: cases.length, passed: results.length - failed.length, failed: failed.length, assertionCount,
     runtimeMs: Math.round((performance.now() - start) * 1000) / 1000, output },
-  safety: { boundedCases: 12, maximumEngineHorizonSimMs: 300000, realTimers: false, network: false,
+  safety: { boundedCases: cases.length, maximumEngineHorizonSimMs: 300000, realTimers: false, network: false,
     applicationPersistence: false, reportFilesystemOnly: true, productionClientChanges: false },
   latencyDefinition: { simulated: 'Actual external-arrival/admission-to-service ledger timestamps; served-only.',
-    wall: 'Actual accepted admission/service command samples on uninterrupted virtual 3× clock; external wall boundary = ceil(arrivalSimMs*1000/3).',
+    wall: 'Actual admission/service producer samples on uninterrupted virtual 3× clock; guided admission is emitted by real engine creation at wall 0, all other admissions/services by accepted commands. External wall boundary = ceil(arrivalSimMs*1000/3).',
     toleranceSeconds: 0.0000011, noSamples: 'null / N/A, never zero', causalClaim: 'None. Waiting is observed positive-time overlap, not proven VIP displacement.' },
   checklistCoverage: {
     D: 'D1–D7 engine data/command contracts covered; keyboard, focus, labels and UI affordances are not exercised.',
@@ -560,6 +699,7 @@ const report = {
   caveats: [
     'These are synthetic legal command schedules, not human play, browser timing, rendering or tablet/Safari evidence.',
     'No-congestion VIP latency is feasible, not a promised human outcome. An intentionally equal FIFO/expedite pair is also asserted.',
+    'S13/S14 exact FIFO, saturated expedite and protected-Prep outcomes apply only to their chosen 1,000 simulated-ms handling schedules. General browser expedite runs need not win; no automatic reservation exists in the game.',
     'Driver deadlines are classified from observed external-arrival time; they do not generate a separate deadline-expiry event.',
     'Null/N/A is checked at the data contract; actual rendered N/A strings and hidden-score controls remain browser responsibilities.',
     'Stress manual observations are intentionally unmatched; only the separate equal full-horizon canonical pair is matched.',

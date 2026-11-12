@@ -82,7 +82,7 @@ Open **http://localhost:3000/**. Vite binds to all interfaces and tries another 
 | --- | --- |
 | `pnpm dev` | Start the Vite development server, normally on port 3000. |
 | `pnpm check` | Type-check with `tsc --noEmit`. |
-| `pnpm test` | Run the tracked Vitest regression suite once. |
+| `pnpm test` | Run Vitest, pure timing/result negative tests, and deterministic VIP stress checks. No browser/OpenSSL required. |
 | `pnpm test:watch` | Run regression tests in watch mode during development. |
 | `pnpm test:e2e` | Run workshop browser acceptance tests against an existing production build; see below. |
 | `pnpm test:exports` | Run real-browser PNG, print, cancellation, privacy and cleanup tests against the production build. |
@@ -349,3 +349,7 @@ The tracked browser suites use temporary HTTPS with the existing security header
 On the draft Round 3 branch, run `pnpm test:round3:3x` for exact engine/driver stress assertions, full unit/type gates, an isolated production build and a real-browser FIFO → expedite pair. Both browser runs use Normal/3×, finish at the actual 300-simulated-second horizon and explicitly select retained IDs for comparison. The player uses only visible controls and reports actual outcomes, not a guaranteed expedite win. Chromium is the default; `SOF_BROWSERS` enables more engines.
 
 Use `pnpm test:round3:stress` for fast deterministic virtual-wall-clock assertions only. Neither command deploys the app or changes a running UAT preview's build. Reports/screenshots go to ignored `test-results/round3-3x/`. Local browser serving requires OpenSSL on PATH and installed Playwright Chromium; engine-only checks do not. See [3× commands, exact timing landmarks and stress latency expectations](tests/VIP_3X_TESTING.md) for setup, PowerShell options, sample-size semantics and the distinction between simulated test evidence and observed browser play.
+
+`pnpm test:round3:checks` runs fast pure Node negative tests and deterministic stress checks. It is also part of `pnpm test`, so the normal gated build and existing deployment build steps exercise these assertions automatically. `pnpm test:round3:infrastructure` separately tests owned child-process timeouts/cancellation and HTTPS startup cleanup; it requires OpenSSL. Full real-browser pairs remain an explicit validation command, not a claim of mandatory PR branch protection or a multi-minute addition to every production build.
+
+The unchanged 90-second challenge deadline is deliberately feasible with protected capacity, not a guaranteed expedite win. Saturating the kitchen and protecting Prep space are different player choices. The deterministic reference strategies document that trade-off; they do not automatically reserve a worker in the actual game.

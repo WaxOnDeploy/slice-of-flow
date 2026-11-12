@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = process.env.SOF_TEST_OUTPUT || path.join(root, 'test-results', 'workshop');
 const config = JSON.parse(await readFile(path.join(root, 'vercel.json'), 'utf8'));
-const builtRoot = path.join(root, 'dist', 'public');
+const builtRoot = path.resolve(process.env.SOF_TEST_DIST || path.join(root, 'dist', 'public'));
 const mime = { '.html': 'text/html', '.js': 'application/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.json': 'application/json' };
 let server;
 let tlsDirectory;

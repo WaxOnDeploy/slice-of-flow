@@ -10,7 +10,7 @@
     "start": "NODE_ENV=production node dist/index.js",
     "preview": "vite preview --host",
     "check": "tsc --noEmit",
-    "test": "vitest run --config vitest.config.ts",
+    "test": "vitest run --config vitest.config.ts && pnpm test:round3:checks",
     "test:watch": "vitest --config vitest.config.ts",
     "test:e2e": "node tests/workshop.e2e.mjs",
     "test:exports": "node tests/exports.e2e.mjs",
@@ -19,6 +19,8 @@
     "test:round3": "node tests/round3.e2e.mjs",
     "test:round3:3x": "node tests/run-vip-3x.mjs",
     "test:round3:stress": "node tests/run-vip-3x.mjs --engine-only",
+    "test:round3:checks": "node --test tests/vip-3x-assertions.node-test.mjs && tsx tests/vip-3x-stress.ts",
+    "test:round3:infrastructure": "node --test tests/vip-infrastructure.node-test.mjs",
     "format": "prettier --write ."
   },
   "dependencies": {

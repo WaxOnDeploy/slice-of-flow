@@ -75,6 +75,8 @@ const PAUSE_NAMES = {
 const POLICY_NAMES = { fifo: "FIFO baseline", expedite: "VIP expedite" };
 const DISCLAIMER =
   "Matched conditions are not a causal claim: human choices can differ. Outcomes may be mixed, equal, adverse, or unavailable. This pilot does not establish human play or production-policy approval.";
+const CAPACITY_ADVICE =
+  "VIPs can jump the queue, but they cannot create Prep or Oven capacity. Try protecting space for urgent work, then compare VIP commitments with normal deliveries.";
 const format = (value: number | null, unit = "") =>
   value === null
     ? "N/A (no observed samples)"
@@ -250,6 +252,35 @@ function VipResult({ snapshot }: { snapshot: FinalRunSnapshot }) {
         is excluded. Overlap does not prove displacement.
       </p>
       <p>{DISCLAIMER}</p>
+      <details data-testid="vip-final-ticket-records">
+        <summary>Recorded ticket outcomes</summary>
+        <p>
+          Read-only final records for all 15 tickets. Times are simulated seconds
+          from this run's start; not admitted means no Orders admission occurred.
+          These records stay in this browser session and are not uploaded.
+        </p>
+        <ol>
+          {snapshot.orders.map(row => (
+            <li
+              key={row.orderKey}
+              data-vip-ticket={row.orderKey}
+              data-vip-status={row.outcome}
+              data-vip-station={row.finalStation ?? ""}
+              data-vip-admitted-at-ms={row.admittedAtMs ?? ""}
+              data-vip-exited-at-ms={row.exitedAtMs ?? ""}
+            >
+              <strong>{row.orderKey}</strong>: {row.outcome}
+              {row.finalStation ? ` in ${STATION_NAMES[row.finalStation]}` : ""}
+              {row.admittedAtMs === null
+                ? " · not admitted"
+                : ` · Orders admission ${seconds(row.admittedAtMs)}`}
+              {row.exitedAtMs === null
+                ? ""
+                : ` · ${row.outcome === "served" ? "served" : "closed"} ${seconds(row.exitedAtMs)}`}
+            </li>
+          ))}
+        </ol>
+      </details>
     </section>
   );
 }
@@ -644,6 +675,7 @@ export default function SliceOfFlowVipRound({
             Box 2. Ordinary Custom Build remains Normal, Large (Prep 90s / Oven
             80s).
           </p>
+          <p>{CAPACITY_ADVICE}</p>
           {pilot.ok && (
             <p>
               Three Small VIPs (Prep 30s / Oven 40s) arrive at{" "}
@@ -1303,6 +1335,10 @@ export default function SliceOfFlowVipRound({
             <ol>
               <li>What would happen if every order were VIP?</li>
               <li>
+                Did protecting urgent work help you meet commitments? What
+                happened to normal work and total deliveries?
+              </li>
+              <li>
                 Who has authority to declare urgency, and what cost or waiting
                 did the team actually observe?
               </li>
@@ -1364,6 +1400,7 @@ export default function SliceOfFlowVipRound({
             VIP globally and one extra Orders or Pizza Box policy slot for that
             VIP. No extra Prep worker or oven slot is created.
           </p>
+          <p>{CAPACITY_ADVICE}</p>
           <p>
             Resume kitchen removes only the facilitator pause. Help,
             instructions, guide, hidden tab, and exit confirmation own separate

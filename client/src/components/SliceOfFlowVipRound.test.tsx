@@ -139,6 +139,16 @@ describe("preview pilot VIP round", () => {
     expect(text).toContain("not a guaranteed workshop duration or outcome");
     expect(text).toContain("Original Round 1/2 presets are unchanged");
     expect(text).toContain("Custom Build remains Normal, Large");
+    expect(text).toContain(
+      "VIPs can jump the queue, but they cannot create Prep or Oven capacity."
+    );
+    expect(text).toContain(
+      "Try protecting space for urgent work, then compare VIP commitments with normal deliveries."
+    );
+    expect(text).toContain("Three Small VIPs (Prep 30s / Oven 40s)");
+    expect(text).toContain(
+      "Ordinary WIP limits: Orders 4 · Prep 2 · Oven 3 · Pizza Box 2."
+    );
     expect(text).toContain("Built by Jeff Bourke, MHA, PMP, SAFe RTE");
     expect(text).toContain("Start FIFO baseline");
     expect(text).toContain("Start VIP/expedite");
@@ -299,6 +309,42 @@ describe("preview pilot VIP round", () => {
     );
     expect(result().textContent).toContain("0.75 tickets per simulated minute");
   });
+  it("renders all canonical final ticket rows with real timestamps, zero admission and served/active/unadmitted identities", async () => {
+    await mount();
+    await running();
+    await click("Pull oldest available ticket (FIFO)");
+    await sample(30000);
+    await move();
+    await sample(70000);
+    await move();
+    await move();
+    await finishAt(80000);
+    const rows = Array.from(result().querySelectorAll<HTMLElement>(
+      "[data-vip-ticket][data-vip-status]"
+    ));
+    expect(rows).toHaveLength(15);
+    expect(new Set(rows.map(row => row.dataset.vipTicket)).size).toBe(15);
+    const first = rows.find(row => row.dataset.vipTicket === "order-1")!;
+    expect(first.dataset.vipStatus).toBe("served");
+    expect(first.dataset.vipStation).toBe("");
+    expect(first.dataset.vipAdmittedAtMs).toBe("0");
+    expect(first.dataset.vipExitedAtMs).toBe("70000");
+    const second = rows.find(row => row.dataset.vipTicket === "order-2")!;
+    expect(second.dataset.vipStatus).toBe("active");
+    expect(second.dataset.vipStation).toBe("orderQueue");
+    expect(second.dataset.vipAdmittedAtMs).toBe("0");
+    expect(second.dataset.vipExitedAtMs).toBe("");
+    const vip = rows.find(row => row.dataset.vipTicket === "order-13")!;
+    expect(vip.dataset.vipStatus).toBe("not-admitted");
+    expect(vip.dataset.vipAdmittedAtMs).toBe("");
+    expect(vip.dataset.vipStation).toBe("");
+    const disclosure = result().querySelector<HTMLDetailsElement>(
+      '[data-testid="vip-final-ticket-records"]'
+    )!;
+    expect(disclosure.open).toBe(false);
+    expect(disclosure.querySelector("summary")?.textContent).toBe("Recorded ticket outcomes");
+    expect(disclosure.textContent).toContain("not uploaded");
+  });
   it("external VIP arrivals have text statuses and FIFO does not permit jumping older normal backlog", async () => {
     await mount();
     await running();
@@ -329,6 +375,13 @@ describe("preview pilot VIP round", () => {
     expect(result().textContent).toContain("Waited during VIP activity");
     expect(result().textContent).toContain("not causal delay");
     expect(button("Start VIP/expedite").disabled).toBe(false);
+    const debrief = document.querySelector('[aria-label="Team debrief"]')!;
+    expect(debrief.textContent).toContain(
+      "Did protecting urgent work help you meet commitments? What happened to normal work and total deliveries?"
+    );
+    expect(debrief.textContent).toContain(
+      "Discuss observed evidence, not an assumed lesson."
+    );
     expect(
       document.querySelector<HTMLSelectElement>(
         'select[aria-label="Baseline attempt"]'
@@ -495,17 +548,34 @@ describe("preview pilot VIP round", () => {
     );
     expect(result().textContent).toContain("4 points · 0 deadline penalties");
   });
-  it("a VIP cannot create a third physical Prep worker and the ready destination stays disabled", async () => {
+  it("capacity advice in Help does not auto-reserve Prep: normal work can fill both workers and a VIP remains blocked", async () => {
     await mount();
     await running();
     await finishAt(1000);
     await start("expedite");
     await guidedMove();
+    await sample(11000);
+    expect(ticket("order-2")).toBeNull();
+    expect(ticket("order-13")).toBeNull();
+    await click("Pull earliest VIP into Orders");
+    await click("Help");
+    const help = document.querySelector('[role="dialog"]')!;
+    expect(help.textContent).toContain(
+      "VIPs can jump the queue, but they cannot create Prep or Oven capacity."
+    );
+    expect(help.textContent).toContain(
+      "Try protecting space for urgent work, then compare VIP commitments with normal deliveries."
+    );
+    expect(help.textContent).toContain(
+      "No extra Prep worker or oven slot is created."
+    );
+    await click("Close help");
+    expect(ticket("order-13").dataset.vipStation).toBe("orderQueue");
     await click("Pull next Normal order into Orders");
     await select("order-2");
+    expect(destination().disabled).toBe(false);
     await move();
-    await sample(11000);
-    await click("Pull earliest VIP into Orders");
+    expect(ticket("order-2").dataset.vipStation).toBe("prep");
     await select("order-13");
     expect(destination().textContent).toBe("Move selected ticket to Prep");
     expect(destination().disabled).toBe(true);
@@ -516,6 +586,12 @@ describe("preview pilot VIP round", () => {
     expect(
       document.querySelector(".sof-vip-lane-head.sof-lab-prep")?.className
     ).not.toContain("sof-vip-destination-ready");
+    expect(container.textContent).toContain("2 physical Prep workers");
+    expect(container.textContent).toContain("3 physical oven slots");
+    expect(ticket("order-13").textContent).toContain("Due in 90s");
+    expect(container.textContent).toContain("Arrival 10s · deadline 100s");
+    expect(container.textContent).toContain("Arrival 90s · deadline 180s");
+    expect(container.textContent).toContain("Arrival 170s · deadline 260s");
   });
   it("full observation windows remain not matched when a human's help control trace differs", async () => {
     await mount();
