@@ -1,19 +1,21 @@
-# Owner approval and review status
+# Slice of Flow proprietary license status
 
-Jeff Bourke approved the usage boundaries and permissions contact on November 12, 2026.
+On November 12, 2026, Jeff Bourke directed publication of his custom proprietary project license and replacement of the inherited project-level declaration. The root [LICENSE](../../LICENSE), version 1.0, governs the first repository revision published with it and subsequent revisions offered under it, unless superseded.
 
-- Free personal play and employee-led internal team workshops at one organization.
-- Outside facilitation, whether paid or unpaid, requires express written permission.
-- Resale, rehosting, white-labeling and source distribution require their own express grant; facilitation permission is not a resale license.
-- Permission requests: **jeff@thefatalfive.com**. A request is not an authorization.
-- Jeff states he took the portrait used as the chef reference. Record him as photographer based on that first-person statement, not an independent verification or a blanket claim for all artwork/photos.
+Copyright © 2026 Jeff Bourke. All rights reserved in protectable material he authored or lawfully owns. Package metadata points to `LICENSE`; `private: true` prevents accidental npm publishing and does not make the GitHub repository private.
 
-## This branch does not activate new terms
+## Approved permissions
 
-The root LICENSE and hosted terms remain clearly marked review drafts. Owner approval of the stated rules/contact is complete; final effective date/release, live terms location and an appropriate visitor acceptance process are not complete. Package metadata still has the inherited MIT declaration while its historical scope and valid prior permissions are reviewed. It is not the desired final proprietary designation.
+Free personal play and employee-led internal workshops at one organization are permitted. Outside facilitation, paid or unpaid, resale and rehosting require express written permission from **jeff@thefatalfive.com**. Facilitation permission does not include white-labeling, source distribution or sublicensing; a request does not grant permission.
 
-No package, plugin, gameplay, timer, route, asset, hosting or repository-visibility changes are included. The unrelated flow-lab preview remains unmerged. Third-party notices and valid prior rights are preserved.
+Jeff confirmed that he took the chef reference portrait himself. This is recorded as his first-person authorship statement, not an independent verification or a blanket claim about other photos or generated artwork.
 
-## Follow-up before activation
+## Preserved boundaries
 
-Complete the final notice/terms and publication plan; review the inherited MIT/contribution scope and human-authorship boundaries. Resolve or document the disposition of the plugin licensing findings and remaining third-party/legacy asset questions. Align README and package metadata only in a separately reviewed finalization commit. Do not claim visitor assent, registration or complete clearance from this draft PR.
+Required third-party licenses and notices, GitHub platform permissions and valid prior rights remain effective for their applicable materials. Publishing this license does not revoke rights validly obtained for earlier copies, overwrite dependency licenses or create copyright in ideas, gameplay methods or otherwise unprotectable AI-generated output. Git history is preserved.
+
+The separate [hosted Terms of Use draft](TERMS_OF_USE_DRAFT.md) remains a draft visitor contract, not accepted live terms. The LICENSE's express hosted-use permissions do not depend on that draft. Additional contractual service obligations require appropriate publication and acceptance; no registration, legal-clearance certification or visitor assent is claimed.
+
+## Separate follow-ups
+
+The plugin licensing findings and remaining legacy/third-party artwork questions retain their documented status. No plugin is removed or relicensed, no new code or artwork is introduced, and the unrelated flow-lab preview remains unmerged. Finalizing a live visitor contract is separate from the project license publication completed here.

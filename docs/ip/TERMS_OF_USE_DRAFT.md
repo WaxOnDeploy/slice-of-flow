@@ -2,7 +2,9 @@
 
 **REVIEW DRAFT — NOT PUBLISHED, ACCEPTED OR IN EFFECT**
 
-Proposed licensor: **Jeff Bourke, individually**. Draft prepared November 12, 2026. This supersedes v1 for review only; v1 remains preserved. Counsel should review ownership, prior MIT permissions, human authorship, assent and applicable law before publication. No government registration or live licensing change is made by this draft.
+Proposed hosted-contract licensor: **Jeff Bourke, individually**. Draft prepared November 12, 2026. This supersedes v1 for hosted-contract review only; v1 remains preserved. Counsel should review ownership, valid prior permissions, human authorship, assent and applicable law before publishing a visitor contract. No government registration or visitor acceptance is established by this draft.
+
+The root [proprietary LICENSE](../../LICENSE), version 1.0, separately governs the covered project revisions beginning with its November 12, 2026 publication. Its express hosted-use permissions operate independently of this draft. This file does not delay or replace the effective project license.
 
 ## Owner-approved usage boundaries — publication remains pending
 
@@ -68,9 +70,9 @@ React, Radix, other libraries, fonts, icons, vendored components and any other s
 
 If the repository remains public, GitHub’s applicable terms permit platform viewing and forking. These terms do not override those platform rights. Viewing or forking is not a promise of additional commercial permissions, but a valid independent license may supply them. Security headers or obfuscated frontend code do not themselves establish legal restrictions or prevent every copy.
 
-## 8. Historical MIT permissions and other exceptions
+## 8. Valid prior permissions and other exceptions
 
-The project’s package metadata historically declared MIT beginning with its template bootstrap. The legal scope and effect of that declaration must be assessed against the actual materials, history, ownership and applicable agreements. The absence of a standalone LICENSE file or GitHub’s failure to detect a license does not by itself establish that no permissions were granted.
+The legal scope and effect of any valid permission previously granted must be assessed against the actual materials, history, ownership and applicable agreements. A new proprietary notice does not itself revoke those rights, and license-detection metadata does not decide their scope.
 
 These terms apply only to identified releases or access lawfully offered under them. They do not retroactively revoke rights validly granted for earlier copies, claim exclusive ownership over preexisting licensed or unprotectable material, or automatically relicense an outside contributor’s work. Preserving an old release does not newly grant rights; changing its metadata does not erase valid old rights.
 
@@ -102,27 +104,18 @@ Jeff may suspend service access for material breach or harmful misuse where lega
 
 ---
 
-## Proposed repository notice — separate from the user contract
+## Effective repository license — separate from this draft user contract
 
-The following is a starting point for a root `LICENSE` file after approval, not a presently effective license:
+The authoritative [root LICENSE](../../LICENSE) names Jeff Bourke and reserves his protectable project rights under the custom proprietary license, version 1.0. Permission requests: **jeff@thefatalfive.com**. It applies prospectively to the covered repository revisions and preserves independently valid prior and third-party rights.
 
-> © 2026 Jeff Bourke. All rights reserved in protectable material authored or lawfully owned by Jeff Bourke.
->
-> No general license to modify, distribute, sublicense, sell or rehost Jeff-owned project material is granted by repository access. Hosted play and permitted exports are governed by the separately published Slice of Flow Terms of Use. Additional rights require Jeff’s express written authorization.
->
-> Separately licensed third-party components retain their own licenses and notices. Valid prior licenses, applicable GitHub platform permissions and nonwaivable legal rights remain unaffected. This notice does not create copyright over ideas, gameplay methods, facts or material lacking required human authorship.
->
-> This notice applies prospectively to the release designated when it is approved and published. Permission requests: jeff@thefatalfive.com. The final hosted terms URL and effective release/date must be completed before activation.
-
-For a custom license file named `LICENSE`, proposed package metadata is `"license": "SEE LICENSE IN LICENSE"`. Also propose `"private": true` to prevent accidental npm publication; this does **not** make the GitHub repository private. Third-party package metadata must not be changed to Jeff’s license. [3]
+Project package metadata is `"license": "SEE LICENSE IN LICENSE"` with `"private": true` to prevent accidental npm publication; this does **not** make the GitHub repository private. Third-party package metadata must not be changed to Jeff’s license. [3]
 
 ## Drafting references
 
-GitHub’s public-repository permissions and license-detection guidance inform the platform exception, not a conclusion that previous rights were absent. [1] [2] MIT’s broad permissions inform the prior-rights exception. [4] Copyright Office guidance informs the limited human-authorship claim. [5] [6] Counsel must separately assess contract formation, consumer law, venue, title and enforceability.
+GitHub’s public-repository permissions and license-detection guidance inform the platform exception, not a conclusion that previous rights were absent. [1] [2] Copyright Office guidance informs the limited human-authorship claim. [5] [6] Counsel should separately assess contract formation, consumer law, venue, title and enforceability.
 
 [1]: https://docs.github.com/en/site-policy/github-terms/github-terms-of-service "GitHub Terms of Service, User-Generated Content"
 [2]: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/licensing-a-repository "GitHub Docs: Licensing a Repository"
 [3]: https://docs.npmjs.com/cli/v12/configuring-npm/package-json/ "npm Docs: Package License and Private Metadata"
-[4]: https://choosealicense.com/licenses/mit/ "MIT License Text"
 [5]: https://www.copyright.gov/ai/Copyright-and-Artificial-Intelligence-Part-2-Copyrightability-Report.pdf "U.S. Copyright Office: AI Copyrightability Report"
 [6]: https://www.copyright.gov/ai/ai_policy_guidance.pdf "U.S. Copyright Office: AI Registration Guidance"

@@ -1,6 +1,6 @@
 # Development-plugin licensing status
 
-**Reviewed November 12, 2026. These findings do not certify complete license compliance or ownership.** Neither plugin is relicensed by the proposed Jeff Bourke notice.
+**Reviewed November 12, 2026. These findings do not certify complete license compliance or ownership.** Neither plugin is relicensed by Jeff Bourke's proprietary project license; their applicable third-party terms are preserved.
 
 ## Builder plugin 0.1.1
 
@@ -18,7 +18,7 @@ Manus's generated-output ownership provisions do not grant ownership of, or a re
 
 The inspected `vite.config.ts` adds both plugins only when Vite's command is `serve`. Their own implementations do not independently enforce that restriction. Top-level imports and development dependency declarations remain. Existing artifact searches showed no targeted runtime/plugin markers, but were not fresh-build or live-deployment verification.
 
-This draft PR does not change the plugins, their versions or activation. A future removal/replacement needs its own frozen-lockfile installation, fresh root/Pages builds, development-server verification and gameplay/export/route regressions. Archive the actual evidence and tested revision; do not mark permissions resolved merely because a build passed.
+This project-license update does not change the plugins, their versions or activation. A future removal/replacement needs its own frozen-lockfile installation, fresh root/Pages builds, development-server verification and gameplay/export/route regressions. Archive the actual evidence and tested revision; do not mark permissions resolved merely because a build passed.
 
 ## References
 
