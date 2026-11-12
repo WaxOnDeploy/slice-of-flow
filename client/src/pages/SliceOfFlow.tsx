@@ -6,6 +6,7 @@ import SliceOfFlowTransition from './SliceOfFlowTransition';
 import SliceOfFlowDebrief from './SliceOfFlowDebrief';
 import SliceOfFlowSplash from '@/components/SliceOfFlowSplash';
 import type { SplashVariant } from '@/components/SliceOfFlowSplash';
+import SliceOfFlowRightsFooter from '@/components/SliceOfFlowRightsFooter';
 import {
   playOrderFlip,
   playBurn,
@@ -328,6 +329,7 @@ export default function SliceOfFlow() {
       <PhaseTransitionOverlay isVisible={transitionVisible} label={transitionLabel} />
       <div ref={phaseRootRef} className="sof-phase" data-phase={displayedPhase} inert={transitionVisible} aria-busy={transitionVisible}>
         {renderPhase()}
+        <SliceOfFlowRightsFooter />
       </div>
     </>
   );

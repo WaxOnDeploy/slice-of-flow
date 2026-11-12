@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import SliceOfFlowAuthorCredit from '@/components/SliceOfFlowAuthorCredit';
+import SliceOfFlowRightsFooter from '@/components/SliceOfFlowRightsFooter';
 
 const HERO_IMG = 'https://d2xsxph8kpxj0f.cloudfront.net/310519663079801262/HMZYiPTRs2uX46faFy3c3x/sof-hero-bg-GAkzomYox6u7BrLN2cai9V.webp';
 
@@ -518,6 +519,7 @@ export default function SliceOfFlowSplash({ onEnter, variant = 'ticket' }: Splas
         </div>
       </header>
       {content}
+      <SliceOfFlowRightsFooter />
     </div>
   );
 }
