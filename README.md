@@ -168,6 +168,14 @@ pnpm test:exports
 
 The export suite uses the same temporary HTTPS/security policy and supports `SOF_TEST_URL`, `SOF_TEST_PORT`, `SOF_TEST_OUTPUT`, and `SOF_BROWSERS`. Evidence is written to ignored `test-results/exports/`; downloaded empty-round samples are explicitly test evidence, not real team results. Development-only jsdom supports DOM unit checks; it is not shipped in the app. See [native canvas PNG generation](https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/toBlob), [browser printing](https://developer.mozilla.org/en-US/docs/Web/CSS/Guides/Media_queries/Printing), and [native sharing](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/share) for platform requirements.
 
+### Isolated deterministic flow foundations
+
+`client/src/lib/sofEngine/` contains a separately tested pure fixed-deck engine, integer-ms/wall-us driver, canonical event accounting and copied/frozen final snapshots/archive values. `flow/sof018Metrics.ts` measures all-active Orders-admission-to-terminal-exit WIP, actual observation/rates, finished samples and a separately labelled short-run Orders-to-exit illustration. `sof/metricDefinitions.ts` preserves explicit source/units/sample definitions. The golden production deck uses seed 0 only; marked synthetic fixtures never become public scenarios. Inputs and commands fail closed; physical resources, policy WIP and score rules are distinct.
+
+These modules are **not imported into the playable application**. They do not replace the existing timer/store, record previous R1/R2 history, add facilitator controls, enable rounds 3–5, add storage or modify existing exports. The core has 151 dedicated tests; combined with the export release, the current suite has 518 tests. This is library evidence, not new human gameplay or native-device certification. A later host must own scheduling, stale-run checks, nested pause locks and final capture explicitly; a rejected control at the horizon must not swallow a successfully advanced terminal sample.
+
+`validateSnapshot` is a lifecycle/measurement port, not proof an external ledger was played. `snapshotFromEngine`/`finalizeRun` additionally enforce replay-compatible producer state. A valid zero-duration served port fixture does not grant instant-service physics. Legacy positive-usable served means have unknown observation/sample history and are not silently interchangeable with the new nonnegative-elapsed definition. A later comparison authority must validate its actual producer evidence; equal seed or score is insufficient.
+
 ## Browser-local state and retained routes
 
 Gameplay, difficulty, speed, and round results live in an **in-memory Zustand store**: a full reload resets them. There are no game accounts, cloud saves, server-side scores, or cross-device/team state synchronization. Resetting a game keeps the current difficulty and speed within that page session.
