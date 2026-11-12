@@ -18,4 +18,8 @@ The separate [hosted Terms of Use draft](TERMS_OF_USE_DRAFT.md) remains a draft 
 
 ## Separate follow-ups
 
-The plugin licensing findings and remaining legacy/third-party artwork questions retain their documented status. No plugin is removed or relicensed, no new code or artwork is introduced, and the unrelated flow-lab preview remains unmerged. Finalizing a live visitor contract is separate from the project license publication completed here.
+The public [License & Permissions page](https://slice-of-flow.com/license) displays the approved usage summary and full root LICENSE. Real-text copyright and permissions links are shown across the Slice of Flow entry and gameplay phases. Links open in a separate tab to preserve an ongoing game; the visitor contract remains a separate draft.
+
+The two unneeded editor-only plugins have been removed prospectively from this standalone GitHub/Vercel package manifest, dependency graph and Vite configuration. The original Manus-managed project is untouched. Historical licensing findings and remaining legacy/third-party artwork questions retain their documented status; no dependency or artwork is relicensed, and removal is not retroactive clearance. See [plugin record](PLUGIN_LICENSE_REVIEW.md).
+
+Preserve source artwork, the specific self-taken portrait, creation records and any rights agreements privately, outside this public repository. Jeff's portrait statement does not establish rights in all other photos or every generated element. Copyright-registration preparation is separate from an actual filing; no registration has been submitted. The unrelated flow-lab preview remains unmerged.
