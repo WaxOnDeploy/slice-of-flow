@@ -40,7 +40,7 @@ export default function SliceOfFlowIndependentEvidence({ archive }: { archive: R
     pairId: 'lab-preview-contextual-pair', baselineRunId: baselineId, subjectRunId: subjectId,
     requestedBasis: 'contextual', change: null,
   }) : null, [archive, baselineId, subjectId]);
-  const options = archive.runs.map((run, index) => <option key={run.runId} value={run.runId}>Attempt {index + 1} · {format(run.observation.durationMs / 1000)} sim seconds · {run.endReason}</option>);
+  const options = archive.runs.map((run, index) => <option key={run.runId} value={run.runId}>Recorded run {index + 1} · {run.runId} · {format(run.observation.durationMs / 1000)} sim seconds · {run.endReason}</option>);
 
   return <section className="sof-lab-evidence" aria-labelledby="lab-evidence-title" data-testid="lab-evidence">
     <h2 id="lab-evidence-title">Recorded lab evidence</h2>

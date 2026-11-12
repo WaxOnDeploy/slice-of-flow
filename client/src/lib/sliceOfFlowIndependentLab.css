@@ -98,3 +98,13 @@
   .sof-independent-lab *,
   .sof-lab-dialog * { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Original-game Print / Save PDF must never include independent lab state. */
+@media print {
+  .sof-independent-preview,
+  .sof-independent-lab,
+  .sof-dialog:has(.sof-lab-dialog),
+  body:has(.sof-dialog .sof-lab-dialog) .sof-dialog-overlay {
+    display: none !important;
+  }
+}

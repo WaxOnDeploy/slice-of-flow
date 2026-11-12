@@ -47,6 +47,16 @@ describe('independent recorded evidence preview', () => {
     expect(Array.from(container.querySelectorAll('select')).map(node => node.value)).toEqual(['', '', '']);
     expect(container.querySelectorAll('tbody tr')).toHaveLength(0);
   });
+  it('uses recorded-run numbering and actual IDs when earlier attempts were abandoned', () => {
+    const run = fixture('evidence:run:2', 1500);
+    render(archiveOf(run));
+    const labels = Array.from(container.querySelectorAll('select option')).filter(node => (node as HTMLOptionElement).value === run.runId);
+    expect(labels).toHaveLength(3);
+    for (const node of labels) {
+      expect(node.textContent).toContain('Recorded run 1 · evidence:run:2');
+      expect(node.textContent).not.toContain('Attempt 1');
+    }
+  });
   it('preserves every numeric event prefix and distinguishes waiting from active WIP', () => {
     const run = fixture('evidence:run:1', 1500), model = value(buildCfd(run));
     render(archiveOf(run)); select(0, run.runId);
