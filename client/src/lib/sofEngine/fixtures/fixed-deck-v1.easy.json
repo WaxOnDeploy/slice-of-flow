@@ -1,0 +1,27 @@
+{
+  "schema": "sof-manifest/v1",
+  "scenarioId": "fixed-deck",
+  "scenarioVersion": "fixed-deck-v1",
+  "generatorVersion": "master-array/v1",
+  "seed": 0,
+  "difficulty": "easy",
+  "horizonMs": 420000,
+  "pushIntervalMs": 20000,
+  "burnBufferMs": 30000,
+  "patienceMs": 600000,
+  "orders": [
+    {"orderKey":"order-1","ordinal":1,"orderTypeId":"cheese","complexity":"Small","availableAtMs":0,"prepMs":30000,"bakeMs":40000},
+    {"orderKey":"order-2","ordinal":2,"orderTypeId":"pepperoni","complexity":"Small","availableAtMs":0,"prepMs":30000,"bakeMs":40000},
+    {"orderKey":"order-3","ordinal":3,"orderTypeId":"veggie-supreme","complexity":"Medium","availableAtMs":0,"prepMs":60000,"bakeMs":60000},
+    {"orderKey":"order-4","ordinal":4,"orderTypeId":"cheese","complexity":"Small","availableAtMs":0,"prepMs":30000,"bakeMs":40000},
+    {"orderKey":"order-5","ordinal":5,"orderTypeId":"meat-lovers","complexity":"Medium","availableAtMs":0,"prepMs":60000,"bakeMs":60000},
+    {"orderKey":"order-6","ordinal":6,"orderTypeId":"cheese","complexity":"Small","availableAtMs":0,"prepMs":30000,"bakeMs":40000},
+    {"orderKey":"order-7","ordinal":7,"orderTypeId":"veggie-supreme","complexity":"Medium","availableAtMs":0,"prepMs":60000,"bakeMs":60000},
+    {"orderKey":"order-8","ordinal":8,"orderTypeId":"pepperoni","complexity":"Small","availableAtMs":0,"prepMs":30000,"bakeMs":40000},
+    {"orderKey":"order-9","ordinal":9,"orderTypeId":"custom-build","complexity":"Large","availableAtMs":0,"prepMs":90000,"bakeMs":80000},
+    {"orderKey":"order-10","ordinal":10,"orderTypeId":"meat-lovers","complexity":"Medium","availableAtMs":0,"prepMs":60000,"bakeMs":60000},
+    {"orderKey":"order-11","ordinal":11,"orderTypeId":"veggie-supreme","complexity":"Medium","availableAtMs":0,"prepMs":60000,"bakeMs":60000},
+    {"orderKey":"order-12","ordinal":12,"orderTypeId":"custom-build","complexity":"Large","availableAtMs":0,"prepMs":90000,"bakeMs":80000}
+  ],
+  "holds": []
+}
