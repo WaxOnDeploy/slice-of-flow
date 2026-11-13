@@ -241,3 +241,53 @@
 .sof-vip-table-scroll table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 16px; }
 .sof-vip-table-scroll caption { text-align: left; font-weight: 700; margin-bottom: 8px; }
 .sof-vip-table-scroll th, .sof-vip-table-scroll td { border: 1px solid #b29874; padding: 10px; text-align: left; vertical-align: top; }
+
+/* Keep urgent arrivals discoverable when a ticket scrolls the kitchen into view. */
+.sof-vip-watch-dock {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  margin: 12px 0;
+  padding: 10px 14px;
+  background: #fff0c6;
+  color: #533800;
+  border: 2px solid #805816;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(83, 56, 0, .14);
+  max-height: 42svh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.sof-vip-watch-clock { display: block; font-weight: 700; font-size: 14px; }
+.sof-vip-watch { min-width: 0; }
+.sof-vip-watch-title { font-weight: 800; font-size: 18px; }
+.sof-vip-watch-detail, .sof-vip-watch-next { font-size: 16px; }
+.sof-vip-round .sof-vip-watch p { margin: 4px 0; }
+.sof-vip-watch-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sof-vip-watch-actions button { min-height: 44px; padding: 8px 12px; }
+.sof-vip-round .sof-vip-ticket,
+.sof-vip-round [data-vip-destination],
+.sof-vip-round [data-vip-admit],
+.sof-vip-round [data-testid='vip-arrivals-heading'] {
+  scroll-margin-top: var(--vip-watch-clearance, 180px);
+}
+.sof-vip-round [data-testid='vip-arrivals-heading']:focus {
+  outline: 3px solid #1976d2;
+  outline-offset: 3px;
+}
+@media (max-width: 540px) {
+  .sof-vip-watch-dock { top: 4px; padding: 8px 10px; }
+  .sof-vip-watch-actions { gap: 6px; }
+  .sof-vip-watch-actions button { flex: 1 1 140px; }
+}
+
+.sof-vip-watch-actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff0c6;
+  padding-top: 4px;
+}
+@media (max-width: 540px) {
+  /* The dock's own clock already says Paused; retain FIFO/capacity/token reasons. */
+  .sof-vip-watch-dock [data-vip-watch-reason='PAUSED'] { display: none; }
+}

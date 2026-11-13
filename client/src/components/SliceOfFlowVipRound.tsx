@@ -11,6 +11,7 @@ import SliceOfFlowDialog from "./SliceOfFlowDialog";
 import SliceOfFlowAuthorCredit from "./SliceOfFlowAuthorCredit";
 import SliceOfFlowOrderGuide from "./SliceOfFlowOrderGuide";
 import SliceOfFlowVipComparisonTable from "./SliceOfFlowVipComparisonTable";
+import SliceOfFlowVipWatch from "./SliceOfFlowVipWatch";
 import {
   abandonIndependentSession,
   commandIndependentSession,
@@ -354,6 +355,17 @@ export default function SliceOfFlowVipRound({
   const active = session?.status === "active";
   const engine = session?.engine;
   const retained = session?.archive.runs ?? [];
+  useLayoutEffect(() => {
+    const element = root.current;
+    const dock = element?.querySelector<HTMLElement>(".sof-vip-watch-dock");
+    if (!element || !dock) return;
+    const measure = () => element.style.setProperty("--vip-watch-clearance", `${Math.ceil(dock.getBoundingClientRect().height) + 24}px`);
+    measure();
+    if (typeof ResizeObserver === "undefined") return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(dock);
+    return () => observer.disconnect();
+  }, [active]);
   const hasBaseline = retained.some(
     run => run.config.policy.variantId === "fifo"
   );
@@ -867,11 +879,26 @@ export default function SliceOfFlowVipRound({
               ? "First move: select Normal Order 1 with its button, Enter, or Space. Next destination: Prep. The clock waits for this valid move."
               : "Select a ticket with its button, Enter, or Space. Use the highlighted destination button or ArrowRight to move one station. Wait for Ready in Prep and Oven; watch the burn timer."}
           </p>
+          <div className="sof-vip-watch-dock">
+            <span className="sof-vip-watch-clock">
+              Kitchen: {Math.max(0, Math.ceil((engine.config.manifest.horizonMs - engine.nowMs) / 1000))}s remaining · simulated time
+              {paused && " · Paused"}
+            </span>
+            <SliceOfFlowVipWatch
+              engine={engine}
+              onAdmit={admit}
+              onShowArrivals={() => {
+                const heading = root.current?.querySelector<HTMLElement>("[data-testid='vip-arrivals-heading']");
+                heading?.focus({ preventScroll: true });
+                heading?.scrollIntoView({ block: "center", behavior: "instant" });
+              }}
+            />
+          </div>
           <section
             className="sof-vip-backlog"
             aria-label="External VIP backlog and scheduled arrivals"
           >
-            <h3>
+            <h3 data-testid="vip-arrivals-heading" tabIndex={-1}>
               <span className="sof-vip-badge">VIP</span> Arrivals and deadlines
             </h3>
             <p>

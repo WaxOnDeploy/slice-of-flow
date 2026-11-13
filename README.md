@@ -353,3 +353,17 @@ Use `pnpm test:round3:stress` for fast deterministic virtual-wall-clock assertio
 `pnpm test:round3:checks` runs fast pure Node negative tests and deterministic stress checks. It is also part of `pnpm test`, so the normal gated build and existing deployment build steps exercise these assertions automatically. `pnpm test:round3:infrastructure` separately tests owned child-process timeouts/cancellation and HTTPS startup cleanup; it requires OpenSSL. Full real-browser pairs remain an explicit validation command, not a claim of mandatory PR branch protection or a multi-minute addition to every production build.
 
 The unchanged 90-second challenge deadline is deliberately feasible with protected capacity, not a guaranteed expedite win. Saturating the kitchen and protecting Prep space are different player choices. The deterministic reference strategies document that trade-off; they do not automatically reserve a worker in the actual game.
+
+### Round 3 VIP arrival visibility (draft preview)
+
+The optional Round 3 kitchen includes a sticky **VIP watch** so incoming VIPs remain discoverable while selecting and moving station tickets. The watch announces arrivals without stealing focus, displays the next arrival and deadline, and explains whether FIFO order, capacity, a pause, or an occupied expedite token prevents pulling the VIP. **Show VIP arrivals** explicitly moves focus to the full arrivals panel; **Pull waiting VIP Order N** uses the same canonical admission rules as the original controls.
+
+In FIFO, an arrived VIP remains outside Orders behind older available normal tickets. It becomes a gold kitchen ticket only after admission. The visibility change does not permit queue jumping in FIFO, add workers/oven slots, change deadlines, reserve capacity, or automatically admit an order.
+
+After a gated production build, run the focused visibility suite:
+
+```sh
+SOF_BROWSERS=chromium,firefox,webkit node tests/vip-visibility.e2e.mjs
+```
+
+This suite checks real 3× arrivals, sticky desktop/phone visibility, stable live announcements, FIFO blocking, keyboard VIP admission in expedite, the second VIP waiting for its occupied token, and paused countdowns. Its manually ended runs are not full-horizon matched comparisons; the separate `pnpm test:round3:3x` runner covers those. Physical workshop-device validation remains separate.
