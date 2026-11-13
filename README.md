@@ -301,9 +301,13 @@ or a completed copyright registration.
 - [ ] Reach Round 2; verify manual pulls and WIP caps (4/2/3/2), then inspect the full debrief and share/replay controls. Also test the skip-to-Round-2 results path.
 - [ ] Reload to confirm gameplay resets but onboarding flags remain; verify supported routes, deployed deep-link fallback, CDN/fonts, and analytics behavior.
 
-## Default-off independent measurement lab — draft preview
+## Approved optional-pilot release scope
 
-On a **draft preview build only**, add `?flow-lab=1` to the root URL, finish a normal or skipped-R1 journey, then explicitly select **Start lab run** below the existing debrief. The flag does not start a run, replace ordinary gameplay, or record its past history. The lab uses the official fixed deck, manual pull, original difficulty/speed defaults and its own immutable run/clock adapter. Its local opaque run codes are identity only, not randomized demand or personal labels.
+Jeff Bourke approved the combined Round 3 VIP/Expedite and independent Flow Metrics lab release on November 12, 2026. Both remain **default-off**, enabled only by explicit public query flags; these flags are not access controls. The ordinary Rounds 1–2 experience is unchanged. Physical iPad/Safari validation is explicitly deferred, not passed: browser-engine and touch-emulation checks do not establish actual-device certification. The optional pilots are intended for desktop/laptop evaluation while that gate remains open. Round 4 is planning only and is not included.
+
+## Default-off independent measurement lab — optional pilot
+
+Add `?flow-lab=1` to the root URL, finish a normal or skipped-R1 journey, then explicitly select **Start lab run** below the existing debrief. The flag does not start a run, replace ordinary gameplay, or record its past history. The lab uses the official fixed deck, manual pull, original difficulty/speed defaults and its own immutable run/clock adapter. Its local opaque run codes are identity only, not randomized demand or personal labels.
 
 Pause/Resume belongs only to the facilitator. Instructions, the first-move guide, help, hidden tabs and exit confirmation retain independent pause ownership. Resume samples/rebases while still paused to avoid catch-up. One scheduler exists only during unpaused active lab play; page exit/unmount cancels it. This preview is intentionally silent, with no catch-up sounds. **Hide live scores** removes only live aggregates from DOM/accessibility while retaining operational timers and burn hazards. Ending records an actual terminal snapshot; confirmed exit abandons the active draft without inventing a completed result. Replay starts a fresh manual attempt, not replayed or synthetic played evidence.
 
@@ -317,11 +321,11 @@ pnpm exec playwright install --with-deps chromium firefox webkit
 pnpm test:lab
 ```
 
-The lab test uses the same temporary local HTTPS/CSP harness and `SOF_TEST_*`/`SOF_BROWSERS` options. It performs real UI actions, complete independent play, keyboard/pointer/focus, owned pause/help/exit, score hiding, fresh replay/manual end, exact-history CFD, contextual pair selection, phone layout and no data-post checks. The ordinary full-game/export suites remain separate release gates. Engine tests and emulated browsers are not a human playtest, Safari/Edge/iPad/projector certification, or evidence of team usage. Keep this feature on a draft branch until human review; the optional VIP pilot below also stays draft-only, never part of ordinary production play.
+The lab test uses the same temporary local HTTPS/CSP harness and `SOF_TEST_*`/`SOF_BROWSERS` options. It performs real UI actions, complete independent play, keyboard/pointer/focus, owned pause/help/exit, score hiding, fresh replay/manual end, exact-history CFD, contextual pair selection, phone layout and no data-post checks. The ordinary full-game/export suites remain separate release gates. Engine tests and emulated browsers are not a human playtest, Safari/Edge/iPad/projector certification, or evidence of team usage. The approved optional release does not complete wider workshop calibration or the deferred physical-device gate.
 
-## Optional Round 3 — VIP / Expedite draft pilot
+## Optional Round 3 — VIP / Expedite pilot
 
-On this **draft preview branch only**, add `?round3=1` to the root URL. Opening it displays setup; no clock or orders start until **Start FIFO baseline**. Complete a FIFO attempt, then optionally choose **Start VIP/expedite**. Both run the same fixed 12 Normal orders plus three Small VIP orders. Custom Build remains a Normal, Large order. Default Rounds 1–2, their exports, `/deck-shop`, `/game`, `/license`, author credit, proprietary license and security headers are preserved.
+Add `?round3=1` to the root URL. Opening it displays setup; no clock or orders start until **Start FIFO baseline**. Complete a FIFO attempt, then optionally choose **Start VIP/expedite**. Both run the same fixed 12 Normal orders plus three Small VIP orders. Custom Build remains a Normal, Large order. Default Rounds 1–2, their exports, `/deck-shop`, `/game`, `/license`, author credit, proprietary license and security headers are preserved.
 
 The initial pilot uses **300 simulated seconds** on Normal/Hard, VIP arrivals at **10 / 90 / 170 seconds**, and **90 seconds from external arrival** to serve each VIP. Easy uses 420 seconds, arrivals 60 / 160 / 260, and a 120-second deadline window. These are tuned **pilot values**, not the original document's proposed 4:00 / 0:45 / 1:45 / 2:45 defaults. At 3×, a Normal/Hard run needs about 100 uninterrupted real seconds; instructions, pauses and discussion add time. Timing feasibility is not human-play acceptance.
 
@@ -341,12 +345,12 @@ pnpm test:round3       # Chromium full-horizon pair; Firefox/WebKit short manual
 pnpm test:lab-print    # Original debrief prints with lab pre-start, dialogs and final results
 ```
 
-The tracked browser suites use temporary HTTPS with the existing security headers. `SOF_BROWSERS=chromium,firefox,webkit` selects engines; `SOF_VIP_FULL_PAIR=0` uses explicitly short manual runs instead of a Chromium full-horizon pair. Use a browser-safe `SOF_TEST_PORT` (default 4186 for Round 3; avoid restricted 4190). They do not replace actual Safari/iPad/projector or human workshop review. Keep this pilot **draft and unmerged** until human interpretation and playability review. Rounds 4–5, the complete cross-round picker, all-round facilitator controls, VIP-specific export and multi-device play are not implemented here.
+The tracked browser suites use temporary HTTPS with the existing security headers. `SOF_BROWSERS=chromium,firefox,webkit` selects engines; `SOF_VIP_FULL_PAIR=0` uses explicitly short manual runs instead of a Chromium full-horizon pair. Use a browser-safe `SOF_TEST_PORT` (default 4186 for Round 3; avoid restricted 4190). They do not replace actual Safari/iPad/projector or human workshop review. Jeff approved the Round 3 playtest and combined optional release; physical iPad/Safari validation remains explicitly deferred. Rounds 4–5, the complete cross-round picker, all-round facilitator controls, VIP-specific export and multi-device play are not implemented here.
 
 
 ### Automated Normal / 3× VIP FIFO and Expedite runs
 
-On the draft Round 3 branch, run `pnpm test:round3:3x` for exact engine/driver stress assertions, full unit/type gates, an isolated production build and a real-browser FIFO → expedite pair. Both browser runs use Normal/3×, finish at the actual 300-simulated-second horizon and explicitly select retained IDs for comparison. The player uses only visible controls and reports actual outcomes, not a guaranteed expedite win. Chromium is the default; `SOF_BROWSERS` enables more engines.
+Run `pnpm test:round3:3x` for exact engine/driver stress assertions, full unit/type gates, an isolated production build and a real-browser FIFO → expedite pair. Both browser runs use Normal/3×, finish at the actual 300-simulated-second horizon and explicitly select retained IDs for comparison. The player uses only visible controls and reports actual outcomes, not a guaranteed expedite win. Chromium is the default; `SOF_BROWSERS` enables more engines.
 
 Use `pnpm test:round3:stress` for fast deterministic virtual-wall-clock assertions only. Neither command deploys the app or changes a running UAT preview's build. Reports/screenshots go to ignored `test-results/round3-3x/`. Local browser serving requires OpenSSL on PATH and installed Playwright Chromium; engine-only checks do not. See [3× commands, exact timing landmarks and stress latency expectations](tests/VIP_3X_TESTING.md) for setup, PowerShell options, sample-size semantics and the distinction between simulated test evidence and observed browser play.
 
@@ -354,7 +358,7 @@ Use `pnpm test:round3:stress` for fast deterministic virtual-wall-clock assertio
 
 The unchanged 90-second challenge deadline is deliberately feasible with protected capacity, not a guaranteed expedite win. Saturating the kitchen and protecting Prep space are different player choices. The deterministic reference strategies document that trade-off; they do not automatically reserve a worker in the actual game.
 
-### Round 3 VIP arrival visibility (draft preview)
+### Round 3 VIP arrival visibility
 
 The optional Round 3 kitchen includes a sticky **VIP watch** so incoming VIPs remain discoverable while selecting and moving station tickets. The watch announces arrivals without stealing focus, displays the next arrival and deadline, and explains whether FIFO order, capacity, a pause, or an occupied expedite token prevents pulling the VIP. **Show VIP arrivals** explicitly moves focus to the full arrivals panel; **Pull waiting VIP Order N** uses the same canonical admission rules as the original controls.
 
