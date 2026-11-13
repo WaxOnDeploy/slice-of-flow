@@ -1,0 +1,293 @@
+/* Round 3 pilot only. Reuses the independent lab's diner tokens without styling the released kitchen. */
+.sof-vip-round {
+  --vip-gold: #e8b73b;
+  --vip-dark-gold: #805816;
+}
+.sof-vip-round .sof-vip-badge {
+  display: inline-block;
+  border: 2px solid var(--vip-dark-gold);
+  border-radius: 6px;
+  background: #ffe19a;
+  color: #533800;
+  padding: 2px 8px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  vertical-align: middle;
+}
+.sof-vip-policies {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 16px 0;
+}
+.sof-vip-policies > div {
+  background: #fff8e7;
+  border: 2px solid #dec59b;
+  border-radius: 12px;
+  padding: 16px;
+}
+.sof-vip-policies > .sof-vip-policy {
+  border-color: var(--vip-dark-gold);
+  background: #fff0c6;
+}
+.sof-vip-round label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 700;
+  max-width: 100%;
+}
+.sof-vip-round select {
+  font: inherit;
+  font-size: 16px;
+  min-height: 44px;
+  max-width: 100%;
+  color: #534334;
+  background: #fff8e7;
+  padding: 8px 12px;
+  border: 2px solid #925531;
+  border-radius: 8px;
+}
+.sof-vip-round select:focus-visible {
+  outline: 3px solid #1976d2;
+  outline-offset: 3px;
+}
+.sof-vip-round code {
+  font-family: "DM Sans", sans-serif;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.sof-vip-backlog {
+  margin: 16px 0;
+  background: #fff0c6;
+  border: 2px solid var(--vip-dark-gold);
+  border-radius: 12px;
+  padding: 16px;
+}
+.sof-vip-arrivals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0;
+  margin: 16px 0 0;
+  list-style: none;
+}
+.sof-vip-arrivals li {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #9b742b;
+  background: #fff8e7;
+  border-radius: 8px;
+}
+.sof-vip-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  margin: 20px 0;
+}
+.sof-vip-board > * {
+  min-width: 0;
+  grid-column: var(--vip-col-wide);
+  grid-row: var(--vip-row-wide);
+}
+.sof-vip-lane-head {
+  padding: 12px;
+  border: 1px solid #c5ac88;
+  border-radius: 12px;
+  background: #f5ebda;
+}
+.sof-vip-lane-head.sof-lab-orderQueue {
+  border-top: 5px solid #1976d2;
+}
+.sof-vip-lane-head.sof-lab-prep {
+  border-top: 5px solid #c08816;
+}
+.sof-vip-lane-head.sof-lab-oven {
+  border-top: 5px solid #a43a2a;
+}
+.sof-vip-lane-head.sof-lab-boxDeliver {
+  border-top: 5px solid #388e3c;
+}
+.sof-vip-round .sof-vip-board .sof-vip-ticket {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  text-align: left;
+  width: 100%;
+  gap: 6px;
+  padding: 12px;
+  margin: 0;
+  background: #fff8e7;
+}
+.sof-vip-round .sof-vip-board .sof-vip-ticket-gold {
+  background: #ffe19a;
+  border: 3px solid #805816;
+}
+.sof-vip-round .sof-vip-board .sof-vip-ticket[aria-pressed="true"] {
+  border-color: #a43a2a;
+  box-shadow: inset 0 0 0 2px #a43a2a;
+}
+.sof-vip-round .sof-vip-destination-ready {
+  outline: 3px solid #388e3c;
+  outline-offset: 2px;
+  background: #edf5df;
+}
+.sof-vip-round button.sof-vip-destination-ready {
+  border-color: #356722;
+  font-weight: 800;
+}
+.sof-vip-round .sof-vip-destination-ready:focus-visible {
+  outline-color: #1976d2;
+}
+.sof-vip-exception {
+  border: 2px solid #805816;
+  padding: 8px;
+  font-weight: 800;
+  background: #ffe19a;
+}
+.sof-vip-history,
+.sof-vip-debrief {
+  margin: 20px 0;
+  padding: 16px;
+  border: 1px solid #dec59b;
+  border-radius: 12px;
+  background: #fff8e7;
+}
+.sof-vip-history ul {
+  list-style: none;
+  padding: 0;
+}
+.sof-vip-history li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #dec59b;
+  padding: 12px 0;
+}
+.sof-vip-debrief ol {
+  padding-left: 24px;
+}
+.sof-vip-debrief li {
+  margin: 12px 0;
+}
+.sof-vip-result {
+  margin: 16px 0;
+}
+.sof-vip-pair-results {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.sof-vip-pair-results .sof-vip-result {
+  min-width: 0;
+}
+.sof-vip-pair-results .sof-vip-result dl > div {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+.sof-vip-dialog h2 {
+  color: #7b3f1a;
+}
+@media (max-width: 850px) {
+  .sof-vip-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sof-vip-board > * {
+    grid-column: var(--vip-col-medium);
+    grid-row: var(--vip-row-medium);
+  }
+  .sof-vip-arrivals,
+  .sof-vip-pair-results {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 540px) {
+  .sof-vip-board,
+  .sof-vip-policies {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sof-vip-board > * {
+    grid-column: 1;
+    grid-row: var(--vip-row-small);
+  }
+  .sof-vip-round .sof-lab-actions > label,
+  .sof-vip-round select {
+    width: 100%;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sof-vip-round *,
+  .sof-vip-dialog * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.sof-vip-wait-marker {
+  border-left: 3px solid #805816;
+  padding-left: 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.sof-vip-table-scroll { max-width: 100%; min-width: 0; overflow-x: auto; }
+.sof-vip-table-scroll:focus-visible { outline: 3px solid #1976d2; outline-offset: 3px; }
+.sof-vip-table-scroll table { width: 100%; min-width: 600px; border-collapse: collapse; font-size: 16px; }
+.sof-vip-table-scroll caption { text-align: left; font-weight: 700; margin-bottom: 8px; }
+.sof-vip-table-scroll th, .sof-vip-table-scroll td { border: 1px solid #b29874; padding: 10px; text-align: left; vertical-align: top; }
+
+/* Keep urgent arrivals discoverable when a ticket scrolls the kitchen into view. */
+.sof-vip-watch-dock {
+  position: sticky;
+  top: 8px;
+  z-index: 20;
+  margin: 12px 0;
+  padding: 10px 14px;
+  background: #fff0c6;
+  color: #533800;
+  border: 2px solid #805816;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(83, 56, 0, .14);
+  max-height: 42svh;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+.sof-vip-watch-clock { display: block; font-weight: 700; font-size: 14px; }
+.sof-vip-watch { min-width: 0; }
+.sof-vip-watch-title { font-weight: 800; font-size: 18px; }
+.sof-vip-watch-detail, .sof-vip-watch-next { font-size: 16px; }
+.sof-vip-round .sof-vip-watch p { margin: 4px 0; }
+.sof-vip-watch-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.sof-vip-watch-actions button { min-height: 44px; padding: 8px 12px; }
+.sof-vip-round .sof-vip-ticket,
+.sof-vip-round [data-vip-destination],
+.sof-vip-round [data-vip-admit],
+.sof-vip-round [data-testid='vip-arrivals-heading'] {
+  scroll-margin-top: var(--vip-watch-clearance, 180px);
+}
+.sof-vip-round [data-testid='vip-arrivals-heading']:focus {
+  outline: 3px solid #1976d2;
+  outline-offset: 3px;
+}
+@media (max-width: 540px) {
+  .sof-vip-watch-dock { top: 4px; padding: 8px 10px; }
+  .sof-vip-watch-actions { gap: 6px; }
+  .sof-vip-watch-actions button { flex: 1 1 140px; }
+}
+
+.sof-vip-watch-actions {
+  position: sticky;
+  bottom: 0;
+  background: #fff0c6;
+  padding-top: 4px;
+}
+@media (max-width: 540px) {
+  /* The dock's own clock already says Paused; retain FIFO/capacity/token reasons. */
+  .sof-vip-watch-dock [data-vip-watch-reason='PAUSED'] { display: none; }
+}

@@ -1,6 +1,7 @@
 import { account } from './accounting';
 import { replay, replayFrames, validateEngine } from './engine';
-import { scoreCounts, validateConfig } from './scenario';
+import { validateConfig } from './scenario';
+import { runScore } from './vipRules';
 import {
   equivalent, exactKeys, failure, immutable, isCode, isRecord, isTime, success,
   type Accounting, type Checked, type Engine, type Finalization, type FinalOrder, type FinalRunSnapshot,
@@ -24,10 +25,10 @@ export function createRunDraft(runId: unknown, configInput: unknown): Checked<Ru
 function finalOrders(a: Accounting): readonly FinalOrder[] {
   return immutable(a.orders.map(({ arrived: _arrived, holds: _holds, ...order }) => order));
 }
-function metrics(a: Accounting): FinalRunSnapshot['metrics'] {
+function metrics(a: Accounting, config: FinalRunSnapshot['config'], endMs: number): FinalRunSnapshot['metrics'] {
   const angry = a.orders.filter(o => o.angry && o.outcome !== 'burnt' && o.admittedAtMs !== null).length;
   return immutable({ served: a.served, burnt: a.burnt, angry, stillInProgress: a.active,
-    score: scoreCounts(a.served, a.burnt, angry), servedSample: a.servedSample });
+    score: runScore(config, a.orders, endMs), servedSample: a.servedSample });
 }
 /** Validate the entire DTO against its independent transition fold; no inferred missing ledger. */
 export function validateSnapshot(input: unknown): Checked<FinalRunSnapshot> {
@@ -40,7 +41,7 @@ export function validateSnapshot(input: unknown): Checked<FinalRunSnapshot> {
   const history = input.history as FinalRunSnapshot['history'];
   const last = history.events.at(-1);
   if (last?.kind !== 'runEnded' || last.reason !== input.endReason || !equivalent(input.orders, finalOrders(folded.value)) ||
-    !equivalent(input.metrics, metrics(folded.value))) return failure('SNAPSHOT_MISMATCH', 'snapshot');
+    !equivalent(input.metrics, metrics(folded.value, config.value, input.observation.endMs))) return failure('SNAPSHOT_MISMATCH', 'snapshot');
   return success(immutable(input) as FinalRunSnapshot);
 }
 /** Validate producer physics/control trace as well as ledger accounting before final capture. */
@@ -59,7 +60,7 @@ export function snapshotFromEngine(input: Engine): Checked<FinalRunSnapshot> {
   if (!equivalent(projected, finalOrders(folded.value))) return failure('ENGINE_ACCOUNTING_MISMATCH', 'state.tickets');
   return validateSnapshot({ schema: 'sof-run/v1', kind: 'independent-final', runId: input.runId,
     config: input.config, history, observation: { startMs: 0, endMs: input.nowMs, durationMs: input.nowMs },
-    endReason: input.ended, orders: finalOrders(folded.value), metrics: metrics(folded.value) });
+    endReason: input.ended, orders: finalOrders(folded.value), metrics: metrics(folded.value, input.config, input.nowMs) });
 }
 export function finalizeRun(input: unknown, engine: Engine): Checked<Finalization> {
   if (!isRecord(input) || !exactKeys(input, ['schema', 'runId', 'config', 'final']) || input.schema !== 'sof-draft/v1') return failure('INVALID_DRAFT', 'draft');

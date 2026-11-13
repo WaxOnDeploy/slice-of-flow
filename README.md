@@ -82,7 +82,7 @@ Open **http://localhost:3000/**. Vite binds to all interfaces and tries another 
 | --- | --- |
 | `pnpm dev` | Start the Vite development server, normally on port 3000. |
 | `pnpm check` | Type-check with `tsc --noEmit`. |
-| `pnpm test` | Run the tracked Vitest regression suite once. |
+| `pnpm test` | Run Vitest, pure timing/result negative tests, and deterministic VIP stress checks. No browser/OpenSSL required. |
 | `pnpm test:watch` | Run regression tests in watch mode during development. |
 | `pnpm test:e2e` | Run workshop browser acceptance tests against an existing production build; see below. |
 | `pnpm test:exports` | Run real-browser PNG, print, cancellation, privacy and cleanup tests against the production build. |
@@ -209,9 +209,9 @@ The export suite uses the same temporary HTTPS/security policy and supports `SOF
 
 `client/src/lib/sofEngine/` contains a separately tested pure fixed-deck engine, integer-ms/wall-us driver, canonical event accounting and copied/frozen final snapshots/archive values. `flow/sof018Metrics.ts` measures all-active Orders-admission-to-terminal-exit WIP, actual observation/rates, finished samples and a separately labelled short-run Orders-to-exit illustration. `sof/metricDefinitions.ts` preserves explicit source/units/sample definitions. The golden production deck uses seed 0 only; marked synthetic fixtures never become public scenarios. Inputs and commands fail closed; physical resources, policy WIP and score rules are distinct.
 
-These modules are **not imported into the playable application**. They do not replace the existing timer/store, record previous R1/R2 history, add facilitator controls, enable rounds 3–5, add storage or modify existing exports. The core has 151 dedicated tests; combined with the export release, the current suite has 518 tests. This is library evidence, not new human gameplay or native-device certification. A later host must own scheduling, stale-run checks, nested pause locks and final capture explicitly; a rejected control at the horizon must not swallow a successfully advanced terminal sample.
+These modules do not replace the **ordinary** Round 1 / Round 2 timer/store, record earlier R1/R2 history, enable rounds 3–5, add storage or modify existing exports. The core foundation release had 151 dedicated tests; its combined export-release suite had 518 tests. A separately flagged draft preview can import the modules only through the lazy composition seam documented below. Library/build evidence is not human gameplay or native-device certification.
 
-`validateSnapshot` is a lifecycle/measurement port, not proof an external ledger was played. `snapshotFromEngine`/`finalizeRun` additionally enforce replay-compatible producer state. A valid zero-duration served port fixture does not grant instant-service physics. Legacy positive-usable served means have unknown observation/sample history and are not silently interchangeable with the new nonnegative-elapsed definition. A later comparison authority must validate its actual producer evidence; equal seed or score is insufficient.
+`validateSnapshot` is a lifecycle/measurement port, not proof an external ledger was played. `snapshotFromEngine`/`finalizeRun` additionally enforce replay-compatible producer state. A valid zero-duration served port fixture does not grant instant-service physics. Legacy positive-usable served means have unknown observation/sample history and are not silently interchangeable with the new nonnegative-elapsed definition. The sole comparison assessor validates actual producer compatibility, configured policy change, observation and control traces; equal seed or score is insufficient and no human play is certified.
 
 ## Browser-local state and retained routes
 
@@ -300,3 +300,74 @@ or a completed copyright registration.
 - [ ] At 1x, verify Prep/bake readiness, rejected early/skipped/backward moves, Pizza Box → Served, burn behavior, and the three-pizza Oven cap.
 - [ ] Reach Round 2; verify manual pulls and WIP caps (4/2/3/2), then inspect the full debrief and share/replay controls. Also test the skip-to-Round-2 results path.
 - [ ] Reload to confirm gameplay resets but onboarding flags remain; verify supported routes, deployed deep-link fallback, CDN/fonts, and analytics behavior.
+
+## Approved optional-pilot release scope
+
+Jeff Bourke approved the combined Round 3 VIP/Expedite and independent Flow Metrics lab release on November 12, 2026. Both remain **default-off**, enabled only by explicit public query flags; these flags are not access controls. The ordinary Rounds 1–2 experience is unchanged. Physical iPad/Safari validation is explicitly deferred, not passed: browser-engine and touch-emulation checks do not establish actual-device certification. The optional pilots are intended for desktop/laptop evaluation while that gate remains open. Round 4 is planning only and is not included.
+
+## Default-off independent measurement lab — optional pilot
+
+Add `?flow-lab=1` to the root URL, finish a normal or skipped-R1 journey, then explicitly select **Start lab run** below the existing debrief. The flag does not start a run, replace ordinary gameplay, or record its past history. The lab uses the official fixed deck, manual pull, original difficulty/speed defaults and its own immutable run/clock adapter. Its local opaque run codes are identity only, not randomized demand or personal labels.
+
+Pause/Resume belongs only to the facilitator. Instructions, the first-move guide, help, hidden tabs and exit confirmation retain independent pause ownership. Resume samples/rebases while still paused to avoid catch-up. One scheduler exists only during unpaused active lab play; page exit/unmount cancels it. This preview is intentionally silent, with no catch-up sounds. **Hide live scores** removes only live aggregates from DOM/accessibility while retaining operational timers and burn hazards. Ending records an actual terminal snapshot; confirmed exit abandons the active draft without inventing a completed result. Replay starts a fresh manual attempt, not replayed or synthetic played evidence.
+
+Completed lab runs provide measured all-active WIP, served-only delivery rate and Orders-to-served sample mean, distinct all-exit rate and a clearly caveated Orders-to-exit illustration. A read-only disclosure draws cumulative flow from **every** independently reconciled event prefix, including equal-time transitions; waiting outside Orders is not active WIP. Numeric tables and a keyboard event selector preserve exact ms timing. No chart is invented for a zero-duration observation.
+
+The second disclosure requires explicit, distinct baseline/subject selections and uses the sole comparison assessor once. It is deliberately **contextual**, never presented as a matched policy experiment, winner or causal benefit. Missing means stay unavailable; actual observation windows, populations, units and sample counts are retained. No automatic latest/best baseline is selected, and existing PNG/print/text exports remain the original R1/R2 summaries.
+
+```sh
+pnpm build
+pnpm exec playwright install --with-deps chromium firefox webkit
+pnpm test:lab
+```
+
+The lab test uses the same temporary local HTTPS/CSP harness and `SOF_TEST_*`/`SOF_BROWSERS` options. It performs real UI actions, complete independent play, keyboard/pointer/focus, owned pause/help/exit, score hiding, fresh replay/manual end, exact-history CFD, contextual pair selection, phone layout and no data-post checks. The ordinary full-game/export suites remain separate release gates. Engine tests and emulated browsers are not a human playtest, Safari/Edge/iPad/projector certification, or evidence of team usage. The approved optional release does not complete wider workshop calibration or the deferred physical-device gate.
+
+## Optional Round 3 — VIP / Expedite pilot
+
+Add `?round3=1` to the root URL. Opening it displays setup; no clock or orders start until **Start FIFO baseline**. Complete a FIFO attempt, then optionally choose **Start VIP/expedite**. Both run the same fixed 12 Normal orders plus three Small VIP orders. Custom Build remains a Normal, Large order. Default Rounds 1–2, their exports, `/deck-shop`, `/game`, `/license`, author credit, proprietary license and security headers are preserved.
+
+The initial pilot uses **300 simulated seconds** on Normal/Hard, VIP arrivals at **10 / 90 / 170 seconds**, and **90 seconds from external arrival** to serve each VIP. Easy uses 420 seconds, arrivals 60 / 160 / 260, and a 120-second deadline window. These are tuned **pilot values**, not the original document's proposed 4:00 / 0:45 / 1:45 / 2:45 defaults. At 3×, a Normal/Hard run needs about 100 uninterrupted real seconds; instructions, pauses and discussion add time. Timing feasibility is not human-play acceptance.
+
+FIFO pulls the oldest available order across both classes. Expedite may pull the earliest available VIP before Normal backlog, but permits **only one active VIP globally** until that ticket is served, burnt or closed. Both variants retain the same two physical Prep workers and three oven slots. A VIP can use a single extra **Orders or Pizza Box policy slot**, visibly marked when occupied; it can **never** exceed physical Prep/Oven capacity. No automatic ticket admission or movement occurs.
+
+VIP deadlines begin at external arrival, not Orders admission. Service exactly at the deadline is on time. A missed deadline for a nonburnt VIP costs 2 points once, including VIPs still in external backlog; burn costs 2 points instead of adding a second deadline penalty. VIP deadline status is shown separately from the existing ledger-based ordinary angry count. The five exclusive VIP outcomes partition all three orders: on time, late, pending, not yet arrived, burnt. An early manually discarded VIP is an unsuccessful late closure, but receives a deadline penalty only after the actual deadline has elapsed.
+
+Normal cards show a **current positive-time waiting overlap** while a VIP is active, excluding processing and external backlog. Final results count distinct Normal tickets observed waiting in Orders, ready Prep/Oven, or Pizza Box during VIP activity. These labels mean **observed overlap**, not proof of counterfactual delay caused by VIPs. Arrival-to-served and Orders-to-served means are separate, include sample sizes, and use N/A for empty served samples.
+
+Choose the completed FIFO and Expedite run IDs explicitly to reveal the before/after table. No latest/best pair is preselected. Only the existing comparison assessor evaluates matched conditions; manual ends, differing settings/controls or mismatched windows stay **not matched**. A matched pair is not a causal claim or promised improvement. No Round 2 aggregate is misrepresented as a normal-only baseline. Discussion asks what happens when every order is VIP, who can declare urgency, and what limits the equivalent expedite lane in real work.
+
+Keyboard Enter/Space selects a ticket; focused-ticket ArrowRight or the highlighted destination button moves it. Ticket DOM identity is retained across stations. Pause/Resume, help, hidden-tab and exit pauses have separate ownership, with one scheduler only while running. Live score hiding leaves operational time/burn information available. Run records remain in local memory only; no uploads, names, account, leaderboard or automatic sharing is added. Existing Print / Save PDF exports remain original R1/R2 content and exclude the whole independent lab and its portal dialogs.
+
+```sh
+pnpm build
+pnpm test:round3       # Chromium full-horizon pair; Firefox/WebKit short manual runs
+pnpm test:lab-print    # Original debrief prints with lab pre-start, dialogs and final results
+```
+
+The tracked browser suites use temporary HTTPS with the existing security headers. `SOF_BROWSERS=chromium,firefox,webkit` selects engines; `SOF_VIP_FULL_PAIR=0` uses explicitly short manual runs instead of a Chromium full-horizon pair. Use a browser-safe `SOF_TEST_PORT` (default 4186 for Round 3; avoid restricted 4190). They do not replace actual Safari/iPad/projector or human workshop review. Jeff approved the Round 3 playtest and combined optional release; physical iPad/Safari validation remains explicitly deferred. Rounds 4–5, the complete cross-round picker, all-round facilitator controls, VIP-specific export and multi-device play are not implemented here.
+
+
+### Automated Normal / 3× VIP FIFO and Expedite runs
+
+Run `pnpm test:round3:3x` for exact engine/driver stress assertions, full unit/type gates, an isolated production build and a real-browser FIFO → expedite pair. Both browser runs use Normal/3×, finish at the actual 300-simulated-second horizon and explicitly select retained IDs for comparison. The player uses only visible controls and reports actual outcomes, not a guaranteed expedite win. Chromium is the default; `SOF_BROWSERS` enables more engines.
+
+Use `pnpm test:round3:stress` for fast deterministic virtual-wall-clock assertions only. Neither command deploys the app or changes a running UAT preview's build. Reports/screenshots go to ignored `test-results/round3-3x/`. Local browser serving requires OpenSSL on PATH and installed Playwright Chromium; engine-only checks do not. See [3× commands, exact timing landmarks and stress latency expectations](tests/VIP_3X_TESTING.md) for setup, PowerShell options, sample-size semantics and the distinction between simulated test evidence and observed browser play.
+
+`pnpm test:round3:checks` runs fast pure Node negative tests and deterministic stress checks. It is also part of `pnpm test`, so the normal gated build and existing deployment build steps exercise these assertions automatically. `pnpm test:round3:infrastructure` separately tests owned child-process timeouts/cancellation and HTTPS startup cleanup; it requires OpenSSL. Full real-browser pairs remain an explicit validation command, not a claim of mandatory PR branch protection or a multi-minute addition to every production build.
+
+The unchanged 90-second challenge deadline is deliberately feasible with protected capacity, not a guaranteed expedite win. Saturating the kitchen and protecting Prep space are different player choices. The deterministic reference strategies document that trade-off; they do not automatically reserve a worker in the actual game.
+
+### Round 3 VIP arrival visibility
+
+The optional Round 3 kitchen includes a sticky **VIP watch** so incoming VIPs remain discoverable while selecting and moving station tickets. The watch announces arrivals without stealing focus, displays the next arrival and deadline, and explains whether FIFO order, capacity, a pause, or an occupied expedite token prevents pulling the VIP. **Show VIP arrivals** explicitly moves focus to the full arrivals panel; **Pull waiting VIP Order N** uses the same canonical admission rules as the original controls.
+
+In FIFO, an arrived VIP remains outside Orders behind older available normal tickets. It becomes a gold kitchen ticket only after admission. The visibility change does not permit queue jumping in FIFO, add workers/oven slots, change deadlines, reserve capacity, or automatically admit an order.
+
+After a gated production build, run the focused visibility suite:
+
+```sh
+SOF_BROWSERS=chromium,firefox,webkit node tests/vip-visibility.e2e.mjs
+```
+
+This suite checks real 3× arrivals, sticky desktop/phone visibility, stable live announcements, FIFO blocking, keyboard VIP admission in expedite, the second VIP waiting for its occupied token, and paused countdowns. Its manually ended runs are not full-horizon matched comparisons; the separate `pnpm test:round3:3x` runner covers those. Physical workshop-device validation remains separate.

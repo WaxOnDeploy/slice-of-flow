@@ -4,3 +4,4 @@ export * from './engine';
 export * from './driver';
 export * from './accounting';
 export * from './runSnapshots';
+export * from './vip';

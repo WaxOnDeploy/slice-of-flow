@@ -5,6 +5,7 @@ import {
 } from './types';
 import { validateConfig } from './scenario';
 import { validateEvent } from './accounting';
+import { isVip, policyLimit } from './vipRules';
 
 type Mutable<T> = T extends object ? { -readonly [K in keyof T]: Mutable<T[K]> } : T;
 type Work = Omit<Mutable<Engine>, 'config'> & { config: RunConfig };
@@ -29,8 +30,8 @@ function end(s: Work, reason: 'horizon' | 'all-resolved' | 'manual-stop'): void 
 function clear(s: Work): void {
   if (s.config.endCondition === 'all-resolved-or-horizon' && s.tickets.every(t => ['served', 'burnt', 'discarded'].includes(t.status))) end(s, 'all-resolved');
 }
-function fifo(s: Work) {
-  return s.tickets.filter(t => t.status === 'external').sort((a, b) => {
+function fifo(s: Work, serviceClass?: 'vip' | 'normal') {
+  return s.tickets.filter(t => t.status === 'external' && (!serviceClass || isVip(s.config, t.orderKey) === (serviceClass === 'vip'))).sort((a, b) => {
     const x = s.config.manifest.orders.find(o => o.orderKey === a.orderKey)!;
     const y = s.config.manifest.orders.find(o => o.orderKey === b.orderKey)!;
     return x.availableAtMs - y.availableAtMs || x.ordinal - y.ordinal || a.orderKey.localeCompare(b.orderKey);
@@ -40,10 +41,11 @@ function admit(s: Work, t: Mutable<Ticket>, by: 'push' | 'pull' | 'guide'): void
   t.status = 'active'; t.station = 'orderQueue'; t.admittedAtMs = s.nowMs;
   emit(s, { kind: 'admission', ...ref(t), by });
 }
-function capacity(s: Work, station: typeof STATIONS[number]): boolean {
+function capacity(s: Work, station: typeof STATIONS[number], entering?: Ticket): boolean {
   const n = s.tickets.filter(t => active(t) && t.station === station).length;
   const physical = s.config.resources.occupancy[station];
-  const policy = s.config.policy.wip[station];
+  // Only the entering VIP can claim the extra slot. Normals never inherit the exception.
+  const policy = policyLimit(s.config, station, entering !== undefined && isVip(s.config, entering.orderKey));
   return (physical === null || n < physical) && (policy === null || n < policy);
 }
 function boundary(s: Work): void {
@@ -72,7 +74,7 @@ function boundary(s: Work): void {
     emit(s, { kind: 'discard', ...ref(t), from: 'oven', reason: 'burnt' });
     t.status = 'burnt'; t.station = null; t.exitedAtMs = s.nowMs; t.ready = false;
   }
-  for (const t of s.tickets) if (active(t) && !t.angry && t.admittedAtMs! + m.patienceMs === s.nowMs) {
+  for (const t of s.tickets) if (active(t) && !isVip(s.config, t.orderKey) && !t.angry && t.admittedAtMs! + m.patienceMs === s.nowMs) {
     t.angry = true; emit(s, { kind: 'anger', ...ref(t) });
   }
   if (s.nextPushAtMs !== null && s.nextPushAtMs <= s.nowMs) {
@@ -92,7 +94,7 @@ function nextBoundary(s: Work, target: number): number {
   for (const t of s.tickets) if (active(t)) {
     if (!t.ready) take(t.station === 'prep' ? t.prepReadyAtMs : t.station === 'oven' ? t.ovenReadyAtMs : null);
     if (t.station === 'oven') take(t.burnAtMs);
-    if (!t.angry) take(t.admittedAtMs! + m.patienceMs);
+    if (!isVip(s.config, t.orderKey) && !t.angry) take(t.admittedAtMs! + m.patienceMs);
   }
   return next;
 }
@@ -108,7 +110,7 @@ export function validateEngine(input: unknown): Checked<Engine> {
   if ((input.guide !== 'complete' && (!c.guidedStart || !input.pausedBy.includes('guide') || input.nowMs !== 0)) ||
     (input.guide === 'complete' && input.pausedBy.includes('guide'))) return failure('INVALID_STATE', 'state.guide');
   if (input.nextPushAtMs !== null && (!isTime(input.nextPushAtMs) || input.nextPushAtMs <= input.nowMs || input.nextPushAtMs % c.manifest.pushIntervalMs !== 0)) return failure('INVALID_STATE', 'state.nextPushAtMs');
-  if ((c.policy.variantId === 'manual-pull') !== (input.nextPushAtMs === null)) return failure('INVALID_STATE', 'state.nextPushAtMs');
+  if ((c.policy.variantId !== 'interval-push') !== (input.nextPushAtMs === null)) return failure('INVALID_STATE', 'state.nextPushAtMs');
   if (!Array.isArray(input.tickets) || input.tickets.length !== c.manifest.orders.length || !Array.isArray(input.events)) return failure('INVALID_STATE', 'state.tickets');
   const sorted = [...c.manifest.orders].sort((a, b) => a.ordinal - b.ordinal || a.orderKey.localeCompare(b.orderKey));
   const nowMs = input.nowMs;
@@ -125,6 +127,7 @@ export function validateEngine(input: unknown): Checked<Engine> {
       (t.admittedAtMs !== null && ((t.admittedAtMs as number) < spec.availableAtMs || (t.admittedAtMs as number) > nowMs))) return failure('INVALID_STATE', `state.tickets[${i}].admittedAtMs`);
     if (t.status === 'active') {
       const station = t.station as typeof STATIONS[number];
+      if (isVip(c, t.orderKey as string) && t.angry) return failure('INVALID_STATE', `state.tickets[${i}].angry`);
       if (station === 'orderQueue' && (t.ready || t.prepReadyAtMs !== null || t.ovenReadyAtMs !== null || t.burnAtMs !== null)) return failure('INVALID_STATE', `state.tickets[${i}].ready`);
       if (station === 'prep' && (!isTime(t.prepReadyAtMs) || t.ready !== (t.prepReadyAtMs <= nowMs) || t.ovenReadyAtMs !== null || t.burnAtMs !== null)) return failure('INVALID_STATE', `state.tickets[${i}].ready`);
       if (station === 'oven' && (!isTime(t.prepReadyAtMs) || !isTime(t.ovenReadyAtMs) || !isTime(t.burnAtMs) || t.burnAtMs !== t.ovenReadyAtMs + c.manifest.burnBufferMs || t.burnAtMs <= nowMs || t.ready !== (t.ovenReadyAtMs <= nowMs))) return failure('INVALID_STATE', `state.tickets[${i}].ready`);
@@ -142,9 +145,11 @@ export function validateEngine(input: unknown): Checked<Engine> {
   if (input.events[0]?.kind !== 'runStarted' || input.events[0]?.atMs !== 0 || (input.ended !== null && (input.events.at(-1)?.kind !== 'runEnded' || input.events.at(-1)?.reason !== input.ended))) return failure('INVALID_HISTORY', 'state.events');
   for (const station of STATIONS) {
     const n = input.tickets.filter(t => t.status === 'active' && t.station === station).length;
-    const caps = [c.resources.occupancy[station], c.policy.wip[station]];
+    const vipPresent = input.tickets.some(t => t.status === 'active' && t.station === station && isVip(c, t.orderKey));
+    const caps = [c.resources.occupancy[station], policyLimit(c, station, vipPresent)];
     if (caps.some(cap => cap !== null && n > cap)) return failure('CAPACITY', `state.${station}`);
   }
+  if (c.policy.variantId === 'expedite' && input.tickets.filter(t => t.status === 'active' && isVip(c, t.orderKey)).length > 1) return failure('VIP_TOKEN', 'state.tickets');
   return success(input as unknown as Engine);
 }
 
@@ -203,10 +208,13 @@ export function applyAction(input: Engine, incoming: unknown): ActionResult {
     const t = s.tickets.find(t => t.orderKey === command.orderKey);
     if (!t) return reject('UNKNOWN_ORDER', 'command.orderKey');
     if (command.kind === 'admit') {
-      if (s.config.policy.variantId !== 'manual-pull') return reject('POLICY');
+      if (s.config.policy.variantId === 'interval-push') return reject('POLICY');
       if (t.status !== 'external') return reject('NOT_AVAILABLE');
-      if (fifo(s)?.orderKey !== t.orderKey) return reject('FIFO');
-      if (!capacity(s, 'orderQueue')) return reject('CAPACITY');
+      const expedited = s.config.policy.variantId === 'expedite';
+      const vip = isVip(s.config, t.orderKey);
+      if (expedited && vip && s.tickets.some(t => active(t) && isVip(s.config, t.orderKey))) return reject('VIP_TOKEN');
+      if (fifo(s, expedited ? vip ? 'vip' : 'normal' : undefined)?.orderKey !== t.orderKey) return reject('FIFO');
+      if (!capacity(s, 'orderQueue', t)) return reject('CAPACITY');
       emit(s, { kind: 'commandAccepted', commandClass: 'gameplay', command }); admit(s, t, 'pull');
     } else {
       if (!active(t) || t.station === null) return reject('NOT_ACTIVE');
@@ -216,7 +224,7 @@ export function applyAction(input: Engine, incoming: unknown): ActionResult {
         const next = [...STATIONS, 'served'][STATIONS.indexOf(station) + 1];
         if (command.to !== next) return reject('INVALID_MOVE');
         if ((station === 'prep' || station === 'oven') && !t.ready) return reject('NOT_READY');
-        if (command.to !== 'served' && !capacity(s, command.to)) return reject('CAPACITY');
+        if (command.to !== 'served' && !capacity(s, command.to, t)) return reject('CAPACITY');
         emit(s, { kind: 'commandAccepted', commandClass: 'gameplay', command });
         if (command.to === 'served') {
           emit(s, { kind: 'service', ...ref(t), from: 'boxDeliver' });
