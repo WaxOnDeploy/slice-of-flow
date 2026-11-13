@@ -3,6 +3,7 @@ import { applyAction, createEngine } from '../sofEngine/engine';
 import { makeFixedDeckConfig } from '../sofEngine/scenario';
 import { createArchive, createRunDraft, finalizeRun, makeRunId, retainRun } from '../sofEngine/runSnapshots';
 import { makeVipConfig, type VipVariant } from '../sofEngine/vip';
+import { makeSupplierConfig, type SupplierVariant } from '../sofEngine/supplier';
 import { measureTimeWeightedWip, type WipSummary } from '../flow/sof018Metrics';
 import {
   exactKeys, immutable, isRecord, isTime, type Checked, type Difficulty, type Driver,
@@ -34,6 +35,7 @@ export type SessionResult = Readonly<{
 }>;
 export type IndependentStart = Readonly<{ sessionCode: string; difficulty: Difficulty; speed: Speed }>;
 export type VipStart = Readonly<IndependentStart & { variant: VipVariant }>;
+export type SupplierStart = Readonly<{ sessionCode: string; speed: Speed; variant: SupplierVariant }>;
 const issue = (code: string, path = 'session'): readonly ValidationIssue[] => Object.freeze([Object.freeze({ code, path })]);
 const rejected = (state: IndependentSession, issues: readonly ValidationIssue[]): SessionResult => Object.freeze({ accepted: false, state, issues });
 const accepted = (state: IndependentSession): SessionResult => Object.freeze({ accepted: true, state, issues: Object.freeze([]) });
@@ -47,12 +49,13 @@ function identity(state: IndependentSession, token: unknown): readonly Validatio
   if (!isTime(state.revision) || state.revision === Number.MAX_SAFE_INTEGER) return issue('REVISION_OVERFLOW');
   return null;
 }
-function start(input: IndependentStart | VipStart, wallUs: unknown, attempt: number, archive: RunArchive, usedSessionCodes: readonly string[] = [], vip = false): Checked<IndependentSession> {
-  if (!isRecord(input) || !exactKeys(input, vip ? ['sessionCode', 'difficulty', 'speed', 'variant'] : ['sessionCode', 'difficulty', 'speed'])) return { ok: false, issues: issue('INVALID_START') };
+function start(input: IndependentStart | VipStart | SupplierStart, wallUs: unknown, attempt: number, archive: RunArchive, usedSessionCodes: readonly string[] = [], mode: 'fixed' | 'vip' | 'supplier' = 'fixed'): Checked<IndependentSession> {
+  const keys = mode === 'supplier' ? ['sessionCode', 'speed', 'variant'] : mode === 'vip' ? ['sessionCode', 'difficulty', 'speed', 'variant'] : ['sessionCode', 'difficulty', 'speed'];
+  if (!isRecord(input) || !exactKeys(input, keys)) return { ok: false, issues: issue('INVALID_START') };
   const id = makeRunId(input.sessionCode, attempt); if (!id.ok) return id;
   if (!isTime(wallUs)) return { ok: false, issues: issue('INVALID_WALL_TIME') };
   // Official builder only. No fixture/scenario/config injection port.
-  const config = vip ? makeVipConfig({ difficulty: input.difficulty, variant: (input as VipStart).variant, initialSpeed: input.speed, guidedStart: true }) : makeFixedDeckConfig({ difficulty: input.difficulty, policy: 'manual-pull', initialSpeed: input.speed,
+  const config = mode === 'supplier' ? makeSupplierConfig({ variant: (input as SupplierStart).variant, initialSpeed: input.speed, guidedStart: true }) : mode === 'vip' ? makeVipConfig({ difficulty: (input as VipStart).difficulty, variant: (input as VipStart).variant, initialSpeed: input.speed, guidedStart: true }) : makeFixedDeckConfig({ difficulty: (input as IndependentStart).difficulty, policy: 'manual-pull', initialSpeed: input.speed,
     guidedStart: true, endCondition: 'fixed-horizon' });
   if (!config.ok) return config;
   const created = createEngine(id.value, config.value); if (!created.ok) return created;
@@ -70,13 +73,23 @@ export function startIndependentSession(input: IndependentStart, wallUs: unknown
 }
 /** Round 3 preview pilot, not a generic configuration injection API. */
 export function startVipSession(input: VipStart, wallUs: unknown): Checked<IndependentSession> {
-  return start(input, wallUs, 1, createArchive(), [], true);
+  return start(input, wallUs, 1, createArchive(), [], 'vip');
 }
 export function replayVipSession(previous: IndependentSession, input: VipStart, wallUs: unknown): Checked<IndependentSession> {
   if (previous.status === 'active') return { ok: false, issues: issue('ACTIVE_REPLAY') };
   if (!isRecord(input) || previous.usedSessionCodes.includes(input.sessionCode as string)) return { ok: false, issues: issue('FRESH_SESSION_REQUIRED') };
   if (!isTime(previous.attempt + 1)) return { ok: false, issues: issue('ATTEMPT_OVERFLOW') };
-  return start(input, wallUs, previous.attempt + 1, previous.archive, previous.usedSessionCodes, true);
+  return start(input, wallUs, previous.attempt + 1, previous.archive, previous.usedSessionCodes, 'vip');
+}
+/** Round 4 supplier-only pilot. Normal-only official builder, never caller config injection. */
+export function startSupplierSession(input: SupplierStart, wallUs: unknown): Checked<IndependentSession> {
+  return start(input, wallUs, 1, createArchive(), [], 'supplier');
+}
+export function replaySupplierSession(previous: IndependentSession, input: SupplierStart, wallUs: unknown): Checked<IndependentSession> {
+  if (previous.status === 'active') return { ok: false, issues: issue('ACTIVE_REPLAY') };
+  if (!isRecord(input) || previous.usedSessionCodes.includes(input.sessionCode as string)) return { ok: false, issues: issue('FRESH_SESSION_REQUIRED') };
+  if (!isTime(previous.attempt + 1)) return { ok: false, issues: issue('ATTEMPT_OVERFLOW') };
+  return start(input, wallUs, previous.attempt + 1, previous.archive, previous.usedSessionCodes, 'supplier');
 }
 /** Replay is another manual run, NOT replayed frames or synthetic played evidence. */
 export function replayIndependentSession(previous: IndependentSession, input: IndependentStart, wallUs: unknown): Checked<IndependentSession> {

@@ -24,10 +24,10 @@ export type DemandOrder = Readonly<{
   serviceClass?: 'vip'; deadlineAtMs?: SimMs;
 }>;
 export type HoldSpec = Readonly<{
-  holdId: string; orderKey: OrderKey; startMs: SimMs; endMs: SimMs; reason: 'fixture-dependency';
+  holdId: string; orderKey: OrderKey; startMs: SimMs; endMs: SimMs; reason: 'fixture-dependency' | 'supplier-ingredient';
 }>;
 export type Manifest = DeepReadonly<{
-  schema: 'sof-manifest/v1'; scenarioId: 'fixed-deck' | 'vip-expedite'; scenarioVersion: string;
+  schema: 'sof-manifest/v1'; scenarioId: 'fixed-deck' | 'vip-expedite' | 'supplier-shortage'; scenarioVersion: string;
   generatorVersion: string; seed: 0; difficulty: Difficulty; horizonMs: SimMs;
   pushIntervalMs: SimMs; burnBufferMs: SimMs; patienceMs: SimMs;
   orders: DemandOrder[]; holds: HoldSpec[];
@@ -41,7 +41,7 @@ export type RunConfig = DeepReadonly<{
   manifest: Manifest; resources: Resources; initialSpeed: Speed; guidedStart: boolean;
   endCondition: EndCondition;
   policy: {
-    dimensionId: string; version: string; variantId: 'interval-push' | 'manual-pull' | 'fifo' | 'expedite';
+    dimensionId: string; version: string; variantId: 'interval-push' | 'manual-pull' | 'fifo' | 'expedite' | 'naive' | 'managed';
     wip: Record<Station, number | null>;
   };
 }>;

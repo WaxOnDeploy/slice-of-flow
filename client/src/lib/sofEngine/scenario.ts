@@ -8,6 +8,8 @@ export const VERSIONS = immutable({
   clock: 'integer-ms/old-speed-us/v1', scoring: 'released-score/v1', policy: 'admission-wip', policyVersion: 'v1',
 });
 export const VIP_VERSIONS = immutable({ scenario: 'vip-expedite-v1', generator: 'vip-hardcoded/v1', scoring: 'vip-deadline-score/v1', policy: 'vip-service', policyVersion: 'v1' });
+export const SUPPLIER_VERSIONS = immutable({ scenario: 'supplier-shortage-v1', generator: 'supplier-fixed/v1', policy: 'supplier-sequencing', policyVersion: 'v1' });
+export const SUPPLIER_PILOT_TIMING = immutable({ horizonMs: 240000, startMs: 20000, endMs: 65000, affectedOrderTypeId: 'veggie-supreme' });
 /** Preview pilot only. Fixed-deck Round 1/2 timing is not changed. */
 export const VIP_PILOT_TIMINGS = immutable({
   easy: { horizonMs: 420000, arrivalMs: [60000, 160000, 260000], deadlineWindowMs: 120000 },
@@ -48,11 +50,20 @@ const VIP_GOLDENS = immutable(Object.fromEntries((['easy', 'normal', 'hard'] as 
       availableAtMs, prepMs: 30000, bakeMs: 40000, serviceClass: 'vip', deadlineAtMs: availableAtMs + timing.deadlineWindowMs,
     }))] }];
 })) as unknown as Record<Difficulty, Manifest>);
+/** Seed 0 identifies this deterministic fixed schedule, not random demand. */
+const SUPPLIER_GOLDEN: Manifest = immutable({ ...GOLDENS.normal, scenarioId: 'supplier-shortage',
+  scenarioVersion: SUPPLIER_VERSIONS.scenario, generatorVersion: SUPPLIER_VERSIONS.generator,
+  holds: GOLDENS.normal.orders.filter(o => o.orderTypeId === SUPPLIER_PILOT_TIMING.affectedOrderTypeId).map(o => ({
+    holdId: `supplier-${o.orderKey}`, orderKey: o.orderKey, startMs: SUPPLIER_PILOT_TIMING.startMs,
+    endMs: SUPPLIER_PILOT_TIMING.endMs, reason: 'supplier-ingredient' as const,
+  })),
+});
 
 export function resolveManifest(version: unknown, difficulty: unknown, seed: unknown): Checked<Manifest> {
-  if (version !== VERSIONS.scenario && version !== VIP_VERSIONS.scenario) return failure('UNSUPPORTED_VERSION', 'scenarioVersion');
+  if (version !== VERSIONS.scenario && version !== VIP_VERSIONS.scenario && version !== SUPPLIER_VERSIONS.scenario) return failure('UNSUPPORTED_VERSION', 'scenarioVersion');
   if (seed !== 0) return failure('UNSUPPORTED_SEED', 'seed');
   if (difficulty !== 'easy' && difficulty !== 'normal' && difficulty !== 'hard') return failure('INVALID_DIFFICULTY', 'difficulty');
+  if (version === SUPPLIER_VERSIONS.scenario) return difficulty === 'normal' ? success(immutable(SUPPLIER_GOLDEN)) : failure('INVALID_DIFFICULTY', 'difficulty');
   return success(immutable((version === VIP_VERSIONS.scenario ? VIP_GOLDENS : GOLDENS)[difficulty]));
 }
 
@@ -60,13 +71,15 @@ export function validateManifest(input: unknown): Checked<Manifest> {
   const keys = ['schema', 'scenarioId', 'scenarioVersion', 'generatorVersion', 'seed', 'difficulty',
     'horizonMs', 'pushIntervalMs', 'burnBufferMs', 'patienceMs', 'orders', 'holds'];
   if (!isRecord(input) || !exactKeys(input, keys)) return failure('INVALID_MANIFEST', 'manifest');
-  if (input.schema !== 'sof-manifest/v1' || !['fixed-deck', 'vip-expedite'].includes(input.scenarioId as string)) return failure('UNSUPPORTED_SCHEMA', 'manifest');
+  if (input.schema !== 'sof-manifest/v1' || !['fixed-deck', 'vip-expedite', 'supplier-shortage'].includes(input.scenarioId as string)) return failure('UNSUPPORTED_SCHEMA', 'manifest');
   if (input.seed !== 0) return failure('UNSUPPORTED_SEED', 'manifest.seed');
   const official = input.scenarioId === 'fixed-deck' && input.scenarioVersion === VERSIONS.scenario && input.generatorVersion === VERSIONS.generator;
   const vip = input.scenarioId === 'vip-expedite' && input.scenarioVersion === VIP_VERSIONS.scenario && input.generatorVersion === VIP_VERSIONS.generator;
+  const supplier = input.scenarioId === 'supplier-shortage' && input.scenarioVersion === SUPPLIER_VERSIONS.scenario && input.generatorVersion === SUPPLIER_VERSIONS.generator;
   const fixture = input.scenarioId === 'fixed-deck' && input.scenarioVersion === FIXTURE_VERSIONS.scenario && input.generatorVersion === FIXTURE_VERSIONS.generator;
-  if (!official && !fixture && !vip) return failure('UNSUPPORTED_VERSION', 'manifest.scenarioVersion');
+  if (!official && !fixture && !vip && !supplier) return failure('UNSUPPORTED_VERSION', 'manifest.scenarioVersion');
   if (input.difficulty !== 'easy' && input.difficulty !== 'normal' && input.difficulty !== 'hard') return failure('INVALID_DIFFICULTY', 'manifest.difficulty');
+  if (supplier && input.difficulty !== 'normal') return failure('INVALID_DIFFICULTY', 'manifest.difficulty');
   for (const key of ['horizonMs', 'pushIntervalMs', 'burnBufferMs', 'patienceMs']) {
     if (!isTime(input[key]) || (key !== 'horizonMs' && !(fixture && key === 'burnBufferMs') && input[key] === 0)) return failure('INVALID_TIME', `manifest.${key}`);
   }
@@ -97,8 +110,9 @@ export function validateManifest(input: unknown): Checked<Manifest> {
     if (!isRecord(hold) || !exactKeys(hold, ['holdId', 'orderKey', 'startMs', 'endMs', 'reason'])) return failure('INVALID_HOLD', path);
     if (!isCode(hold.holdId) || holdIds.has(hold.holdId) || !isCode(hold.orderKey) || !ids.has(hold.orderKey)) return failure('INVALID_ID', path);
     holdIds.add(hold.holdId);
-    if (!isTime(hold.startMs) || !isTime(hold.endMs) || hold.endMs <= hold.startMs || hold.reason !== 'fixture-dependency') return failure('INVALID_HOLD', path);
+    if (!isTime(hold.startMs) || !isTime(hold.endMs) || hold.endMs <= hold.startMs || hold.reason !== (supplier ? 'supplier-ingredient' : 'fixture-dependency')) return failure('INVALID_HOLD', path);
   }
+  if (supplier && !equivalent(input, SUPPLIER_GOLDEN)) return failure('MANIFEST_MISMATCH', 'manifest');
   if ((official || vip) && !equivalent(input, (vip ? VIP_GOLDENS : GOLDENS)[input.difficulty])) return failure('MANIFEST_MISMATCH', 'manifest');
   return success(immutable(input) as Manifest);
 }
@@ -119,13 +133,14 @@ export function validateConfig(input: unknown): Checked<RunConfig> {
   const manifest = validateManifest(input.manifest);
   if (!manifest.ok) return manifest;
   const vip = manifest.value.scenarioId === 'vip-expedite';
+  const supplier = manifest.value.scenarioId === 'supplier-shortage';
   if (input.scoringVersion !== (vip ? VIP_VERSIONS.scoring : VERSIONS.scoring)) return failure('UNSUPPORTED_VERSION', 'config.scoringVersion');
-  if (!equivalent(input.resources, vip ? VIP_RESOURCES : RESOURCES)) return failure('INVALID_RESOURCES', 'config.resources');
+  if (!equivalent(input.resources, vip || supplier ? VIP_RESOURCES : RESOURCES)) return failure('INVALID_RESOURCES', 'config.resources');
   if (![1, 2, 3].includes(input.initialSpeed as number) || typeof input.guidedStart !== 'boolean') return failure('INVALID_CONFIG', 'config.initialSpeed');
   if (input.endCondition !== 'fixed-horizon' && input.endCondition !== 'all-resolved-or-horizon') return failure('INVALID_CONFIG', 'config.endCondition');
-  if (vip && input.endCondition !== 'fixed-horizon') return failure('INVALID_CONFIG', 'config.endCondition');
+  if ((vip || supplier) && input.endCondition !== 'fixed-horizon') return failure('INVALID_CONFIG', 'config.endCondition');
   const policy = input.policy;
-  if (!isRecord(policy) || !exactKeys(policy, ['dimensionId', 'version', 'variantId', 'wip']) || policy.dimensionId !== (vip ? VIP_VERSIONS.policy : VERSIONS.policy) || policy.version !== 'v1' || !(vip ? ['fifo', 'expedite'] : ['interval-push', 'manual-pull']).includes(policy.variantId as string)) return failure('INVALID_POLICY', 'config.policy');
+  if (!isRecord(policy) || !exactKeys(policy, ['dimensionId', 'version', 'variantId', 'wip']) || policy.dimensionId !== (supplier ? SUPPLIER_VERSIONS.policy : vip ? VIP_VERSIONS.policy : VERSIONS.policy) || policy.version !== 'v1' || !(supplier ? ['naive', 'managed'] : vip ? ['fifo', 'expedite'] : ['interval-push', 'manual-pull']).includes(policy.variantId as string)) return failure('INVALID_POLICY', 'config.policy');
   if (!equivalent(policy.wip, policy.variantId === 'interval-push' ? PUSH_WIP : PULL_WIP)) return failure('INVALID_POLICY', 'config.policy.wip');
   return success(immutable(input) as RunConfig);
 }

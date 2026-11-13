@@ -5,6 +5,7 @@ import {
 } from './types';
 import { validateConfig } from './scenario';
 import { isVip, policyLimit } from './vipRules';
+import { isSupplier, movementBlocked, oldestSupplierOrder } from './supplierRules';
 
 const EVENT_FIELDS: Record<string, readonly string[]> = {
   runStarted: [], arrival: ['orderKey', 'orderId'], admission: ['orderKey', 'orderId', 'by'],
@@ -74,7 +75,7 @@ export function account(configInput: unknown, runId: unknown, historyInput: unkn
       stateAreaMs[station] += byStation[station] * delta;
       if (!Number.isSafeInteger(stateAreaMs[station])) return false;
     }
-    blockedTicketMs += rows.filter(r => r.outcome === 'active' && r.holds.length > 0).length * delta;
+    blockedTicketMs += rows.filter(r => r.outcome === 'active' && r.finalStation !== null && movementBlocked(config, r.holds, r.finalStation)).length * delta;
     previousAt = to;
     return Number.isSafeInteger(blockedTicketMs);
   };
@@ -115,11 +116,11 @@ export function account(configInput: unknown, runId: unknown, historyInput: unkn
       if (!r.arrived || r.admittedAtMs !== null || r.outcome !== 'not-admitted') return bad('INVALID_LIFECYCLE', e.seq);
       if ((e.by === 'push' && (config.policy.variantId !== 'interval-push' || e.atMs === 0 || e.atMs % config.manifest.pushIntervalMs !== 0)) ||
         (e.by === 'pull' && config.policy.variantId === 'interval-push') || (e.by === 'guide' && (!config.guidedStart || e.atMs !== 0))) return bad('INVALID_ADMISSION', e.seq);
-      if (config.manifest.scenarioId === 'vip-expedite') {
+      if (config.manifest.scenarioId === 'vip-expedite' || isSupplier(config)) {
         const vip = isVip(config, r.orderKey), expedited = config.policy.variantId === 'expedite';
         if (expedited && vip && rows.some(row => row.outcome === 'active' && isVip(config, row.orderKey))) return bad('VIP_TOKEN', e.seq);
         const available = config.manifest.orders.filter(o => rows.some(row => row.orderKey === o.orderKey && row.arrived && row.admittedAtMs === null) &&
-          (!expedited || isVip(config, o.orderKey) === vip)).sort((a, b) => a.availableAtMs - b.availableAtMs || a.ordinal - b.ordinal);
+          (!expedited || isVip(config, o.orderKey) === vip)).sort((a, b) => a.availableAtMs - b.availableAtMs || a.ordinal - b.ordinal || a.orderKey.localeCompare(b.orderKey));
         if (available[0]?.orderKey !== r.orderKey) return bad('FIFO', e.seq);
         const limit = policyLimit(config, 'orderQueue', vip);
         if (limit !== null && byStation.orderQueue >= limit) return bad('CAPACITY', e.seq);
@@ -129,6 +130,13 @@ export function account(configInput: unknown, runId: unknown, historyInput: unkn
       if (r.outcome !== 'active' || r.finalStation === null) return bad('INVALID_LIFECYCLE', e.seq);
       if (e.kind === 'movement') {
         if (r.finalStation !== e.from || STATIONS.indexOf(e.to) !== STATIONS.indexOf(e.from) + 1) return bad('INVALID_MOVEMENT', e.seq);
+        if (isSupplier(config) && e.from === 'orderQueue' && config.policy.variantId === 'naive' &&
+          oldestSupplierOrder(config, rows.filter(row => row.outcome === 'active' && row.finalStation === 'orderQueue')) !== r.orderKey) return bad('SUPPLIER_SEQUENCE', e.seq);
+        // Supplier schedule is checked directly as well, so a same-time missing/reordered
+        // boundary envelope cannot authorize a start during the shortage.
+        const holds = isSupplier(config) ? config.manifest.holds.filter(h => h.orderKey === r.orderKey && h.startMs <= e.atMs && e.atMs < h.endMs).map(h => h.holdId) : r.holds;
+        // Legacy fixture ports remain lifecycle accounting rather than producer physics.
+        if (isSupplier(config) && movementBlocked(config, holds, e.from)) return bad('BLOCKED', e.seq);
         const limit = policyLimit(config, e.to, isVip(config, r.orderKey));
         if (limit !== null && byStation[e.to] >= limit) return bad('CAPACITY', e.seq);
         byStation[e.from]--; byStation[e.to]++; r.finalStation = e.to;
@@ -167,4 +175,32 @@ export function account(configInput: unknown, runId: unknown, historyInput: unkn
     servedSample: { definition: 'orders-to-served/nonnegative-elapsed/v1', n: served, sumSimMs,
       meanSimMs: served === 0 ? null : sumSimMs / served },
   }));
+}
+
+/** Per-ticket interval union from an already validated ledger. The active population only:
+ * external/scheduled and exited tickets never count; supplier holds additionally require Orders.
+ * Multiple concurrent hold IDs contribute once per ticket, not once per supplier/hold.
+ */
+export function blockedDurationsFromValidatedHistory(config: RunConfig, events: readonly EngineEvent[], endMs: number): ReadonlyMap<string, number> {
+  const rows = new Map(config.manifest.orders.map(o => [o.orderKey, { active: false, station: null as Station | null, holds: [] as string[] }]));
+  const durations = new Map(config.manifest.orders.map(o => [o.orderKey, 0]));
+  let previous = 0;
+  const integrate = (at: number) => {
+    for (const [key, row] of Array.from(rows.entries())) if (row.active && row.station !== null && movementBlocked(config, row.holds, row.station)) {
+      durations.set(key, durations.get(key)! + at - previous);
+    }
+    previous = at;
+  };
+  for (const e of events) {
+    integrate(e.atMs);
+    if (!('orderKey' in e)) continue;
+    const row = rows.get(e.orderKey)!;
+    if (e.kind === 'admission') { row.active = true; row.station = 'orderQueue'; }
+    if (e.kind === 'movement') row.station = e.to;
+    if (e.kind === 'service' || e.kind === 'discard') { row.active = false; row.station = null; }
+    if (e.kind === 'blockStart') row.holds.push(e.holdId);
+    if (e.kind === 'blockEnd') row.holds = row.holds.filter(id => id !== e.holdId);
+  }
+  integrate(endMs);
+  return durations;
 }

@@ -371,3 +371,27 @@ SOF_BROWSERS=chromium,firefox,webkit node tests/vip-visibility.e2e.mjs
 ```
 
 This suite checks real 3× arrivals, sticky desktop/phone visibility, stable live announcements, FIFO blocking, keyboard VIP admission in expedite, the second VIP waiting for its occupied token, and paused countdowns. Its manually ended runs are not full-horizon matched comparisons; the separate `pnpm test:round3:3x` runner covers those. Physical workshop-device validation remains separate.
+
+## Round 4 supplier-only pilot — partial, draft branch only
+
+On `feat/round4-supplier-pilot` review builds, add `?round4=1`. This is a **draft**, not a production release. Default Rounds 1–2 and the released VIP/Flow Metrics entry points remain unchanged. With both `round4=1` and `round3=1`, supplier setup takes precedence; closing it shows the requested VIP setup, never a running second kitchen. Every run requires explicit Start, instructions and the guided first move.
+
+The first calibration fixture is **Normal only**, seed `0`, the original fixed twelve orders externally available at zero, and a **240-simulated-second fixed horizon**. Seed 0 selects a deterministic fixture, not random demand. A provisional **Veggie Supreme shortage from 20 through just before 65 simulated seconds** affects only unstarted orders (ordinals 3/7/11). The delivery delay is 45 simulated seconds; it is not a final workshop calibration. Speed 1×/2×/3× applies to the next run only.
+
+Both policies admit external tickets FIFO and retain Orders/Prep/Oven/Pizza Box WIP **4/2/3/2**, two physical Prep workers and three Oven slots. The oldest-first baseline permits only the oldest admitted Orders ticket into Prep; if it is supplier-blocked, later admitted Orders tickets wait. Managed sequencing may select an already-admitted unblocked Orders ticket. A blocked ticket stays in Orders and consumes its real WIP slot. Already-Prep/downstream tickets and hazards continue. Delivery unlocks ingredients but never admits or moves work; no capacity, timer reduction or hidden WIP exception is added.
+
+Canonical supplier manifests/configs, stage-scoped eligibility, the deterministic reducer, independent ledger accounting, immutable snapshots/archives, monotonic session clocks and the sole comparison assessor own the rules. The UI is reactive, not another engine. Native keyboard/pointer controls, persistent supplier status, generic owner **Supplier**, simulated blocker ages and owned pause/help/hidden/exit handling are included. There is one scheduler only in unpaused play and none on the default path.
+
+Debrief units are deliberately distinct: scheduled/observed disruption **simulated seconds**, counted once; active Orders blocked interval unions summed as **ticket-seconds**; positive-duration affected-ticket count; actual served-only Orders-to-served mean and sample size; unfinished active WIP, separate unadmitted demand, burns, anger and canonical score. External and already-Prep work do not contribute supplier-blocked time. Results/comparisons use explicit retained IDs, no latest/best selection, `N/A` for empty samples and no guaranteed managed win or causal savings. Manual stops and unequal control traces are not matched pairs.
+
+Local memory only: no personal-label entry, new storage, uploads, analytics expansion, exports or automatic sharing. Original debrief exports remain separate; supplier UI/dialogs are print-excluded. Rework, swarming, outages, mixed disruptions, other difficulties and full Round 4 acceptance are **not implemented** in this supplier slice. Human paired calibration and physical-device validation remain separate gates. No merge or production enablement without a separate reviewed release decision.
+
+```sh
+pnpm build
+# Real-clock controlled short runs across engines; these deliberately are not matched horizons.
+SOF_BROWSERS=chromium,firefox,webkit node tests/supplier.e2e.mjs
+# Separate Chromium UI-only complete 240s/3× policy pair and explicit matched IDs.
+node tests/supplier-3x.e2e.mjs
+```
+
+Both scripts use the existing production-equivalent HTTPS harness and `SOF_TEST_DIST`, `SOF_TEST_OUTPUT`, `SOF_TEST_PORT`, `SOF_TEST_PREFIX` or `SOF_TEST_URL` seams. Do not use restricted port 4190. Keep root and Pages artifacts separate. These tests do not deploy, refresh an existing UAT, certify an actual iPad/Safari device, or establish a human learning outcome.
