@@ -6,6 +6,7 @@ import {
 import { validateConfig } from './scenario';
 import { validateEvent } from './accounting';
 import { isVip, policyLimit } from './vipRules';
+import { isSupplier, movementBlocked, oldestSupplierOrder } from './supplierRules';
 
 type Mutable<T> = T extends object ? { -readonly [K in keyof T]: Mutable<T[K]> } : T;
 type Work = Omit<Mutable<Engine>, 'config'> & { config: RunConfig };
@@ -218,8 +219,12 @@ export function applyAction(input: Engine, incoming: unknown): ActionResult {
       emit(s, { kind: 'commandAccepted', commandClass: 'gameplay', command }); admit(s, t, 'pull');
     } else {
       if (!active(t) || t.station === null) return reject('NOT_ACTIVE');
-      if (t.holds.length && command.kind === 'move') return reject('BLOCKED');
       const station = t.station;
+      if (command.kind === 'move' && isSupplier(s.config) && station === 'orderQueue' && command.to === 'prep' &&
+        s.config.policy.variantId === 'naive' && oldestSupplierOrder(s.config,
+          s.tickets.filter(row => active(row) && row.station === 'orderQueue')) !== t.orderKey) return reject('SUPPLIER_SEQUENCE');
+      if (command.kind === 'move' && movementBlocked(s.config, t.holds, station) &&
+        (!isSupplier(s.config) || station !== 'orderQueue' || command.to === 'prep')) return reject('BLOCKED');
       if (command.kind === 'move') {
         const next = [...STATIONS, 'served'][STATIONS.indexOf(station) + 1];
         if (command.to !== next) return reject('INVALID_MOVE');

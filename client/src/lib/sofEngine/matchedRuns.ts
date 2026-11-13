@@ -2,6 +2,7 @@ import { replay } from './engine';
 import { getRun, snapshotFromEngine, validateSnapshot } from './runSnapshots';
 import { makeFixedDeckConfig, VERSIONS, VIP_VERSIONS } from './scenario';
 import { makeVipConfig, type VipVariant } from './vip';
+import { makeSupplierConfig, SUPPLIER_VERSIONS, type SupplierVariant } from './supplier';
 import { compatibleServedDefinitions } from '../sof/metricDefinitions';
 import {
   equivalent, exactKeys, failure, immutable, isCode, isRecord, success,
@@ -37,7 +38,8 @@ export type ProducerCompatibility = Readonly<{
 
 function canonicalConfig(snapshot: FinalRunSnapshot): boolean {
   const c = snapshot.config;
-  const built = c.manifest.scenarioId === 'vip-expedite' ? makeVipConfig({ difficulty: c.manifest.difficulty, variant: c.policy.variantId as VipVariant,
+  const built = c.manifest.scenarioId === 'supplier-shortage' ? makeSupplierConfig({ variant: c.policy.variantId as SupplierVariant,
+    initialSpeed: c.initialSpeed, guidedStart: c.guidedStart }) : c.manifest.scenarioId === 'vip-expedite' ? makeVipConfig({ difficulty: c.manifest.difficulty, variant: c.policy.variantId as VipVariant,
     initialSpeed: c.initialSpeed, guidedStart: c.guidedStart }) : makeFixedDeckConfig({ difficulty: c.manifest.difficulty, policy: c.policy.variantId,
     initialSpeed: c.initialSpeed, guidedStart: c.guidedStart, endCondition: c.endCondition });
   return built.ok && equivalent(c, built.value);
@@ -111,7 +113,9 @@ export function assessComparison(archive: unknown, explicitPair: unknown): Match
     const change = pair.change;
     const approvedChange = change !== null && change.version === 'v1' && change.beforeVariantId !== change.afterVariantId &&
       ((change.dimensionId === VERSIONS.policy && ['interval-push', 'manual-pull'].includes(change.beforeVariantId) && ['interval-push', 'manual-pull'].includes(change.afterVariantId)) ||
-       (change.dimensionId === VIP_VERSIONS.policy && ['fifo', 'expedite'].includes(change.beforeVariantId) && ['fifo', 'expedite'].includes(change.afterVariantId)));
+       (change.dimensionId === VIP_VERSIONS.policy && ['fifo', 'expedite'].includes(change.beforeVariantId) && ['fifo', 'expedite'].includes(change.afterVariantId)) ||
+       (change.dimensionId === SUPPLIER_VERSIONS.policy && bm.scenarioId === 'supplier-shortage' && am.scenarioId === 'supplier-shortage' && canonicalConfig(b) && canonicalConfig(a) &&
+         ['naive', 'managed'].includes(change.beforeVariantId) && ['naive', 'managed'].includes(change.afterVariantId)));
     add(!approvedChange, 'UNAPPROVED_POLICY_CHANGE');
     add(change !== null && (bc.policy.variantId !== change.beforeVariantId || ac.policy.variantId !== change.afterVariantId), 'POLICY_VARIANT_MISMATCH');
     add(!canonicalConfig(b), 'BASELINE_NOT_PRODUCTION_MANIFEST'); add(!canonicalConfig(a), 'SUBJECT_NOT_PRODUCTION_MANIFEST');
@@ -131,7 +135,7 @@ export function assessComparison(archive: unknown, explicitPair: unknown): Match
     add(b.observation.durationMs <= 0 || a.observation.durationMs <= 0, 'NONPOSITIVE_OBSERVATION');
     add(!equivalent(b.observation, a.observation), 'OBSERVATION_MISMATCH'); add(b.endReason !== a.endReason, 'END_REASON_MISMATCH');
     add(!compatibleServedDefinitions(b.metrics.servedSample.definition, a.metrics.servedSample.definition), 'SERVED_DEFINITION_MISMATCH');
-    add((bm.scenarioId === 'vip-expedite' || am.scenarioId === 'vip-expedite') && (b.endReason === 'manual-stop' || a.endReason === 'manual-stop'), 'MANUAL_END_NOT_MATCHABLE');
+    add(([bm.scenarioId, am.scenarioId].some(id => id === 'vip-expedite' || id === 'supplier-shortage')) && (b.endReason === 'manual-stop' || a.endReason === 'manual-stop'), 'MANUAL_END_NOT_MATCHABLE');
     add(!equivalent(controls(b), controls(a)), 'CONTROL_TRACE_MISMATCH');
     return finish(issues.length === 0 ? 'matched' : 'unmatched');
   } catch {

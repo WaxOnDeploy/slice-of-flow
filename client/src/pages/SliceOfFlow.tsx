@@ -22,6 +22,7 @@ import '@/lib/sliceOfFlowWorkshop.css';
 // Preview-only sibling: never loaded or scheduled on the default game path.
 const IndependentLab = lazy(() => import('@/components/SliceOfFlowIndependentPreview'));
 const VipRound = lazy(() => import('@/components/SliceOfFlowVipRound'));
+const SupplierRound = lazy(() => import('@/components/SliceOfFlowSupplierRound'));
 
 // ─── PHASE TRANSITION OVERLAY ─────────────────────
 function PhaseTransitionOverlay({
@@ -122,6 +123,8 @@ export default function SliceOfFlow() {
   const [vipEnabled] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('round3') === '1');
   // Mounting the pilot is not starting its clock; each run still needs an explicit Start.
   const [vipOpen, setVipOpen] = useState(vipEnabled);
+  const [supplierEnabled] = useState(() => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('round4') === '1');
+  const [supplierOpen, setSupplierOpen] = useState(supplierEnabled);
 
   // Splash screen state
   const [showSplash, setShowSplash] = useState(true);
@@ -175,7 +178,7 @@ export default function SliceOfFlow() {
       heading.classList.add('sof-focus-heading');
       heading.focus({ preventScroll: true });
     }
-  }, [displayedPhase, showSplash, transitionVisible, vipOpen]);
+  }, [displayedPhase, showSplash, transitionVisible, vipOpen, supplierOpen]);
 
   useEffect(() => {
     if (phase !== prevPhaseRef.current) {
@@ -231,7 +234,7 @@ export default function SliceOfFlow() {
 
   // Game tick — runs every second while game is active
   useEffect(() => {
-    if (isRunning) {
+    if (isRunning && !supplierOpen && !(supplierEnabled && vipOpen)) {
       intervalRef.current = setInterval(() => {
         const stateBefore = useSliceOfFlowStore.getState();
         const cardsBefore = stateBefore.cards;
@@ -312,7 +315,7 @@ export default function SliceOfFlow() {
         intervalRef.current = null;
       }
     };
-  }, [isRunning, tick]);
+  }, [isRunning, tick, supplierOpen, supplierEnabled, vipOpen]);
 
   // Show splash screen first
   if (showSplash) {
@@ -320,6 +323,10 @@ export default function SliceOfFlow() {
   }
 
   const renderPhase = () => {
+    // Deterministic combined-flag priority: supplier first, then the requested VIP/default path.
+    if (supplierOpen) return <Suspense fallback={<p role="status">Loading Round 4 supplier-only pilot…</p>}>
+      <SupplierRound speed={speed} onClose={() => setSupplierOpen(false)} />
+    </Suspense>;
     if (vipOpen) return <Suspense fallback={<p role="status">Loading Round 3 — VIP / Expedite…</p>}>
       <VipRound difficulty={difficulty} speed={speed} onClose={() => setVipOpen(false)} />
     </Suspense>;
@@ -327,6 +334,9 @@ export default function SliceOfFlow() {
       case 'landing':
         return <>
           <SliceOfFlowLanding />
+          {supplierEnabled && <div className="sof-independent-preview" style={{ padding: 24, background: '#FFF8ED', textAlign: 'center' }}>
+            <button type="button" onClick={() => setSupplierOpen(true)}>Open optional Round 4 supplier pilot</button>
+          </div>}
           {vipEnabled && <div style={{ padding: 24, background: '#FFF8ED', textAlign: 'center' }}>
             <button type="button" className="sof-focus-heading" onClick={() => setVipOpen(true)}>Open optional Round 3 preview</button>
           </div>}
@@ -339,6 +349,9 @@ export default function SliceOfFlow() {
       case 'debrief':
         return <>
           <SliceOfFlowDebrief />
+          {supplierEnabled && <div className="sof-independent-preview" style={{ padding: 24, background: '#FFF8ED', textAlign: 'center' }}>
+            <button type="button" onClick={() => setSupplierOpen(true)}>Try optional Round 4 supplier pilot</button>
+          </div>}
           {vipEnabled && <div style={{ padding: 24, background: '#FFF8ED', textAlign: 'center' }}>
             <button type="button" onClick={() => setVipOpen(true)}>Try optional Round 3 — VIP / Expedite</button>
           </div>}
@@ -354,7 +367,7 @@ export default function SliceOfFlow() {
   return (
     <>
       <PhaseTransitionOverlay isVisible={transitionVisible} label={transitionLabel} />
-      <div ref={phaseRootRef} className="sof-phase" data-phase={vipOpen ? 'round3-preview' : displayedPhase} inert={transitionVisible} aria-busy={transitionVisible}>
+      <div ref={phaseRootRef} className="sof-phase" data-phase={supplierOpen ? 'round4-preview' : vipOpen ? 'round3-preview' : displayedPhase} inert={transitionVisible} aria-busy={transitionVisible}>
         {renderPhase()}
         <SliceOfFlowRightsFooter />
       </div>

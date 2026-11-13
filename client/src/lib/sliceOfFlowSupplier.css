@@ -1,0 +1,190 @@
+/* Round 4 only: no released board, VIP/Lab, global theme, font or asset changes. */
+.sof-supplier-round {
+  --supplier-watch-clearance: 180px;
+}
+.sof-supplier-intro {
+  margin: 12px 0;
+  padding: 8px 14px;
+  background: #fff8e7;
+  border-left: 4px solid #a43a2a;
+  border-radius: 6px;
+}
+.sof-supplier-round summary {
+  cursor: pointer;
+  padding: 10px 0;
+  font-weight: 700;
+  min-height: 44px;
+}
+.sof-supplier-disclosure {
+  border: 1px solid #dec59b;
+  border-radius: 8px;
+  padding: 0 12px;
+}
+.sof-supplier-round select {
+  font: inherit;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 6px;
+  border: 2px solid #925531;
+  border-radius: 6px;
+  background: #fff8e7;
+  color: #534334;
+}
+.sof-supplier-round select:focus-visible,
+.sof-supplier-round summary:focus-visible {
+  outline: 3px solid #1976d2;
+  outline-offset: 3px;
+}
+.sof-supplier-watch {
+  position: sticky;
+  top: 8px;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 18px;
+  background: #2a1508;
+  color: #fff8e7;
+  border: 2px solid #d4a843;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 12px 0;
+  box-shadow: 0 3px 8px #2a150825;
+}
+.sof-supplier-watch strong {
+  flex-basis: 100%;
+  color: #ffd77a;
+}
+.sof-supplier-watch [data-testid="supplier-timer"] {
+  font-weight: 700;
+}
+.sof-supplier-round button,
+.sof-supplier-round summary,
+.sof-supplier-round select {
+  scroll-margin-top: var(--supplier-watch-clearance);
+  scroll-margin-bottom: 24px;
+}
+.sof-supplier-external {
+  background: #fff8e7;
+  padding: 8px 14px;
+  border: 1px dashed #925531;
+  border-radius: 10px;
+  margin: 14px 0;
+}
+.sof-supplier-board {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+  margin: 20px 0;
+}
+.sof-supplier-board > * {
+  min-width: 0;
+  grid-column: var(--supplier-col-wide);
+  grid-row: var(--supplier-row-wide);
+}
+.sof-supplier-lane-head {
+  background: #f5ebda;
+  border: 1px solid #c5ac88;
+  border-radius: 12px;
+  padding: 12px;
+}
+.sof-supplier-lane-head.sof-lab-orderQueue {
+  border-top: 5px solid #1976d2;
+}
+.sof-supplier-lane-head.sof-lab-prep {
+  border-top: 5px solid #c08816;
+}
+.sof-supplier-lane-head.sof-lab-oven {
+  border-top: 5px solid #a43a2a;
+}
+.sof-supplier-lane-head.sof-lab-boxDeliver {
+  border-top: 5px solid #388e3c;
+}
+.sof-supplier-round .sof-supplier-ticket {
+  margin: 0;
+  height: 100%;
+}
+.sof-supplier-round .sof-supplier-blocked {
+  border: 3px dashed #7b3f1a;
+  background: #f8eed8;
+}
+.sof-supplier-block-label {
+  font-weight: 800;
+  border-top: 1px solid #925531;
+  padding-top: 5px;
+}
+.sof-supplier-round .sof-supplier-destination-ready {
+  background: #ffe3a0;
+  border: 3px solid #a43a2a;
+  box-shadow: 0 0 0 2px #d4a843;
+  font-weight: 800;
+}
+.sof-supplier-move > button {
+  min-height: 52px;
+}
+.sof-supplier-comparison-table {
+  overflow-x: auto;
+}
+.sof-supplier-comparison-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  margin: 12px 0;
+}
+.sof-supplier-comparison-table caption {
+  text-align: left;
+  font-weight: 700;
+  padding: 8px 0;
+}
+.sof-supplier-comparison-table th,
+.sof-supplier-comparison-table td {
+  padding: 10px;
+  border: 1px solid #dec59b;
+  vertical-align: top;
+}
+.sof-supplier-round code {
+  overflow-wrap: anywhere;
+}
+@media (max-width: 850px) {
+  .sof-supplier-board {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .sof-supplier-board > * {
+    grid-column: var(--supplier-col-medium);
+    grid-row: var(--supplier-row-medium);
+  }
+}
+@media (max-width: 540px) {
+  .sof-supplier-round {
+    --supplier-watch-clearance: 230px;
+  }
+  .sof-supplier-watch {
+    top: 0;
+    font-size: 15px;
+    gap: 3px 12px;
+    padding: 8px 10px;
+  }
+  .sof-supplier-board {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .sof-supplier-board > * {
+    grid-column: 1;
+    grid-row: var(--supplier-row-small);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sof-supplier-round *,
+  .sof-supplier-dialog * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+/* Original debrief print must never include this optional pilot or its portal. */
+@media print {
+  .sof-supplier-round,
+  .sof-dialog:has(.sof-supplier-dialog),
+  body:has(.sof-dialog .sof-supplier-dialog) .sof-dialog-overlay {
+    display: none !important;
+  }
+}
